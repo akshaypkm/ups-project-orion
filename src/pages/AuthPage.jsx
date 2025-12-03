@@ -20,10 +20,12 @@ export default function AuthPage() {
 
   // common form state
   const [form, setForm] = useState({
-    username: "",
+    userid: "",      // Changed from username
     password: "",
     email: "",
     role: "user",
+    companyName: "", // Added
+    companySector: ""
   });
 
   const onChange = (e) =>
@@ -37,8 +39,8 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         // LOGIN
-        const res = await api.post("/auth/login", {
-          username: form.username,
+        const res = await api.post("api/auth/login", {
+          userid: form.userid,
           password: form.password,
         });
 
@@ -53,11 +55,13 @@ export default function AuthPage() {
         redirectByRole(payload.role);
       } else {
         // SIGNUP
-        await api.post("/auth/register", {
-          username: form.username,
+        await api.post("api/auth/signup", {
+          userid: form.userid,
           password: form.password,
           email: form.email,
           role: form.role,
+          companyName : form.companyName,
+          companySector : form.companySector
         });
         // After register, switch to login
         setIsLogin(true);
@@ -77,15 +81,15 @@ export default function AuthPage() {
     }
   };
 
-  // Mock fallback for UI when backend isn't available (remove when API is ready)
-  const mockLoginFallback = () => {
-    // create a fake token payload; production tokens must be secure!
-    const fakeRole = form.username === "admin" ? "admin" : "user";
-    const fakePayload = { sub: form.username, role: fakeRole, exp: 9999999999 };
-    const fakeToken = btoa(JSON.stringify({ alg: "none" })) + "." + btoa(JSON.stringify(fakePayload)) + ".";
-    localStorage.setItem("ecoroute_token", fakeToken);
-    redirectByRole(fakeRole);
-  };
+  // // Mock fallback for UI when backend isn't available (remove when API is ready)
+  // const mockLoginFallback = () => {
+  //   // create a fake token payload; production tokens must be secure!
+  //   const fakeRole = form.username === "admin" ? "admin" : "user";
+  //   const fakePayload = { sub: form.username, role: fakeRole, exp: 9999999999 };
+  //   const fakeToken = btoa(JSON.stringify({ alg: "none" })) + "." + btoa(JSON.stringify(fakePayload)) + ".";
+  //   localStorage.setItem("ecoroute_token", fakeToken);
+  //   redirectByRole(fakeRole);
+  // };
 
   const redirectByRole = (role) => {
     if (role === "admin") navigate("/admin");
@@ -125,13 +129,13 @@ export default function AuthPage() {
 
         <form className="form" onSubmit={handleSubmit}>
           <label className="label">
-            Username
+            User Id
             <input
-              name="username"
-              value={form.username}
+              name="userid"        // ⚠️ MUST match the state key exactly
+              value={form.userid}  // ⚠️ Update this too
               onChange={onChange}
               required
-              placeholder="e.g., john.doe"
+              placeholder="e.g., type user id..."
             />
           </label>
 
@@ -160,6 +164,32 @@ export default function AuthPage() {
               placeholder="Enter a secure password"
             />
           </label>
+
+          {!isLogin && (
+          <>
+                <label className="label">
+                    Company Name
+                    <input
+                        name="companyName"
+                        value={form.companyName}
+                        onChange={onChange}
+                        required
+                        placeholder="comp1"
+                    />
+                </label>
+
+                <label className="label">
+                    Company Sector
+                    <input
+                        name="companySector"
+                        value={form.companySector}
+                        onChange={onChange}
+                        required
+                        placeholder="e.g., Logistics, Retail"
+                    />
+                </label>
+            </>
+        )}
 
           {!isLogin && (
             <label className="label">
