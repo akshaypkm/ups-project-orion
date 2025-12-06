@@ -92,8 +92,8 @@ export default function AuthPage() {
   // };
 
   const redirectByRole = (role) => {
-    if (role === "admin") navigate("/admin");
-    else navigate("/dashboard");
+    if (role === "admin") navigate("/admin-dashboard");
+    else navigate("/client-dashboard");
   };
 
   return (
