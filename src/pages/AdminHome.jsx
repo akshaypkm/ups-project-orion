@@ -1,6 +1,7 @@
 // src/pages/admin/AdminHome.jsx
 import React from "react";
-import AdminSidebar from "../../components/admin/AdminSidebar";
+import AdminSidebar from "../Components/AdminSidebar";
+
 
 export default function AdminHome() {
   return (
