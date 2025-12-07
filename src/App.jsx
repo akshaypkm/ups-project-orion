@@ -25,10 +25,12 @@ export default function App() {
       <Route path="/" element={<AuthPage />} />
 
       {/* USER ROUTES */}
-      <Route path="/user/dashboard" element={<UserDashboard />} />
-      <Route path="/user/shipments" element={<UserShipments />} />
-      <Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
-      <Route path="/user/results" element={<UserResults />} />
+<Route path="/user/home" element={<UserDashboard />} />
+<Route path="/user/dashboard" element={<UserDashboard />} />
+<Route path="/user/shipments" element={<UserShipments />} />
+<Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
+<Route path="/user/results" element={<UserResults />} />
+
 
       {/* ADMIN ROUTES */}
       <Route path="/admin" element={<AdminPanel />} />
