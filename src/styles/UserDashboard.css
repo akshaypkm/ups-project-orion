@@ -1,0 +1,503 @@
+/* UserDashboard.css */
+
+/* --- Layout --- */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8f9fa;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.content-scroll-area {
+  padding: 2rem;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* --- Sidebar --- */
+/* UserDashboard.css */
+
+/* --- Main Layout Fix --- */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8f9fa;
+  overflow: hidden; /* Prevents double scrollbars */
+}
+
+/* Sidebar Styling Update */
+.sidebar {
+  width: 280px; /* Slightly wider as per image */
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Brand Section */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 4.5rem;
+  padding-left: 0.5rem;
+}
+
+.brand-logo-container {
+  background-color: #d1fae5; /* Light green bg */
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 48px;
+  /* margin-bottom: 2.5rem; */
+}
+
+.brand-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #111827; /* Dark text */
+  letter-spacing: -0.02em;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top:2rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px; /* Softer rounded corners */
+  border: none;
+  background: transparent;
+  color: #4b5563; /* Gray text */
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  margin-top: 1%;
+}
+
+.nav-item .material-symbols-outlined {
+  font-size: 22px;
+  color: #6b7280;
+}
+
+.nav-item:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Active State (Matches Image) */
+.nav-item.active {
+  background-color: #d1fae5; /* The specific light green color */
+  color: #059669; /* Darker green text */
+  font-weight: 600;
+}
+
+.nav-item.active .material-symbols-outlined {
+  color: #059669; /* Icon turns green */
+}
+
+/* Logout Button at Bottom */
+.logout-section {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+  text-align: left;
+}
+
+.logout-btn:hover {
+  color: #111827;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden; 
+}
+
+/* Header Alignment Fix */
+.top-bar {
+  height: 70px; /* Fixed height for consistency */
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 2.5rem; /* Horizontal padding only */
+  display: flex;
+  align-items: center; /* Vertically center content */
+  justify-content: space-between;
+}
+
+.content-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* ... Keep rest of your card/chart styles the same ... */
+
+/* --- Header --- */
+/* .top-bar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+} */
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn:hover {
+  color: #17cfb0;
+}
+
+/* --- Stats Grid --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.stat-toggle {
+  margin-top: auto;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  display: flex;
+}
+
+.toggle-option {
+  flex: 1;
+  text-align: center;
+  padding: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  color: #6b7280;
+}
+
+.toggle-option.active {
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* --- Emissions Credit System --- */
+.credit-card {
+  grid-column: span 2;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.action-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary {
+  background-color: #17cfb0;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #14b89c;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+}
+
+.credit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.credit-stat-item small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.credit-stat-item strong {
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.text-accent {
+  color: #17cfb0 !important;
+}
+
+/* --- Trade Sections --- */
+.trade-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.trade-table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.trade-table th {
+  color: #6b7280;
+  font-weight: 500;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trade-table td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* --- Charts Section --- */
+.charts-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  min-height: 400px;
+}
+
+/* Custom CSS Chart */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 300px;
+  width: 100%;
+  padding-top: 2rem;
+}
+
+.bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.bar {
+  width: 30%;
+  background-color: #17cfb0;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+  min-height: 4px;
+}
+
+.bar.low {
+  background-color: rgba(23, 207, 176, 0.3);
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 5px;
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* --- Side Insights --- */
+.insights-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.insight-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  background-color: #f3f4f6;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar-fill {
+  background-color: #17cfb0;
+  height: 100%;
+  border-radius: 99px;
+}
+
+.badge {
+  background-color: rgba(23, 207, 176, 0.1);
+  color: #17cfb0;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: 200px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+}

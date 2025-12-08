@@ -142,16 +142,16 @@ body,html,#root { height:100%; margin:0; background:linear-gradient(180deg,#f0f4
 }
 
 /* ---------- SIDEBAR ---------- */
-.sidebar {
+/* .sidebar {
   width: 260px;
   background: #272727;
   color: white;
   display: flex;
   flex-direction: column;
   padding: 25px 20px;
-}
+} */
 
-.logo-block {
+/* .logo-block {
   text-align: center;
   margin-bottom: 40px;
 }
@@ -159,7 +159,7 @@ body,html,#root { height:100%; margin:0; background:linear-gradient(180deg,#f0f4
 .sidebar-logo {
   width: 80px;
   margin-bottom: 8px;
-}
+} */
 
 .brand {
   margin: 0;

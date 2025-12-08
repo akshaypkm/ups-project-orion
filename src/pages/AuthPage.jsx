@@ -238,7 +238,7 @@ export default function AuthPage() {
           <strong>Tip:</strong> For quick admin access during testing use username
           <code>admin</code>.
         </div>
-      </div>
+      </div>z
     </div>
   );
 }

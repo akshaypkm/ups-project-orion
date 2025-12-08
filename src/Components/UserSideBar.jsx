@@ -1,68 +1,62 @@
-// src/components/user/UserSidebar.jsx
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import "../styles/UserDashboard.css";
 
-export default function UserSidebar() {
+export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
-    // later: clear auth, etc.
+    localStorage.removeItem("ecoroute_token");
     navigate("/");
   };
 
   return (
     <aside className="sidebar">
-      <div className="logo-block">
-        <img
-          src="https://via.placeholder.com/80x80?text=LOGO"
-          alt="Logo"
-          className="sidebar-logo"
-        />
-        <h2 className="brand">EcoShip</h2>
-        <p className="sub-brand">User Panel</p>
+      {/* Brand Logo */}
+      <div className="brand">
+        <div className="brand-logo-container">
+          <span className="material-symbols-outlined text-accent" style={{fontSize: '28px'}}>eco</span>
+        </div>
+        <span className="brand-text">EcoRoute</span>
       </div>
 
-      <nav className="menu">
-        <NavLink
-          to="/user/home"
-          className={({ isActive }) =>
-            "menu-item" + (isActive ? " active" : "")
-          }
+      {/* Navigation */}
+      <nav className="nav-menu">
+        <button 
+          className={`nav-item ${isActive('/client-dashboard') ? 'active' : ''}`}
+          onClick={() => navigate('/client-dashboard')}
         >
+          <span className="material-symbols-outlined">home</span>
           Home
-        </NavLink>
-
-        <NavLink
-          to="/user/shipments"
-          className={({ isActive }) =>
-            "menu-item" + (isActive ? " active" : "")
-          }
+        </button>
+        
+        <button 
+          className={`nav-item ${isActive('/calculator') ? 'active' : ''}`}
+          onClick={() => navigate('/calculator')}
         >
-          My Shipments
-        </NavLink>
-
-        <NavLink
-          to="/user/calculator"
-          className={({ isActive }) =>
-            "menu-item" + (isActive ? " active" : "")
-          }
+          <span className="material-symbols-outlined">calculate</span>
+          Carbon Quote Calculator
+        </button>
+        
+        <button 
+          className={`nav-item ${isActive('/history') ? 'active' : ''}`}
+          onClick={() => navigate('/history')}
         >
-          Emission Calculator
-        </NavLink>
-
-        <NavLink
-          to="/user/results"
-          className={({ isActive }) =>
-            "menu-item" + (isActive ? " active" : "")
-          }
-        >
-          Results
-        </NavLink>
+          <span className="material-symbols-outlined">history</span>
+          Shipment History
+        </button>
       </nav>
 
-      <button className="logout-btn" onClick={handleLogout}>
-        Logout
-      </button>
+      {/* Logout at Bottom */}
+      <div className="logout-section">
+        <button className="logout-btn" onClick={handleLogout}>
+          <span className="material-symbols-outlined" style={{transform: 'rotate(180deg)'}}>logout</span>
+          Log Out
+        </button>
+      </div>
     </aside>
   );
 }
