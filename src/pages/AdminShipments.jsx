@@ -1,6 +1,7 @@
 // src/pages/admin/AdminShipments.jsx
 import React, { useState } from "react";
-import AdminSidebar from "../../components/admin/AdminSidebar";
+import AdminSidebar from "../Components/AdminSidebar";
+
 
 export default function AdminShipments() {
   const [filters, setFilters] = useState({
