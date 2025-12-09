@@ -25,8 +25,8 @@ export default function App() {
       <Route path="/" element={<AuthPage />} />
 
       {/* USER ROUTES */}
-<Route path="/user/home" element={<UserDashboard />} />
-<Route path="/user/dashboard" element={<UserDashboard />} />
+{/* <Route path="/user/home" element={<clientDashboard />} /> */}
+<Route path="/UserDashboard" element={<UserDashboard />} />
 <Route path="/user/shipments" element={<UserShipments />} />
 <Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
 <Route path="/user/results" element={<UserResults />} />
@@ -42,3 +42,21 @@ export default function App() {
     </Routes>
   );
 }
+
+
+
+// import React from "react";
+// import { Routes, Route } from "react-router-dom";
+// import AuthPage from "./pages/AuthPage";
+// import Dashboard from "./pages/UserDashboard";
+// import AdminPanel from "./pages/AdminPanel";
+
+// export default function App() {
+//   return (
+//     <Routes>
+//       <Route path="/" element={<AuthPage />} />
+//       <Route path="/UserDashboard" element={<Dashboard />} />
+//       <Route path="/admin" element={<AdminPanel />} />
+//     </Routes>
+//   );
+// }

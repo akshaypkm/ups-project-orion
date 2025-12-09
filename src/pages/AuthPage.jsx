@@ -3,6 +3,8 @@ import api from "../api/api";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 
+// import client-dashboard from ".UserDashboard";
+
 /**
  * NOTES:
  * - Replace 'public/ups-logo.png' with your UPS logo in the public folder.
@@ -93,7 +95,7 @@ export default function AuthPage() {
 
   const redirectByRole = (role) => {
     if (role === "admin") navigate("/admin-dashboard");
-    else navigate("/client-dashboard");
+    else navigate("/UserDashboard");
   };
 
   return (
