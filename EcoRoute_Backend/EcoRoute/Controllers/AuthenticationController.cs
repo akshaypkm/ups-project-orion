@@ -33,6 +33,11 @@ namespace EcoRoute.Controllers
                 return BadRequest("User ID already exists!");
             }
 
+            if(userSignUpDto.Role.ToLower() == "admin" && await dbContext.Companies.AnyAsync(c => c.CompanyName == userSignUpDto.CompanyName))
+            {
+                return BadRequest($"Admin account is already created for the company : {userSignUpDto.CompanyName}");
+            }
+            
             var user = new User
             {
                 UserId = userSignUpDto.UserId,

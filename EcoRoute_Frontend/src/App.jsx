@@ -26,7 +26,7 @@ export default function App() {
 
       {/* USER ROUTES */}
 {/* <Route path="/user/home" element={<clientDashboard />} /> */}
-<Route path="/UserDashboard" element={<UserDashboard />} />
+<Route path="/client-dashboard" element={<UserDashboard />} />
 <Route path="/user/shipments" element={<UserShipments />} />
 <Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
 <Route path="/user/results" element={<UserResults />} />

@@ -3,15 +3,11 @@ import api from "../api/api";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 
-// import client-dashboard from ".UserDashboard";
-
 /**
  * NOTES:
- * - Replace 'public/ups-logo.png' with your UPS logo in the public folder.
  * - Backend endpoints used:
- *    POST /auth/register   { username, password, email, role }
- *    POST /auth/login      { username, password } -> { token }
- * - Token payload must include 'role' claim (e.g., { sub: 'alice', role: 'user' })
+ * POST /auth/register   { username, password, email, role, companyName, companySector }
+ * POST /auth/login      { username, password } -> { token }
  */
 
 export default function AuthPage() {
@@ -22,11 +18,11 @@ export default function AuthPage() {
 
   // common form state
   const [form, setForm] = useState({
-    userid: "",      // Changed from username
+    userid: "",
     password: "",
     email: "",
-    role: "user",
-    companyName: "", // Added
+    role: "client", // Default to client
+    companyName: "",
     companySector: ""
   });
 
@@ -48,7 +44,6 @@ export default function AuthPage() {
 
         const token = res.data.token || res.data?.accessToken || null;
         if (!token) {
-          // Mock fallback (if backend not ready) - this is only for UI testing:
           mockLoginFallback();
           return;
         }
@@ -63,9 +58,10 @@ export default function AuthPage() {
           email: form.email,
           role: form.role,
           companyName : form.companyName,
-          companySector : form.companySector
+          // If admin, send empty sector or fixed value depending on backend needs
+          companySector : form.role === 'admin' ? "" : form.companySector
         });
-        // After register, switch to login
+        
         setIsLogin(true);
         setForm({ ...form, password: "" });
         setError("Registration successful — please log in.");
@@ -83,19 +79,18 @@ export default function AuthPage() {
     }
   };
 
-  // // Mock fallback for UI when backend isn't available (remove when API is ready)
-  // const mockLoginFallback = () => {
-  //   // create a fake token payload; production tokens must be secure!
-  //   const fakeRole = form.username === "admin" ? "admin" : "user";
-  //   const fakePayload = { sub: form.username, role: fakeRole, exp: 9999999999 };
-  //   const fakeToken = btoa(JSON.stringify({ alg: "none" })) + "." + btoa(JSON.stringify(fakePayload)) + ".";
-  //   localStorage.setItem("ecoroute_token", fakeToken);
-  //   redirectByRole(fakeRole);
-  // };
-
   const redirectByRole = (role) => {
-    if (role === "admin") navigate("/admin-dashboard");
-    else navigate("/UserDashboard");
+    if (role === "admin") {
+      navigate("/client-dashboard");
+    } else {
+      navigate("/client-dashboard");
+    }
+  };
+
+  const mockLoginFallback = () => {
+    // Keep fallback for UI testing if backend fails
+    const fakeRole = form.userid === "admin" ? "admin" : "client";
+    navigate("/client-dashboard");
   };
 
   return (
@@ -130,11 +125,23 @@ export default function AuthPage() {
         </div>
 
         <form className="form" onSubmit={handleSubmit}>
+          
+          {/* 1. Role Selection (Moved to Top) */}
+          {!isLogin && (
+            <label className="label">
+              Role
+              <select name="role" value={form.role} onChange={onChange}>
+                <option value="client">Client</option> {/* 2. Renamed User to Client */}
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+          )}
+
           <label className="label">
             User Id
             <input
-              name="userid"        // ⚠️ MUST match the state key exactly
-              value={form.userid}  // ⚠️ Update this too
+              name="userid"
+              value={form.userid}
               onChange={onChange}
               required
               placeholder="e.g., type user id..."
@@ -169,39 +176,61 @@ export default function AuthPage() {
 
           {!isLogin && (
           <>
+                {/* 6. Company Name: Dropdown for Admin, Text for Client */}
                 <label className="label">
                     Company Name
-                    <input
-                        name="companyName"
-                        value={form.companyName}
-                        onChange={onChange}
-                        required
-                        placeholder="comp1"
-                    />
+                    {form.role === 'admin' ? (
+                        <select 
+                            name="companyName"
+                            value={form.companyName}
+                            onChange={onChange}
+                            required
+                        >
+                            <option value="" disabled>Select Company</option>
+                            <option value="EcoRoute Admin Corp">EcoRoute Admin Corp</option>
+                            <option value="Global Logistics HQ">Global Logistics HQ</option>
+                            <option value="Sustainable Supply Chain Inc">Sustainable Supply Chain Inc</option>
+                        </select>
+                    ) : (
+                        <input
+                            name="companyName"
+                            value={form.companyName}
+                            onChange={onChange}
+                            required
+                            placeholder="Enter your company name"
+                        />
+                    )}
                 </label>
 
+                {/* 4 & 5. Company Sector: Dropdown for Client, Disabled for Admin */}
                 <label className="label">
                     Company Sector
-                    <input
-                        name="companySector"
-                        value={form.companySector}
-                        onChange={onChange}
-                        required
-                        placeholder="e.g., Logistics, Retail"
-                    />
+                    {form.role === 'client' ? (
+                        <select
+                            name="companySector"
+                            value={form.companySector}
+                            onChange={onChange}
+                            required
+                        >
+                            <option value="" disabled>Select Sector</option>
+                            <option value="Logistics">Logistics</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="E-commerce">E-commerce</option>
+                            <option value="Pharmaceuticals">Pharmaceuticals</option>
+                        </select>
+                    ) : (
+                        <input
+                            name="companySector"
+                            value="" 
+                            disabled
+                            placeholder="Not applicable for Admin"
+                            style={{backgroundColor: '#f3f4f6', cursor: 'not-allowed', color: '#9ca3af'}}
+                        />
+                    )}
                 </label>
             </>
         )}
-
-          {!isLogin && (
-            <label className="label">
-              Role
-              <select name="role" value={form.role} onChange={onChange}>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-          )}
 
           {error && <div className="error">{error}</div>}
 
@@ -240,7 +269,7 @@ export default function AuthPage() {
           <strong>Tip:</strong> For quick admin access during testing use username
           <code>admin</code>.
         </div>
-      </div>z
+      </div>
     </div>
   );
 }
