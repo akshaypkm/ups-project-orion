@@ -6,6 +6,8 @@ namespace EcoRoute.Repositories
     public interface IShipmentRepository
     {
         Task<int> GetTotalShipmentsCompanyAndDateWise(int companyId, DateTime ShipmentStartDate, DateTime ShipmentEndDate);
+
+        Task<string> GetShipmentCodeByShipmentId(int shipmentId);
     }
     public class ShipmentRepository(EcoRouteDbContext dbContext) : IShipmentRepository
     {
@@ -17,5 +19,10 @@ namespace EcoRoute.Repositories
                                             && s.ShipmentDate >= ShipmentStartDate && s.ShipmentDate <= ShipmentEndDate).CountAsync();
         }
 
+        public async Task<string?> GetShipmentCodeByShipmentId(int shipmentId)
+        {
+            return await dbContext.Shipments.Where(s => s.Id == shipmentId)
+                                            .Select(s => s.ShipmentCode).FirstOrDefaultAsync();
+        }
     }
 }
