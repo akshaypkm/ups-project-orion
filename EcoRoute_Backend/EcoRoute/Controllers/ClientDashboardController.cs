@@ -3,6 +3,7 @@ using System.Security.Claims;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
+using EcoRoute.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +16,16 @@ namespace EcoRoute.Controllers
     {
         
         private readonly EcoRouteDbContext dbContext;
-
-        public ClientDashboardController(EcoRouteDbContext dbContext)
+        private readonly IClientDashboardService _clientDashboardService; 
+        public ClientDashboardController(EcoRouteDbContext dbContext, IClientDashboardService _clientDashboardService)
         {
             this.dbContext = dbContext;
+            this._clientDashboardService = _clientDashboardService;
         }
 
         [HttpGet("stats")]
         [Authorize]
-        public async Task<IActionResult> GetDashboardStat([FromQuery] string EmissionPeriod, string ShipmentPeriod, string EmissionsSavedPeriod)
+        public async Task<IActionResult> GetDashboardStat([FromQuery] string EmissionPeriod, [FromQuery] string ShipmentPeriod,[FromQuery] string EmissionsSavedPeriod)
         {
             
             var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
@@ -36,162 +38,43 @@ namespace EcoRoute.Controllers
             }
 
             string companyName = companyClaim.Value;
-
-            var company = await dbContext.Companies.Where(c => c.CompanyName == companyName).FirstAsync();
             
-            if(company == null)
+            var returnDto = await _clientDashboardService.GetClientDashboardStatAsync(companyName, EmissionPeriod, ShipmentPeriod, EmissionsSavedPeriod);
+            
+            if(returnDto.clientDashboardDto == null)
             {
-                return NotFound($"Company not found");
+                return BadRequest("company data not found");
             }
 
-            DateTime EmissionStartDate;
-            DateTime EmissionEndDate = DateTime.Now;
-
-            DateTime ShipmentStartDate;
-            DateTime ShipmentEndDate = DateTime.Now;
-
-            DateTime EmissionsSavedStartDate;
-            DateTime EmissionsSavedEndDate = DateTime.Now;
-
-            switch (EmissionPeriod.ToLower())
-            {
-                case "year":
-                    EmissionStartDate = new DateTime(DateTime.Now.Year, 1, 1);
-                    break;
-                case "day":
-                    EmissionStartDate = DateTime.Today;
-                    break;
-                case "month":
-                default:
-                    EmissionStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                    break;
-            }
-
-            switch (ShipmentPeriod.ToLower())
-            {
-                case "year":
-                    ShipmentStartDate = new DateTime(DateTime.Now.Year, 1, 1);
-                    break;
-                case "day":
-                    ShipmentStartDate = DateTime.Today;
-                    break;
-                case "month":
-                default:
-                    ShipmentStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                    break;
-            }
-
-            switch (EmissionsSavedPeriod.ToLower())
-            {
-                case "year":
-                    EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, 1, 1);
-                    break;
-                case "day":
-                    EmissionsSavedStartDate = DateTime.Today;
-                    break;
-                case "month":
-                default:
-                    EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                    break;
-            }            
-
-            var totalEmissions = await dbContext.Orders.Where(o => o.CompanyId == company.Id && o.OrderDate >= EmissionStartDate 
-                                                            && o.OrderDate <= EmissionEndDate && o.OrderStatus == "placed" )
-                                                            .SumAsync(o => o.OrderCO2Emission);
-
-            var totalShipments = await dbContext.Shipments.Where(s => s.OrderList.Any(o => o.CompanyId == company.Id) 
-                                            && s.ShipmentDate >= ShipmentStartDate && s.ShipmentDate <= ShipmentEndDate).CountAsync();
-
-            var emissionsSaved = await dbContext.Orders.Where(o => o.CompanyId == company.Id && o.OrderDate >= EmissionsSavedStartDate
-                                                            && o.OrderDate <= EmissionsSavedEndDate && o.OrderStatus == "placed")
-                                                            .SumAsync(o => o.OrderStandardCO2Emissions - o.OrderCO2Emission);
-
-            var totalForecastedEmissions = await CalculateTotalForecastedEmissions(company.Id); // USED IN THE SECTION BELOW EMISSION CREDIT SYSTEM
-
-            var forecastedEmissions = await CalculateForecastedEmissions(company.Id); // USED IN EMISSION CREDIT SYSTEM
-
-            // var emissionsSaved = await CalculateSavedEmissions
-            DateTime yearStart = new(DateTime.Now.Year,1,1);
-            DateTime nowDate = DateTime.Now;
-
-            var rawData = await dbContext.Orders
-                                    .Where(o => o.CompanyId == company.Id 
-                                        && o.OrderDate >= yearStart && o.OrderDate <= nowDate)
-                                            .GroupBy(o => o.OrderDate.Month)
-                                                .Select(s => new
-                                                    {
-                                                        Month = s.Key,
-                                                        TotalEmissions = s.Sum( o => o.OrderCO2Emission)
-                                                    }).ToListAsync();
-            
-            double[] finalGraphData = new double[12];
-
-            foreach(var rd in rawData)
-            {
-                finalGraphData[rd.Month - 1] = rd.TotalEmissions;
-            }      
-
-            var creditMarketPrice = await dbContext.Credits
-                                            .OrderByDescending(cr => cr.Id)
-                                                .Select(cr => cr.CreditMarketPrice).FirstAsync();
-
-            var returnDto = new ClientDashboardDto{
-                CompanyCode = company.CompanyCode,
-                Shipments = totalShipments,
-                CompanyCredits = company.CompanyCredits,
-                CreditMarketPrice = creditMarketPrice, 
-                TotalEmissions = totalEmissions,
-                ForecastedEmissions = forecastedEmissions,
-                TotalForecastedEmissions = totalForecastedEmissions, 
-                EmissionsSaved = emissionsSaved, 
-                GraphData = finalGraphData
-            };
-            
-            return Ok(returnDto);
-        }
-
-        private async Task<double> CalculateTotalForecastedEmissions(int companyId)
-        {
-            
-            
-            return 10.00;
-        }
-
-        private async Task<double> CalculateForecastedEmissions(int companyId)
-        {
-            return 10.00;
+            return Ok(returnDto.clientDashboardDto);
         }
 
         [HttpGet("emissionscreditsystem")]
         public async Task<IActionResult> GetEmissionsCreditSystem()
-        {   
-
-            var creditMarketPrice = await (from c in dbContext.Credits
-                                                        orderby c.LatestDate descending
-                                                            select c.CreditMarketPrice).FirstAsync();
-
-            
+        {           
+            var creditMarketPrice = await _clientDashboardService.GetCreditMarketPrice();
             return Ok(creditMarketPrice);
         }   
 
         [HttpGet("emissionscreditsystem/listings")]
         public async Task<ActionResult<List<CreditListingDto>>> GetListing()
         {
+            var companyClaim = User.FindFirst("CompanyName");
 
-            var creditListings = await (from cr in dbContext.CreditListings
-                                    where cr.Status == "available" 
-                                        select new CreditListingDto
-                                        {
-                                            SellerCompanyName = cr.CompanyName,
-                                            CreditsListed = cr.CreditsListed,
-                                            Status = cr.Status
-                                        }).ToListAsync();
+            if(companyClaim == null)
+            {
+                return Unauthorized("token is missing the right company name");
+            }
+
+            string companyName = companyClaim.Value;
+            
+            var creditListings = await _clientDashboardService.GetListing(companyName);
 
             return creditListings;
         }
 
         [HttpPost("emissionscreditsystem/sale")]
-        public async Task<IActionResult> PostSale([FromBody] double saleUnits)
+        public async Task<IActionResult> PutSale([FromBody] double saleUnits)
         {
             
             var companyClaim = User.FindFirst("CompanyName");
@@ -203,37 +86,14 @@ namespace EcoRoute.Controllers
 
             string companyName = companyClaim.Value;
 
-            var company = await dbContext.Companies
-                                    .Where(c => c.CompanyName == companyName)
-                                        .FirstAsync();
+            var res = await _clientDashboardService.PutSale(companyName, saleUnits);
 
-            if(saleUnits >= company.CompanyCredits)
+            if (!res.Success)
             {
-                return BadRequest("Low credit balance for the given request!");
+                return BadRequest($"Sale transaction failed: {res.Message}");
             }
 
-            Console.WriteLine($"Company Credits: {company.CompanyCredits}");
-
-            var creditMarketPrice = await (from c in dbContext.Credits
-                                                        orderby c.LatestDate descending
-                                                            select c.CreditMarketPrice).FirstAsync();
-                                                            
-            Console.WriteLine($"-----------{creditMarketPrice}");
-
-            var creditListing = new CreditListing
-            {
-                CompanyName = companyName,
-                SellerCompanyId = company.Id,
-                CreditsListed = saleUnits,
-                PricePerCredit = creditMarketPrice,
-                Status = "available",
-            };
-
-            company.CompanyCredits -= saleUnits;
-
-            await dbContext.CreditListings.AddAsync(creditListing);
-            await dbContext.SaveChangesAsync();
-            return Ok(creditListing);
+            return Ok("Sale transaction placed successfully");
         }
 
         [HttpPut("emissionscreditsystem/buy")]
@@ -248,6 +108,7 @@ namespace EcoRoute.Controllers
             }
 
             string companyName = companyClaim.Value;
+
 
             var company = await dbContext.Companies
                                     .Where(c => c.CompanyName == companyName)

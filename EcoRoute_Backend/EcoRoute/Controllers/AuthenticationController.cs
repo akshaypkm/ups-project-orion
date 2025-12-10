@@ -17,31 +17,18 @@ namespace EcoRoute.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        private readonly EcoRouteDbContext dbContext;
-        private readonly IConfiguration _configuration;
+        private IAuthService _authService;
 
-        private IUserRepository _userRepo;
-        private ICompanyRepository _companyRepo;
-
-        private IUserService _userService;
-
-        public AuthenticationController(EcoRouteDbContext dbContext,
-                                        IConfiguration _configuration, IUserRepository _userRepo
-                                        ,ICompanyRepository _companyRepo
-                                        ,IUserService _userService)
+        public AuthenticationController(IAuthService _authService)
         {
-            this.dbContext = dbContext;
-            this._configuration = _configuration;
-            this._userRepo = _userRepo;
-            this._companyRepo = _companyRepo;
-            this._userService = _userService;
+            this._authService = _authService;
         }
 
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] UserSignUpDto userSignUpDto)
         {
             
-            var res = await _userService.RegisterUserAsync(userSignUpDto);
+            var res = await _authService.RegisterUserAsync(userSignUpDto);
         
             bool resBool = res.Success;
             string resMessge = res.Message;
@@ -58,7 +45,7 @@ namespace EcoRoute.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
         {
             
-            var res = await _userService.Login(userLoginDto);
+            var res = await _authService.Login(userLoginDto);
 
             if (!res.Success)
             {
