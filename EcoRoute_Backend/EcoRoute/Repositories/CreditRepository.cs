@@ -16,6 +16,8 @@ namespace EcoRoute.Repositories
         Task SaveChangesAsync();
 
         Task<CreditListing> GetCreditListingByIdAsync(int creditListingId);
+
+        Task<int> GetCompanyIdByCreditListingId(int creditListingId);
     }
     public class CreditRepository(EcoRouteDbContext dbContext) : ICreditRepository
     {
@@ -54,6 +56,12 @@ namespace EcoRoute.Repositories
         public async Task<CreditListing> GetCreditListingByIdAsync(int creditListingId)
         {
             return await dbContext.CreditListings.Where(cl => cl.Id == creditListingId).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> GetCompanyIdByCreditListingId(int creditListingId)
+        {
+            return await dbContext.CreditListings.Where(cl => cl.Id == creditListingId)
+                                                .Select(cl => cl.SellerCompanyId).FirstOrDefaultAsync();
         }
     }
 }

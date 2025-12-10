@@ -3,6 +3,7 @@ using System.Transactions;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
+using EcoRoute.Models.HelperClasses;
 using EcoRoute.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ namespace EcoRoute.Services
         public Task<(bool Success, string Message)> PutSale(string companyName, double saleUnits);
 
         public Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto);
+        public Task<List<Notification>> ShowNotifications(string companyName);
     }
 
     public class ClientDashboardService : IClientDashboardService
@@ -31,9 +33,11 @@ namespace EcoRoute.Services
         private readonly IEmissionRepository _emissionRepo;
         private readonly IShipmentRepository _shipmentRepo;
         private readonly ICreditRepository _creditRepo;
+        private readonly INotificationRepository _notificationRepo;
         public ClientDashboardService(EcoRouteDbContext _dbContext, IUserRepository _userRepo, 
                             ICompanyRepository _companyRepo, IEmissionRepository _emissionRepo,
-                            IShipmentRepository _shipmentRepo, ICreditRepository _creditRepo)
+                            IShipmentRepository _shipmentRepo, ICreditRepository _creditRepo,
+                            INotificationRepository _notificationRepo)
         {
             this._dbContext = _dbContext;
             this._userRepo = _userRepo;
@@ -41,7 +45,9 @@ namespace EcoRoute.Services
             this._emissionRepo = _emissionRepo;
             this._shipmentRepo = _shipmentRepo;
             this._creditRepo = _creditRepo;
+            this._notificationRepo = _notificationRepo;
         }
+
         public async Task<(bool Success, string Message, ClientDashboardDto? clientDashboardDto)> GetClientDashboardStatAsync(string CompanyName, string EmissionPeriod, string ShipmentPeriod, string EmissionsSavedPeriod)
         {
             var company = await _companyRepo.GetCompanyByNameAsync(CompanyName);
@@ -168,10 +174,10 @@ namespace EcoRoute.Services
 
         public async Task<(bool Success, string Message)> PutSale(string companyName, double saleUnits)
         {
-            var companyCredits = await _companyRepo.GetCompanyCreditsByNameAsync(companyName);
+            var company = await _companyRepo.GetCompanyByNameAsync(companyName);
 
             int companyId = await _companyRepo.GetCompanyIdByName(companyName);
-            if(saleUnits >= companyCredits)
+            if(saleUnits >= company.CompanyCredits)
             {
                 return (false,"Low credit balance for the given request!");
             }
@@ -180,7 +186,7 @@ namespace EcoRoute.Services
 
             var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
 
-            companyCredits -= saleUnits;
+            company.CompanyCredits -= saleUnits;
             
             var creditListing = new CreditListing
             {
@@ -230,8 +236,16 @@ namespace EcoRoute.Services
 
             company.CompanyCredits += buyCreditDto.UnitsBought;
 
+            var notification = new Notification(){
+                Message = $"Your listed credits of Id: {buyCreditDto.SaleUnitId} - {buyCreditDto.UnitsBought} units are bought by company - {company.CompanyName}",
+                IsRead = false,
+                TargetCompanyId = await _creditRepo.GetCompanyIdByCreditListingId(buyCreditDto.SaleUnitId)
+            };
+
             try
             {
+                await _notificationRepo.AddNotificationAsync(notification);
+                await _notificationRepo.SaveChangesAsync();
                 await _companyRepo.SaveChangesAsync();
                 await _creditRepo.SaveChangesAsync();
 
@@ -243,6 +257,13 @@ namespace EcoRoute.Services
             }
             
             return (true, "successfully bought credits");
+        }
+
+        public async Task<List<Notification>> ShowNotifications(string companyName)
+        {
+            int companyId = await _companyRepo.GetCompanyIdByName(companyName);
+
+            return await _notificationRepo.GetNotificationsByCompanyIdAsync(companyId);
         }
     }
 }

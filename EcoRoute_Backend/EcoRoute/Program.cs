@@ -99,6 +99,7 @@ builder.Services.AddScoped<IShipmentRepository, ShipmentRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITruckRepository, TruckRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 

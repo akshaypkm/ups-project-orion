@@ -3,6 +3,7 @@ using System.Security.Claims;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
+using EcoRoute.Models.HelperClasses;
 using EcoRoute.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -118,5 +119,22 @@ namespace EcoRoute.Controllers
 
             return Ok("trade successful");
         }
+
+        [HttpGet("notifications")]
+        public async Task<ActionResult<List<Notification>>> ShowNotifications()
+        {
+            var companyClaim = User.FindFirst("CompanyName");
+
+            if(companyClaim == null)
+            {
+                return Unauthorized("token is missing the right company name");
+            }
+
+            string companyName = companyClaim.Value;
+
+            var notifications = await _clientDashboardService.ShowNotifications(companyName);
+
+            return notifications;
+        } 
     }
 }
