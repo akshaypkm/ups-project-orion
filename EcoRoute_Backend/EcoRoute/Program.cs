@@ -28,44 +28,6 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Source - https://stackoverflow.com/a
-// Posted by preetham-p-m, modified by community. See post 'Timeline' for change history
-// Retrieved 2025-12-04, License - CC BY-SA 4.0
-
-builder.Services.AddSwaggerGen(option =>
-{
-    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
-    option.AddSecurityDefinition(
-        "Bearer",
-        new OpenApiSecurityScheme
-        {
-            In = ParameterLocation.Header,
-            Description = "Please enter a valid token",
-            Name = "Authorization",
-            Type = SecuritySchemeType.Http,
-            BearerFormat = "JWT",
-            Scheme = "Bearer"
-        }
-    );
-    option.AddSecurityRequirement(
-        new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                new string[] { }
-            }
-        }
-    );
-});
-
-
 builder.Services.AddAuthentication(options =>
 {
     // This tells .NET: "By default, use JWT tokens for everything."
@@ -83,6 +45,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false
     };
 });
+
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
