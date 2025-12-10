@@ -1,0 +1,248 @@
+using System.Data.Common;
+using System.Transactions;
+using EcoRoute.Data;
+using EcoRoute.Models;
+using EcoRoute.Models.Entities;
+using EcoRoute.Repositories;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+
+namespace EcoRoute.Services
+{
+
+    public interface IClientDashboardService
+    {
+        public Task<(bool Success, string Message, ClientDashboardDto? clientDashboardDto)> GetClientDashboardStatAsync(string CompanyName, string EmissionPeriod, string ShipmentPeriod, string EmissionsSavedPeriod);
+    
+        public Task<double> GetCreditMarketPrice(); 
+
+        public Task<List<CreditListingDto>> GetListing(string companyName);
+
+        public Task<(bool Success, string Message)> PutSale(string companyName, double saleUnits);
+
+        public Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto);
+    }
+
+    public class ClientDashboardService : IClientDashboardService
+    {
+        private readonly EcoRouteDbContext _dbContext;
+        private readonly IUserRepository _userRepo;
+        private readonly ICompanyRepository _companyRepo;
+        private readonly IEmissionRepository _emissionRepo;
+        private readonly IShipmentRepository _shipmentRepo;
+        private readonly ICreditRepository _creditRepo;
+        public ClientDashboardService(EcoRouteDbContext _dbContext, IUserRepository _userRepo, 
+                            ICompanyRepository _companyRepo, IEmissionRepository _emissionRepo,
+                            IShipmentRepository _shipmentRepo, ICreditRepository _creditRepo)
+        {
+            this._dbContext = _dbContext;
+            this._userRepo = _userRepo;
+            this._companyRepo = _companyRepo;
+            this._emissionRepo = _emissionRepo;
+            this._shipmentRepo = _shipmentRepo;
+            this._creditRepo = _creditRepo;
+        }
+        public async Task<(bool Success, string Message, ClientDashboardDto? clientDashboardDto)> GetClientDashboardStatAsync(string CompanyName, string EmissionPeriod, string ShipmentPeriod, string EmissionsSavedPeriod)
+        {
+            var company = await _companyRepo.GetCompanyByNameAsync(CompanyName);
+
+            if(company == null)
+            {
+                return (false, $"No company found with the name : {CompanyName}", null);
+            }
+
+            DateTime EmissionStartDate;
+            DateTime EmissionEndDate = DateTime.Now;
+
+            DateTime ShipmentStartDate;
+            DateTime ShipmentEndDate = DateTime.Now;
+
+            DateTime EmissionsSavedStartDate;
+            DateTime EmissionsSavedEndDate = DateTime.Now;
+
+            DateTime GraphYearStart = new(DateTime.Now.Year,1,1);
+            DateTime GraphNowDate = DateTime.Now;
+
+            switch (EmissionPeriod.ToLower())
+            {
+                case "year":
+                    EmissionStartDate = new DateTime(DateTime.Now.Year, 1, 1);
+                    break;
+                case "day":
+                    EmissionStartDate = DateTime.Today;
+                    break;
+                case "month":
+                default:
+                    EmissionStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    break;
+            }
+
+            switch (ShipmentPeriod.ToLower())
+            {
+                case "year":
+                    ShipmentStartDate = new DateTime(DateTime.Now.Year, 1, 1);
+                    break;
+                case "day":
+                    ShipmentStartDate = DateTime.Today;
+                    break;
+                case "month":
+                default:
+                    ShipmentStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    break;
+            }
+
+            switch (EmissionsSavedPeriod.ToLower())
+            {
+                case "year":
+                    EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, 1, 1);
+                    break;
+                case "day":
+                    EmissionsSavedStartDate = DateTime.Today;
+                    break;
+                case "month":
+                default:
+                    EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    break;
+            }      
+
+            var totalEmissions = await _emissionRepo.GetTotalEmissionsFromOrdersCompanyAndDateWise(company.Id, EmissionStartDate, EmissionEndDate);
+
+            var totalEmissionsSaved = await _emissionRepo.GetTotalEmissionsSavedFromOrdersCompanyAndDateWise(company.Id, EmissionsSavedStartDate, EmissionsSavedEndDate);
+
+            var totalShipments = await _shipmentRepo.GetTotalShipmentsCompanyAndDateWise(company.Id, ShipmentStartDate, ShipmentEndDate);
+
+            var totalForecastedEmissions = await CalculateTotalForecastedEmissions(company.Id); // USED IN THE SECTION BELOW EMISSION CREDIT SYSTEM
+
+            var forecastedEmissions = await CalculateForecastedEmissions(company.Id); // USED IN EMISSION CREDIT SYSTEM
+
+            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+
+            var rawData = await _emissionRepo.GetEmissionsDataForGraph(company.Id, GraphYearStart, GraphNowDate);
+
+            
+            double[] finalGraphData = new double[12];
+
+            foreach(var rd in rawData)
+            {
+                finalGraphData[rd.Month - 1] = rd.TotalEmissions;
+            }
+
+            var returnDto = new ClientDashboardDto{
+                CompanyCode = company.CompanyCode,
+                Shipments = totalShipments,
+                CompanyCredits = company.CompanyCredits,
+                CreditMarketPrice = creditMarketPrice, 
+                TotalEmissions = totalEmissions,
+                ForecastedEmissions = forecastedEmissions,
+                TotalForecastedEmissions = totalForecastedEmissions, 
+                EmissionsSaved = totalEmissionsSaved, 
+                GraphData = finalGraphData
+            };
+
+            return (true, "stats retrieved successfully", returnDto);
+        }
+
+        private async Task<double> CalculateTotalForecastedEmissions(int companyId)
+        {
+            return 10.0;
+        }
+
+        private async Task<double> CalculateForecastedEmissions(int companyId)
+        {
+            return 10.0;
+        }
+
+        public async Task<double> GetCreditMarketPrice()
+        {
+            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+            
+            return creditMarketPrice;
+        }
+
+        public async Task<List<CreditListingDto>> GetListing(string companyName)
+        {
+            var creditListing = await _creditRepo.GetListingAsync(companyName);
+
+            return creditListing;
+        }
+
+        public async Task<(bool Success, string Message)> PutSale(string companyName, double saleUnits)
+        {
+            var companyCredits = await _companyRepo.GetCompanyCreditsByNameAsync(companyName);
+
+            int companyId = await _companyRepo.GetCompanyIdByName(companyName);
+            if(saleUnits >= companyCredits)
+            {
+                return (false,"Low credit balance for the given request!");
+            }
+
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+
+            companyCredits -= saleUnits;
+            
+            var creditListing = new CreditListing
+            {
+                CompanyName = companyName,
+                SellerCompanyId = companyId,
+                CreditsListed = saleUnits,
+                PricePerCredit = creditMarketPrice,
+                Status = "available",
+            };
+
+            await _creditRepo.AddCreditListingAsync(creditListing);
+
+            await _companyRepo.SaveChangesAsync();
+            await _creditRepo.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return (true, "credits listed");
+        }
+
+        public async Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto)
+        {
+            var company = await _companyRepo.GetCompanyByNameAsync(companyName);
+
+            var tradedCredit = await _creditRepo.GetCreditListingByIdAsync(buyCreditDto.SaleUnitId);
+
+            if(tradedCredit == null)
+            {
+                return (false, "The credits are not available to trade");
+            }
+
+            if(tradedCredit.Status == "sold" || tradedCredit.Status == "not available")
+            {
+                return (false, "This listing is already sold");
+            }
+
+            if(buyCreditDto.UnitsBought != tradedCredit.CreditsListed)
+            {
+                return (false, "You must buy the exact number of credits listed");
+            }
+
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            tradedCredit.Status = "sold";
+
+            tradedCredit.BuyerCompanyId = company.Id;
+
+            company.CompanyCredits += buyCreditDto.UnitsBought;
+
+            try
+            {
+                await _companyRepo.SaveChangesAsync();
+                await _creditRepo.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return (false,"Someone else bought this listing just now");
+            }
+            
+            return (true, "successfully bought credits");
+        }
+    }
+}
