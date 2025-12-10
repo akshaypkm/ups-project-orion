@@ -109,41 +109,11 @@ namespace EcoRoute.Controllers
 
             string companyName = companyClaim.Value;
 
+            var res = await _clientDashboardService.BuyCredits(companyName, buyCreditDto);
 
-            var company = await dbContext.Companies
-                                    .Where(c => c.CompanyName == companyName)
-                                        .FirstAsync();
-
-            var tradedCredit = await dbContext.CreditListings.Where(cl => cl.Id == buyCreditDto.SaleUnitId).FirstOrDefaultAsync();
-
-            if(tradedCredit == null)
+            if (!res.Success)
             {
-                return BadRequest("The credits are not available to trade");
-            }
-
-            if(tradedCredit.Status == "sold")
-            {
-                return BadRequest("This listing is already sold");
-            }
-
-            if(buyCreditDto.UnitsBought != tradedCredit.CreditsListed)
-            {
-                return BadRequest("you must but exact number of credits listed");
-            }
-
-            tradedCredit.Status = "sold";
-
-            tradedCredit.BuyerCompanyId = company.Id;
-
-            company.CompanyCredits += buyCreditDto.UnitsBought;
-
-            try
-            {
-                await dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Conflict("someone else bought this listing just now");
+                return BadRequest($"failed with error: {res.Message}");
             }
 
             return Ok("trade successful");

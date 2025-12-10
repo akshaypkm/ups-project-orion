@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using EcoRoute.Data;
 using EcoRoute.Models;
+using EcoRoute.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,12 @@ namespace EcoRoute.Controllers
     {
         private readonly EcoRouteDbContext dbContext;
 
-        public ClientShipmentHistoryController(EcoRouteDbContext dbContext)
+        private readonly IClientShipmentHistoryService _clientShipmentHistoryService;
+
+        public ClientShipmentHistoryController(EcoRouteDbContext dbContext, IClientShipmentHistoryService _clientShipmentHistoryService)
         {
             this.dbContext = dbContext;
+            this._clientShipmentHistoryService = _clientShipmentHistoryService;
         }
 
 
@@ -34,80 +38,7 @@ namespace EcoRoute.Controllers
 
             string companyName = companyClaim.Value;
 
-            var company = await dbContext.Companies.Where(c => c.CompanyName == companyName)
-                                                    .FirstOrDefaultAsync();
-
-            var query = dbContext.Orders.Where(o => o.CompanyId == company!.Id);
-            
-            DateTime OrderStartDate;
-            DateTime OrderEndDate = DateTime.Now;
-
-            switch (OrderPeriod.ToLower())
-            {
-                case "year":
-                    OrderStartDate = new DateTime(DateTime.Now.Year, 1, 1);
-                    break;
-                case "day":
-                    OrderStartDate = DateTime.Today;
-                    break;
-                case "month":
-                default:
-                    OrderStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                    break;
-            }
-
-            query = query.Where(o => o.OrderDate >= OrderStartDate && o.OrderDate <= OrderEndDate);
-
-            switch (Filter.ToLower())
-            {
-                case "bySavings":
-                    query = query.OrderByDescending(o => o.OrderEmissionsSaved);
-                    break;
-                case "byOrderCO2Emissions":
-                    query = query.OrderByDescending(o => o.OrderCO2Emission);
-                    break;
-                case "byDistance":
-                    query = query.OrderByDescending(o => o.OrderDistance);
-                    break;
-                case "byWeight":
-                    query = query.OrderByDescending(o => o.OrderWeightKg);
-                    break;
-                case "byQuantity":
-                    query = query.OrderByDescending(o => o.OrderTotalItems);
-                    break;
-                case "byDate":
-                default:
-                    query = query.OrderByDescending(o => o.OrderDate);
-                    break;
-            }
-
-            var orders = await query.ToListAsync();
-
-            List<OrderHistoryDto> orderHistoryDtos = new List<OrderHistoryDto>();
-
-            foreach(var order in orders)
-            {
-                var shipmentCode = await dbContext.Shipments.Where(s => s.Id == order.ShipmentId)
-                                                            .Select(s => s.ShipmentCode).FirstOrDefaultAsync();
-
-                if(shipmentCode == null)
-                {
-                    shipmentCode = "-";
-                }
-                var orderHistoryDto = new OrderHistoryDto
-                {
-                    ShipmentCode = shipmentCode,
-                    OrderDate = order.OrderDate,
-                    OrderOrigin = order.OrderOrigin,
-                    OrderDestination = order.OrderDestination,
-                    OrderTotalItems = order.OrderTotalItems,
-                    OrderWeightKg = order.OrderWeightKg,
-                    OrderCO2Emission = order.OrderCO2Emission,
-                    OrderEmissionsSaved = order.OrderEmissionsSaved
-                };
-
-                orderHistoryDtos.Add(orderHistoryDto);
-            }
+            var orderHistoryDtos = await _clientShipmentHistoryService.GetShipmentHistory(companyName, OrderPeriod, Filter);
 
             return Ok(orderHistoryDtos);
         }
