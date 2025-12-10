@@ -81,7 +81,7 @@ export default function AuthPage() {
 
   const redirectByRole = (role) => {
     if (role === "admin") {
-      navigate("/client-dashboard");
+      navigate("/admin");
     } else {
       navigate("/client-dashboard");
     }
