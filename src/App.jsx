@@ -13,18 +13,19 @@ export default function App() {
       {/* FIXED SIDEBAR */}
       <UserSideBar />
 
-      {/* MAIN CONTENT (shifted right by 256px = ml-64) */}
-      <div className="ml-64 p-10 w-full">
+      {/* MAIN CONTENT - always shifted right by 256px (w-64) */}
+      <div className="ml-64 p-10 flex-1">
+        <div className="max-w-6xl mx-auto w-full">
+          <Routes>
+            <Route path="/" element={<Navigate to="/user/home" />} />
 
-        <Routes>
-          <Route path="/" element={<Navigate to="/user/home" />} />
-
-          {/* USER ROUTES */}
-          <Route path="/user/home" element={<UserDashboard />} />
-          <Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
-          <Route path="/user/shipments" element={<UserShipments />} />
-          <Route path="/user/results" element={<UserResults />} />
-        </Routes>
+            {/* USER ROUTES */}
+            <Route path="/user/home" element={<UserDashboard />} />
+            <Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
+            <Route path="/user/shipments" element={<UserShipments />} />
+            <Route path="/user/results" element={<UserResults />} />
+          </Routes>
+        </div>
       </div>
 
     </div>

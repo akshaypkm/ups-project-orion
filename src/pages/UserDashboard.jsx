@@ -11,7 +11,6 @@ import {
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function UserDashboard() {
-  // Bar chart data
   const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const data = {
@@ -20,7 +19,7 @@ export default function UserDashboard() {
       {
         label: "CO2e Emissions",
         data: [60, 90, 80, 110, 130, 100, 105, 140, 120, 90, 150, 50],
-        backgroundColor: "rgba(16, 185, 129, 0.7)", // emerald-500 with opacity
+        backgroundColor: "rgba(16, 185, 129, 0.7)",
         borderRadius: 6,
       },
     ],
@@ -98,7 +97,9 @@ export default function UserDashboard() {
         {/* BAR CHART */}
         <div className="bg-white p-6 rounded-xl shadow-sm border col-span-2">
           <h2 className="text-lg font-semibold mb-4">CO2e Month Wise Emissions</h2>
-          <Bar data={data} options={options} />
+          <div className="h-80">
+            <Bar data={data} options={options} />
+          </div>
         </div>
 
         {/* RIGHT SIDE CARDS */}

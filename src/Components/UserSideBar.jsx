@@ -5,7 +5,7 @@ export default function UserSideBar() {
     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition";
 
   return (
-    <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6">
+    <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6 fixed left-0 top-0">
       {/* Logo */}
       <h1 className="text-2xl font-semibold mb-10 text-emerald-500">EcoRoute</h1>
 

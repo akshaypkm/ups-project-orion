@@ -1,6 +1,6 @@
 export default function UserResults() {
   return (
-    <div className="p-6 space-y-10">
+    <div className="space-y-10">
 
       {/* PAGE TITLE */}
       <h1 className="text-2xl font-semibold">Calculation Results</h1>

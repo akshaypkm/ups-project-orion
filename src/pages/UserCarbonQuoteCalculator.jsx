@@ -15,7 +15,7 @@ export default function UserCarbonQuoteCalculator() {
   const [date, setDate] = useState("");
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* PAGE HEADER */}
       <h1 className="text-3xl font-bold">Carbon Quote Calculator</h1>
       <p className="text-gray-500 mt-1">
@@ -23,7 +23,7 @@ export default function UserCarbonQuoteCalculator() {
       </p>
 
       {/* MAIN CARD */}
-      <div className="bg-white rounded-xl shadow-sm border mt-8 p-8 max-w-4xl mx-auto space-y-10">
+      <div className="bg-white rounded-xl shadow-sm border p-8 space-y-10 w-full">
 
         {/* Section 1 */}
         <div>

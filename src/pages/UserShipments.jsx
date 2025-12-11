@@ -1,7 +1,4 @@
-import { useState } from "react";
-
 export default function UserShipments() {
-  // Dummy shipment data (replace with API data later)
   const shipments = [
     {
       id: "SHP-10542",
@@ -68,17 +65,17 @@ export default function UserShipments() {
   };
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* HEADER */}
       <h1 className="text-3xl font-bold">Shipment History</h1>
 
       {/* SUB-HEADER */}
-      <h2 className="mt-6 text-2xl font-semibold text-center">
+      <h2 className="text-2xl font-semibold text-center">
         Detailed Report of Shipment History
       </h2>
 
       {/* MAIN CARD */}
-      <div className="bg-white border shadow-sm p-6 rounded-xl mt-6 max-w-6xl mx-auto">
+      <div className="bg-white border shadow-sm p-6 rounded-xl w-full">
 
         {/* --- Search Row --- */}
         <div className="flex items-center gap-4">
@@ -93,22 +90,22 @@ export default function UserShipments() {
           </div>
 
           {/* Filters */}
-          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2">
+          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2 whitespace-nowrap">
             Date Range ▼
           </button>
 
-          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2">
+          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2 whitespace-nowrap">
             Mode: All ▼
           </button>
 
-          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2">
+          <button className="px-4 py-3 border rounded-lg bg-gray-50 flex items-center gap-2 whitespace-nowrap">
             More Filters ▼
           </button>
         </div>
 
         {/* --- TABLE --- */}
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b text-gray-500 text-sm">
                 <th className="pb-3">ID</th>
