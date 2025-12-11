@@ -13,20 +13,29 @@ export default function Sidebar() {
     navigate("/");
   };
 
+  // Helper for dynamic classes based on active state
+  const getNavItemClasses = (path) => {
+    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition w-full text-left";
+    const activeClasses = "bg-emerald-100 text-emerald-600";
+    const inactiveClasses = "text-gray-600 hover:bg-gray-50";
+
+    return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
+  };
+
   return (
-    <aside className="sidebar">
+    <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6 fixed left-0 top-0 z-50">
       {/* Brand Logo */}
-      <div className="brand">
-        <div className="brand-logo-container">
-          <span className="material-symbols-outlined text-accent" style={{fontSize: '28px'}}>eco</span>
-        </div>
-        <span className="brand-text">EcoRoute</span>
+      <div className="flex items-center gap-2 mb-10">
+        <span className="material-symbols-outlined text-emerald-500" style={{fontSize: '28px'}}>
+          eco
+        </span>
+        <h1 className="text-2xl font-semibold text-emerald-500">EcoRoute</h1>
       </div>
 
       {/* Navigation */}
-      <nav className="nav-menu">
+      <nav className="flex flex-col gap-2">
         <button 
-          className={`nav-item ${isActive('/client-dashboard') ? 'active' : ''}`}
+          className={getNavItemClasses('/client-dashboard')}
           onClick={() => navigate('/client-dashboard')}
         >
           <span className="material-symbols-outlined">home</span>
@@ -34,7 +43,7 @@ export default function Sidebar() {
         </button>
         
         <button 
-          className={`nav-item ${isActive('/calculator') ? 'active' : ''}`}
+          className={getNavItemClasses('/calculator')}
           onClick={() => navigate('/calculator')}
         >
           <span className="material-symbols-outlined">calculate</span>
@@ -42,7 +51,7 @@ export default function Sidebar() {
         </button>
         
         <button 
-          className={`nav-item ${isActive('/history') ? 'active' : ''}`}
+          className={getNavItemClasses('/history')}
           onClick={() => navigate('/history')}
         >
           <span className="material-symbols-outlined">history</span>
@@ -51,9 +60,14 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout at Bottom */}
-      <div className="logout-section">
-        <button className="logout-btn" onClick={handleLogout}>
-          <span className="material-symbols-outlined" style={{transform: 'rotate(180deg)'}}>logout</span>
+      <div className="mt-auto">
+        <button 
+          className="flex items-center gap-3 text-gray-500 hover:text-red-500 transition w-full text-left px-4 py-3 text-sm font-medium" 
+          onClick={handleLogout}
+        >
+          <span className="material-symbols-outlined" style={{transform: 'rotate(180deg)'}}>
+            logout
+          </span>
           Log Out
         </button>
       </div>
