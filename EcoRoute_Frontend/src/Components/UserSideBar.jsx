@@ -44,7 +44,7 @@ export default function Sidebar() {
         
         <button 
           className={getNavItemClasses('/calculator')}
-          onClick={() => navigate('/calculator')}
+          onClick={() => navigate('/user/calculator')}
         >
           <span className="material-symbols-outlined">calculate</span>
           Carbon Quote Calculator
@@ -52,7 +52,7 @@ export default function Sidebar() {
         
         <button 
           className={getNavItemClasses('/history')}
-          onClick={() => navigate('/history')}
+          onClick={() => navigate('/user/shipments')}
         >
           <span className="material-symbols-outlined">history</span>
           Shipment History

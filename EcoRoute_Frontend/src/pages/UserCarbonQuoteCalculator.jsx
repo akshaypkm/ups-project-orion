@@ -1,134 +1,231 @@
-// src/pages/user/UserCalculator.jsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import UserSidebar from "../Components/UserSideBar";
+import { useState } from "react";
 
+export default function UserCarbonQuoteCalculator() {
+  const [nature, setNature] = useState("Upstream");
+  const [mode, setMode] = useState("Ground");
+  const [units, setUnits] = useState("");
+  const [mass, setMass] = useState("");
 
-export default function UserCalculator() {
-  const [form, setForm] = useState({
-    origin: "",
-    destination: "",
-    distance: "",
-    weight: "",
-  });
+  const [shared, setShared] = useState("Dedicated");
+  const [equalMass, setEqualMass] = useState("Yes");
+  const [refrigerated, setRefrigerated] = useState("No");
 
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const distance = parseFloat(form.distance || 0);
-    const weight = parseFloat(form.weight || 0);
-
-    // Road-only emission factor
-    const emissionFactor = 0.15; // example kg CO2 per ton-km
-
-    const emissions = distance * weight * emissionFactor;
-
-    navigate("/user/results", {
-      state: {
-        inputs: { ...form, mode: "Road" },
-        emissions: emissions.toFixed(2),
-      },
-    });
-  };
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [date, setDate] = useState("");
 
   return (
-    <div className="dashboard-root">
-      <UserSidebar />
-      <main className="main-content">
-        <header className="content-header">
-          <div>
-            <h1 className="page-title">Emission Calculator</h1>
-            <p className="page-subtitle">
-              Estimate CO₂ emissions for a road shipment.
-            </p>
-          </div>
-        </header>
+    <div className="space-y-6">
+      {/* PAGE HEADER */}
+      <h1 className="text-3xl font-bold">Carbon Quote Calculator</h1>
+      <p className="text-gray-500 mt-1">
+        Enter shipment details to estimate your carbon footprint.
+      </p>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Enter shipment details</h2>
-          </div>
+      {/* MAIN CARD */}
+      <div className="bg-white rounded-xl shadow-sm border p-8 space-y-10 w-full">
 
-          <form className="form-grid" onSubmit={handleSubmit}>
-            <label className="label">
-              Origin
-              <input
-                type="text"
-                name="origin"
-                value={form.origin}
-                onChange={handleChange}
-                placeholder="e.g., Chennai"
-                required
-              />
-            </label>
+        {/* Section 1 */}
+        <div>
+          <h2 className="text-lg font-semibold">Shipment Details</h2>
+          <p className="text-gray-500 text-sm">Provide information about the overall shipment.</p>
 
-            <label className="label">
-              Destination
-              <input
-                type="text"
-                name="destination"
-                value={form.destination}
-                onChange={handleChange}
-                placeholder="e.g., Bangalore"
-                required
-              />
-            </label>
+          <div className="grid grid-cols-3 gap-6 mt-6">
 
-            <label className="label">
-              Distance (km)
-              <input
-                type="number"
-                name="distance"
-                value={form.distance}
-                onChange={handleChange}
-                min="0"
-                step="0.1"
-                placeholder="e.g., 350"
-                required
-              />
-            </label>
-
-            <label className="label">
-              Shipment weight (tons)
-              <input
-                type="number"
-                name="weight"
-                value={form.weight}
-                onChange={handleChange}
-                min="0"
-                step="0.1"
-                placeholder="e.g., 2.5"
-                required
-              />
-            </label>
-
-            <label className="label">
-              Mode of Transport
-              <input
-                type="text"
-                value="Road"
-                disabled
-                className="disabled-input"
-              />
-            </label>
-
-            <div className="form-actions">
-              <button type="submit" className="btn">
-                Calculate Emissions
-              </button>
+            {/* Nature of transport */}
+            <div>
+              <label className="text-sm text-gray-600">Nature of transport:</label>
+              <select
+                value={nature}
+                onChange={(e) => setNature(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+              >
+                <option>Upstream</option>
+                <option>Downstream</option>
+              </select>
             </div>
-          </form>
-        </section>
-      </main>
+
+            {/* Mode of transport */}
+            <div>
+              <label className="text-sm text-gray-600">Mode of transport:</label>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+              >
+                <option>Ground</option>
+              </select>
+            </div>
+
+            {/* Total number of units */}
+            <div>
+              <label className="text-sm text-gray-600">Total number of units:</label>
+              <input
+                type="number"
+                value={units}
+                onChange={(e) => setUnits(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                placeholder="e.g., 50"
+              />
+            </div>
+
+            {/* Total mass */}
+            <div>
+              <label className="text-sm text-gray-600">Total mass (kg):</label>
+              <input
+                type="number"
+                value={mass}
+                onChange={(e) => setMass(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                placeholder="e.g., 1200"
+              />
+            </div>
+
+            {/* Shared/Dedicated */}
+            <div>
+              <label className="text-sm text-gray-600">Shared / Dedicated:</label>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => setShared("Shared")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    shared === "Shared"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  Shared
+                </button>
+
+                <button
+                  onClick={() => setShared("Dedicated")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    shared === "Dedicated"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  Dedicated
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        {/* Section 2 */}
+        <div>
+          <h2 className="text-lg font-semibold">Product and route information</h2>
+          <p className="text-gray-500 text-sm">
+            Specify details about the product and its journey.
+          </p>
+
+          <div className="grid grid-cols-3 gap-6 mt-6">
+
+            {/* Equal mass */}
+            <div>
+              <label className="text-sm text-gray-600">Equal mass:</label>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => setEqualMass("Yes")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    equalMass === "Yes"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  Yes
+                </button>
+
+                <button
+                  onClick={() => setEqualMass("No")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    equalMass === "No"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+
+            {/* Refrigerated */}
+            <div>
+              <label className="text-sm text-gray-600">If product refrigerated:</label>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => setRefrigerated("Yes")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    refrigerated === "Yes"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  Yes
+                </button>
+
+                <button
+                  onClick={() => setRefrigerated("No")}
+                  className={`px-4 py-2 rounded-lg border ${
+                    refrigerated === "No"
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-white text-gray-600"
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Route Inputs */}
+          <div className="grid grid-cols-3 gap-6 mt-6">
+            {/* Origin */}
+            <div>
+              <label className="text-sm text-gray-600">Origin:</label>
+              <input
+                value={origin}
+                onChange={(e) => setOrigin(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                placeholder="e.g., New York, NY"
+              />
+            </div>
+
+            {/* Destination */}
+            <div>
+              <label className="text-sm text-gray-600">Destination:</label>
+              <input
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                placeholder="e.g., Los Angeles, CA"
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="text-sm text-gray-600">Date of shipment:</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full mt-1 px-4 py-2 border rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-end">
+          <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
+            Calculate Footprint →
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
