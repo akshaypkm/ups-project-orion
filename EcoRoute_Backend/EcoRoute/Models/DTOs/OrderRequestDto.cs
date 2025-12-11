@@ -3,7 +3,7 @@ namespace EcoRoute.Models
     public class OrderRequestDto
     {
         public string OrderNature{get; set;} //UP OR DOWN
-        public string TransportMode{get; set;}
+        public string TransportMode{get; set;} // GROUND / AIR / SEA
 
         public int OrderTotalItems{get; set;}
         public double OrderWeightKg{get; set;}

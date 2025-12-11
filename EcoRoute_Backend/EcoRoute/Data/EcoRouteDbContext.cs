@@ -1,5 +1,6 @@
 using System.Net;
 using EcoRoute.Models.Entities;
+using EcoRoute.Models.HelperClasses;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcoRoute.Data
@@ -41,5 +42,7 @@ namespace EcoRoute.Data
         public DbSet<Credit> Credits{get; set;}
 
         public DbSet<TruckType> TruckTypes{get; set;}
+
+        public DbSet<Notification> Notifications{get; set;}
     }
 }

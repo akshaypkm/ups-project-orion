@@ -1,5 +1,8 @@
 using System.Text;
 using EcoRoute.Data;
+using EcoRoute.Models.Entities;
+using EcoRoute.Repositories;
+using EcoRoute.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -83,6 +86,22 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false
     };
 });
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
+builder.Services.AddScoped<ICarbonQuoteService, CarbonQuoteService>();
+builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryService>();
+
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<ICreditRepository, CreditRepository>();
+builder.Services.AddScoped<IEmissionRepository, EmissionRepository>();
+builder.Services.AddScoped<IShipmentRepository, ShipmentRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITruckRepository, TruckRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 

@@ -4,8 +4,8 @@ namespace EcoRoute.Models.Entities
     {
         public int Id{get; set;}
 
-        public double CreditMarketPrice{get; set;}
+        public string Sector{get; set;}
 
-        public DateTime LatestDate{get; set;} = DateTime.Now;
+        public double SectorCredits{get; set;}
     }
 }

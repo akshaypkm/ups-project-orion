@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+// Fixed imports to match project structure (../../ assuming this is in src/pages/user/)
 import api from "../api/api";
 import Sidebar from "../Components/UserSideBar"; // Importing your new common Sidebar
-import "../styles/UserDashboard.css";    // Importing your clean CSS
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -17,7 +29,6 @@ export default function ClientDashboard() {
   const [tradeSection, setTradeSection] = useState(null); // 'buy', 'sell', or null
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
   const [sellAmount, setSellAmount] = useState("");
 
   // --- Data State ---
@@ -32,6 +43,7 @@ export default function ClientDashboard() {
     graphData: [],
   });
   const [listings, setListings] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   // --- API Logic ---
   const fetchStats = async () => {
@@ -48,6 +60,16 @@ export default function ClientDashboard() {
       console.error("Stats error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNotifications = async () => {
+    try{
+        const res = await api.get("/api/client-dashboard/notifications");
+        setNotifications(res.data);
+    }
+    catch(err){
+        console.error("notifications loading failed");
     }
   };
 
@@ -70,8 +92,8 @@ export default function ClientDashboard() {
       } catch (err) { console.error(err); }
     };
     
-    fetchListings(); // Get listings once on load
-    const interval = setInterval(fetchPrice, 5000); // Poll price every 5s
+    fetchListings(); 
+    const interval = setInterval(fetchPrice, 5000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -89,262 +111,349 @@ export default function ClientDashboard() {
     } catch (err) { alert("Sale failed"); }
   };
 
+  const handleBuy = async (id, amount) => {
+    try {
+      await api.put("/api/client-dashboard/emissionscreditsystem/buy", {
+        saleUnitId: id,
+        unitsBought: amount
+      });
+      await fetchListings();
+      await fetchStats(); 
+      alert("Purchase successful!");
+    } catch (err) {
+      alert("failed to buy credits");
+    }
+  };
+
+  
+
   const handleLogout = () => {
     localStorage.removeItem("ecoroute_token");
     navigate("/");
   };
 
-  // --- Helpers ---
-  const maxGraphValue = stats.graphData?.length > 0 ? Math.max(...stats.graphData) : 100;
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  // --- Chart Config ---
+  const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
+  // Map API graphData to Chart
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        label: "CO2e Emissions",
+        // Ensure data array has 12 elements, default to 0 if API returns less/null
+        data: stats.graphData?.length > 0 ? stats.graphData : Array(12).fill(0),
+        backgroundColor: "rgba(16, 185, 129, 0.7)",
+        borderRadius: 6,
+      },
+    ],
+  };
 
-  if (loading) return <div className="dashboard-container" style={{justifyContent:'center', alignItems:'center'}}>Loading...</div>;
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { ticks: { color: "#6b7280" }, grid: { borderDash: [2, 4] } },
+      x: { ticks: { color: "#6b7280" }, grid: { display: false } },
+    },
+  };
+
+  if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Dashboard...</div>;
 
   return (
-    <div className="dashboard-container">
+    <div className="flex min-h-screen bg-gray-50">
       
-      {/* 1. Common Sidebar */}
-      <Sidebar />
+      {/* 1. Sidebar */}
+      <div className="fixed inset-y-0 left-0 z-50">
+        <Sidebar />
+      </div>
 
       {/* 2. Main Content Area */}
-      <main className="main-content">
+      {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
+      <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
         
-        {/* Top Header */}
-        <header className="top-bar">
-          <h2 className="page-title">Dashboard</h2>
+        {/* Top Header (Preserved Functionality + New Style) */}
+        <header className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
           
-          <div className="header-actions">
+          <div className="flex items-center gap-4">
             
             {/* Notification Button */}
-            <div style={{position: 'relative'}}>
-              <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
-                <span className="material-symbols-outlined">notifications</span>
+            <div className="relative">
+              <button 
+                className="p-2 rounded-full hover:bg-gray-200 transition relative" 
+                onClick={() => {
+                    if(!isNotifOpen) handleNotifications(); // Fetch data when opening
+                    setIsNotifOpen(!isNotifOpen);
+                }}
+              >
+                <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* Optional red dot for new notifs */}
+                {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>
+
               {isNotifOpen && (
-                <div className="dropdown-menu">
-                  <div style={{padding: '1rem', borderBottom: '1px solid #eee', fontSize: '0.9rem', color: '#666'}}>
-                    No new notifications
-                  </div>
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-100 p-2 z-50 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase px-2 py-1 mb-1">Notifications</h4>
+                  {notifications.length > 0 ? (
+                    <div className="space-y-1">
+                      {notifications.map((n, i) => (
+                        <div key={i} className="p-3 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                          {n.message}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">No new notifications</p>
+                  )}
                 </div>
               )}
             </div>
             
             {/* Profile Button */}
-            <div style={{position: 'relative'}}>
-              <button className="icon-btn" onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <span className="material-symbols-outlined" style={{fontSize: '28px'}}>account_circle</span>
+            <div className="relative">
+              <button className="p-2 rounded-full hover:bg-gray-200 transition" onClick={() => setIsProfileOpen(!isProfileOpen)}>
+                <span className="material-symbols-outlined text-gray-600 text-3xl">account_circle</span>
               </button>
               {isProfileOpen && (
-                <div className="dropdown-menu">
-                  <div style={{padding: '1rem'}}>
-                    <p style={{fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.5rem', color: '#333'}}>User Profile</p>
-                    <button 
-                      onClick={handleLogout} 
-                      style={{color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', padding: 0}}
-                    >
-                      <span className="material-symbols-outlined" style={{fontSize: '18px'}}>logout</span> Log Out
-                    </button>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                  <div className="px-4 py-2 border-b">
+                    <p className="text-sm font-bold text-gray-800">User Profile</p>
                   </div>
+                  <button 
+                    onClick={handleLogout} 
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span> Log Out
+                  </button>
                 </div>
               )}
             </div>
-
           </div>
         </header>
 
-        {/* Scrollable Content */}
-        <div className="content-scroll-area">
-          <div className="stats-grid">
+        {/* Content Grid */}
+        <div className="space-y-6">
+          
+          {/* ---- TOP CARDS ---- */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Card 1: CO2 Emissions */}
-            <div className="stat-card">
-              <p className="stat-title">Total CO2e emissions</p>
-              <p className="stat-value">{stats.totalEmissions} t</p>
-              <div className="stat-toggle">
+            {/* Card 1: Emissions */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <h2 className="text-lg font-semibold text-gray-700">Total CO2e emissions</h2>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} t</p>
+
+              <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
-                  <div 
-                    key={p} 
-                    className={`toggle-option ${emissionPeriod === p ? 'active' : ''}`} 
+                  <button 
+                    key={p}
                     onClick={() => setEmissionPeriod(p)}
+                    className={`px-3 py-1 text-sm rounded-lg transition ${
+                      emissionPeriod === p 
+                      ? 'bg-emerald-100 text-emerald-600 font-medium' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                   >
                     {p}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
 
             {/* Card 2: Shipments */}
-            <div className="stat-card">
-              <p className="stat-title">Total Shipments</p>
-              <p className="stat-value">{stats.shipments}</p>
-              <div className="stat-toggle">
+            <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <h2 className="text-lg font-semibold text-gray-700">Total Shipments</h2>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.shipments}</p>
+
+              <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
-                  <div 
-                    key={p} 
-                    className={`toggle-option ${shipmentPeriod === p ? 'active' : ''}`} 
+                  <button 
+                    key={p}
                     onClick={() => setShipmentPeriod(p)}
+                    className={`px-3 py-1 text-sm rounded-lg transition ${
+                      shipmentPeriod === p 
+                      ? 'bg-emerald-100 text-emerald-600 font-medium' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                   >
                     {p}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
 
             {/* Card 3: Emissions Credit System */}
-            <div className="stat-card credit-card">
-              <div className="card-header">
-                <div className="card-header-title">
-                  <span className="material-symbols-outlined text-accent">credit_score</span>
-                  Emissions Credit System
+            <div className="bg-white p-6 rounded-xl shadow-sm border relative overflow-hidden">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                <span className="material-symbols-outlined text-emerald-500">credit_score</span>
+                Emissions Credit System
+              </h2>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-gray-500 text-sm">Market Price</p>
+                  <p className="text-xl font-semibold">Rs {stats.creditMarketPrice}</p>
                 </div>
-                <div style={{display: 'flex', gap: '0.5rem'}}>
-                  <button 
-                    className="action-btn btn-primary" 
-                    onClick={() => setTradeSection(tradeSection === 'buy' ? null : 'buy')}
-                  >
-                    Buy
-                  </button>
-                  <button 
-                    className="action-btn btn-secondary" 
-                    onClick={() => setTradeSection(tradeSection === 'sell' ? null : 'sell')}
-                  >
-                    Sell
-                  </button>
+                <div className="flex justify-between items-center">
+                  <p className="text-gray-500 text-sm">Credits Left</p>
+                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits}</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-gray-500 text-sm">Forecast (for this month)</p>
+                  <p className="text-xl font-semibold">{stats.forecastedEmissions} t</p>
                 </div>
               </div>
 
-              <div className="credit-stats">
-                <div className="credit-stat-item">
-                  <small>Market Price</small>
-                  <strong>Rs {stats.creditMarketPrice}</strong>
-                </div>
-                <div className="credit-stat-item">
-                  <small>Credits Left</small>
-                  <strong className="text-accent">{stats.companyCredits}</strong>
-                </div>
-                <div className="credit-stat-item">
-                  <small>Forecast (2mo)</small>
-                  <strong>{stats.forecastedEmissions} t</strong>
-                </div>
+              <div className="mt-5 flex gap-3">
+                <button 
+                  onClick={() => setTradeSection(tradeSection === 'buy' ? null : 'buy')}
+                  className={`flex-1 px-4 py-2 rounded-lg transition ${tradeSection === 'buy' ? 'bg-emerald-600' : 'bg-emerald-500'} text-white hover:bg-emerald-600`}
+                >
+                  Buy
+                </button>
+                <button 
+                  onClick={() => setTradeSection(tradeSection === 'sell' ? null : 'sell')}
+                  className={`flex-1 px-4 py-2 rounded-lg border border-emerald-500 text-emerald-500 hover:bg-emerald-50 transition ${tradeSection === 'sell' ? 'bg-emerald-50' : ''}`}
+                >
+                  Sell
+                </button>
               </div>
 
-              {/* Buy Drawer */}
-              {tradeSection === 'buy' && (
-                <div className="trade-panel">
-                  <h4 style={{marginBottom: '10px', color: '#374151'}}>Available for Purchase</h4>
-                  <table className="trade-table">
-                    <thead>
-                      <tr>
-                        <th>Company</th>
-                        <th>Units</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {listings.length > 0 ? listings.map((l, i) => (
-                        <tr key={i}>
-                          <td>{l.sellerCompanyName}</td>
-                          <td>{l.creditsListed} EC</td>
-                          <td><button className="action-btn" style={{color: '#17cfb0', background: 'none', border:'none'}}>Buy</button></td>
-                        </tr>
-                      )) : (
-                        <tr><td colSpan="3" style={{textAlign: 'center', color: '#999', padding: '10px'}}>No listings available</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {/* Interaction Drawers */}
+              {tradeSection && (
+                <div className="mt-4 pt-4 border-t animate-in fade-in slide-in-from-top-2">
+                  
+                  {/* BUY TABLE */}
+                  {tradeSection === 'buy' && (
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-700 mb-2">Available Listings</h4>
+                      <div className="max-h-40 overflow-y-auto pr-1">
+                        <table className="w-full text-sm text-left">
+                          <thead className="text-xs text-gray-500 bg-gray-50 uppercase">
+                            <tr>
+                              <th className="px-2 py-1">Company</th>
+                              <th className="px-2 py-1">Units</th>
+                              <th className="px-2 py-1">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {listings.length > 0 ? listings.map((l, i) => (
+                              <tr key={i} className="border-b hover:bg-gray-50">
+                                <td className="px-2 py-2 truncate max-w-[80px]">{l.sellerCompanyName}</td>
+                                <td className="px-2 py-2">{l.creditsListed}</td>
+                                <td className="px-2 py-2">
+                                  <button 
+                                    onClick={() => handleBuy(l.saleUnitId, l.creditsListed)}
+                                    className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200"
+                                  >
+                                    Buy
+                                  </button>
+                                </td>
+                              </tr>
+                            )) : (
+                              <tr><td colSpan="3" className="text-center py-2 text-gray-400">No listings</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Sell Drawer */}
-              {tradeSection === 'sell' && (
-                <div className="trade-panel">
-                  <h4 style={{marginBottom: '10px', color: '#374151'}}>Sell Credits</h4>
-                  <div style={{display: 'flex', gap: '1rem', marginTop: '1rem'}}>
-                    <input 
-                      type="number" 
-                      placeholder="Units to sell" 
-                      value={sellAmount} 
-                      onChange={e => setSellAmount(e.target.value)}
-                      style={{padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', flex: 1, outline: 'none'}}
-                    />
-                    <button className="action-btn btn-primary" onClick={handleSell}>Confirm</button>
-                  </div>
+                  {/* SELL FORM */}
+                  {tradeSection === 'sell' && (
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-700 mb-2">Sell Credits</h4>
+                      <div className="flex gap-2">
+                        <input 
+                          type="number" 
+                          placeholder="Amount" 
+                          value={sellAmount} 
+                          onChange={e => setSellAmount(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <button 
+                          onClick={handleSell}
+                          className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Charts & Insights Container */}
-          <div className="charts-container">
+          {/* ---- MAIN CHART + SIDE CARDS ---- */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Chart Card */}
-            <div className="chart-card">
-              <h3 className="stat-title" style={{marginBottom: '1rem'}}>CO2e Month Wise Emissions</h3>
-              <div className="bar-chart">
-                {monthLabels.map((m, i) => {
-                  const val = stats.graphData[i] || 0;
-                  const pct = maxGraphValue > 0 ? (val / maxGraphValue) * 100 : 0;
-                  return (
-                    <div 
-                      key={m} 
-                      className="bar-group" 
-                      onMouseEnter={() => setHoveredBarIndex(i)} 
-                      onMouseLeave={() => setHoveredBarIndex(null)}
-                    >
-                      {hoveredBarIndex === i && <div className="tooltip">{val} t</div>}
-                      <div className={`bar ${val === 0 ? 'low' : ''}`} style={{height: `${pct || 5}%`}}></div>
-                      <span className="bar-label">{m}</span>
-                    </div>
-                  )
-                })}
+            {/* BAR CHART */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border lg:col-span-2">
+              <h2 className="text-lg font-semibold mb-4 text-gray-700">CO2e Month Wise Emissions</h2>
+              <div className="h-80 w-full">
+                <Bar data={chartData} options={chartOptions} />
               </div>
             </div>
 
-            {/* Insights Column */}
-            <div className="insights-column">
-              {/* Budget Forecast */}
-              <div className="insight-card">
-                <div className="card-header-title" style={{marginBottom:'1rem'}}>
-                  <span className="material-symbols-outlined text-accent">analytics</span>
+            {/* RIGHT SIDE CARDS */}
+            <div className="space-y-6">
+              
+              {/* Budget Card */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <span className="material-symbols-outlined text-emerald-500">analytics</span>
                   Carbon Budget Forecast
+                </h2>
+
+                <p className="text-gray-500 text-sm mt-2">
+                  Expected annual emission based on current trend.
+                </p>
+
+                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.totalForecastedEmissions} t</p>
+
+                {/* Progress Bar Logic: Assuming 1200 is cap */}
+                <div className="w-full h-2 bg-gray-200 rounded-full mt-3 overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${Math.min((stats.totalForecastedEmissions / 1200) * 100, 100)}%` }}
+                  ></div>
                 </div>
-                <p style={{fontSize: '0.9rem', color: '#6b7280'}}>Expected emission: {stats.totalForecastedEmissions}t</p>
-                <div style={{marginTop: 'auto'}}>
-                  <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.5rem'}}>
-                    <span style={{fontWeight:'700', fontSize:'1.2rem'}}>{stats.totalForecastedEmissions} t</span>
-                    <span style={{color:'#6b7280', fontSize:'0.9rem'}}>/ 1,200 t</span>
-                  </div>
-                  <div className="progress-bar-bg">
-                    <div className="progress-bar-fill" style={{width: `${(stats.totalForecastedEmissions/1200)*100}%`}}></div>
-                  </div>
-                </div>
+
+                <p className="text-xs text-gray-500 mt-1">/ 1,200 t (Annual Cap)</p>
               </div>
 
               {/* Emissions Saved */}
-              <div className="insight-card">
-                <div className="card-header-title" style={{marginBottom:'1rem'}}>
-                  <span className="material-symbols-outlined text-accent">savings</span>
-                  Emissions Saved
-                </div>
-                <p style={{fontSize: '0.9rem', color: '#6b7280', marginBottom:'1rem'}}>
-                  You saved <strong>{stats.emissionsSaved}t</strong> this period.
+              <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <span className="material-symbols-outlined text-emerald-500">eco</span>
+                  Carbon Emissions Saved
+                </h2>
+
+                <p className="text-gray-500 text-sm mt-2">
+                  Emissions saved by choosing sustainable routes.
                 </p>
-                <div style={{marginTop: 'auto', display: 'flex', alignItems:'center', gap:'0.5rem'}}>
-                  <span className="text-accent" style={{fontSize: '1.5rem', fontWeight:'700'}}>{stats.emissionsSaved} t</span>
-                  <span className="badge">Saved</span>
-                </div>
-                <div className="stat-toggle" style={{marginTop:'1rem'}}>
+
+                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved} t</p>
+
+                <div className="mt-4 flex gap-2">
                   {['Today', 'Month', 'Year'].map(p => (
-                    <div 
-                      key={p} 
-                      className={`toggle-option ${savingsPeriod === p ? 'active' : ''}`} 
+                    <button 
+                      key={p}
                       onClick={() => setSavingsPeriod(p)}
+                      className={`px-2 py-1 text-xs rounded-lg transition ${
+                        savingsPeriod === p 
+                        ? 'bg-emerald-100 text-emerald-600 font-medium' 
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
                     >
                       {p}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
+
             </div>
           </div>
 

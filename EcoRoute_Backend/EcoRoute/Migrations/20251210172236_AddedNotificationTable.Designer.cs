@@ -4,6 +4,7 @@ using EcoRoute.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRoute.Migrations
 {
     [DbContext(typeof(EcoRouteDbContext))]
-    partial class EcoRouteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251210172236_AddedNotificationTable")]
+    partial class AddedNotificationTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,9 +56,6 @@ namespace EcoRoute.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("MonthlyEmissionsCap")
-                        .HasColumnType("float");
-
                     b.HasKey("Id");
 
                     b.ToTable("Companies");
@@ -69,12 +69,11 @@ namespace EcoRoute.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Sector")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("SectorCredits")
+                    b.Property<double>("CreditMarketPrice")
                         .HasColumnType("float");
+
+                    b.Property<DateTime>("LatestDate")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
