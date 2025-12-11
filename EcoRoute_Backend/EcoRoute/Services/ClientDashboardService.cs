@@ -121,7 +121,7 @@ namespace EcoRoute.Services
 
             var forecastedEmissions = await CalculateForecastedEmissions(company.Id); // USED IN EMISSION CREDIT SYSTEM
 
-            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+            var creditMarketPrice = await GetCreditMarketPrice();
 
             var rawData = await _emissionRepo.GetEmissionsDataForGraph(company.Id, GraphYearStart, GraphNowDate);
 
@@ -160,9 +160,41 @@ namespace EcoRoute.Services
 
         public async Task<double> GetCreditMarketPrice()
         {
-            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+            var marketStatus = await _creditRepo.GetMarketSupplyAndDemand();
             
-            return creditMarketPrice;
+            double marketSupplyTonnes = marketStatus.TotalSupply;
+            double marketDeficitTonnes = marketStatus.TotalDeficit;
+
+            double basePrice = 1500.0;
+            double minPrice = 500.0;
+            double maxPrice = 4000.0;
+
+            double marketPressure = 1.0;
+
+            if(marketSupplyTonnes <= 0)
+            {
+                marketPressure = 2.0;
+            }else if(marketDeficitTonnes <= 0)
+            {
+                marketPressure = 0.5;
+            }
+            else
+            {
+                marketPressure = marketDeficitTonnes / marketSupplyTonnes;
+            }
+
+            double creditMarketPrice = basePrice * marketPressure;
+
+            if(creditMarketPrice > maxPrice)
+            {
+                creditMarketPrice = maxPrice;
+            }
+            else if(creditMarketPrice < minPrice)
+            {
+                creditMarketPrice = minPrice;
+            }
+
+            return Math.Round(creditMarketPrice, 2);
         }
 
         public async Task<List<CreditListingDto>> GetListing(string companyName)
@@ -184,7 +216,7 @@ namespace EcoRoute.Services
 
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            var creditMarketPrice = await _creditRepo.GetCreditMarketPriceAsync();
+            var creditMarketPrice = await GetCreditMarketPrice();
 
             company.CompanyCredits -= saleUnits;
             
@@ -194,7 +226,7 @@ namespace EcoRoute.Services
                 SellerCompanyId = companyId,
                 CreditsListed = saleUnits,
                 PricePerCredit = creditMarketPrice,
-                Status = "available",
+                Status = "available"
             };
 
             await _creditRepo.AddCreditListingAsync(creditListing);

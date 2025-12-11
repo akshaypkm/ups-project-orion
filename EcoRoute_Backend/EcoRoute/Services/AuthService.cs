@@ -95,12 +95,12 @@ namespace EcoRoute.Services
             }
 
             double companyCredits;
-            switch (companySector)
+            switch (companySector.ToLower())
             {
-                case "Agriculture":
-                    companyCredits = 1090.00;
+                case "iron and steel":
+                    companyCredits = ;
                     break;
-                // more cases to add!
+                case "":
                 default:
                     companyCredits = 0.0;
                     break;

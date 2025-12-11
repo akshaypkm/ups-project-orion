@@ -15,6 +15,7 @@ namespace EcoRoute.Models.Entities
         public double CompanyEmissionBudget{get; set;}
 
         public double CompanyCredits{get; set;}
+        public double MonthlyEmissionsCap{get; set;}
 
         public DateTime CompanyCreatedAt{get; set;} = DateTime.Now;
 

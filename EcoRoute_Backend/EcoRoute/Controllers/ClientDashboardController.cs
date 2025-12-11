@@ -51,9 +51,10 @@ namespace EcoRoute.Controllers
         }
 
         [HttpGet("emissionscreditsystem")]
-        public async Task<IActionResult> GetEmissionsCreditSystem()
+        public async Task<ActionResult> GetEmissionsCreditSystem()
         {           
-            var creditMarketPrice = await _clientDashboardService.GetCreditMarketPrice();
+            double creditMarketPrice = await _clientDashboardService.GetCreditMarketPrice();
+            
             return Ok(creditMarketPrice);
         }   
 
