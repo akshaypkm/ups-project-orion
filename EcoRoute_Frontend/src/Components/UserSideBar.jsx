@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/UserDashboard.css";
+import CarbonQuoteCalculator from "../pages/UserCarbonQuoteCalculator"
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ export default function Sidebar() {
     localStorage.removeItem("ecoroute_token");
     navigate("/");
   };
+
+  const handleCarbonQuoteCalculator = () => {
+    navigate(CarbonQuoteCalculator);
+  }
 
   // Helper for dynamic classes based on active state
   const getNavItemClasses = (path) => {
@@ -44,7 +49,11 @@ export default function Sidebar() {
         
         <button 
           className={getNavItemClasses('/calculator')}
+<<<<<<< HEAD
           onClick={() => navigate('/user/calculator')}
+=======
+          onClick={() => navigate(handleCarbonQuoteCalculator)}
+>>>>>>> c253b56dce7364f7c7750f76775629288b29f9ac
         >
           <span className="material-symbols-outlined">calculate</span>
           Carbon Quote Calculator

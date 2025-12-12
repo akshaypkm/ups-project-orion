@@ -98,7 +98,11 @@ namespace EcoRoute.Services
             switch (companySector.ToLower())
             {
                 case "iron and steel":
+<<<<<<< HEAD
                     companyCredits =100;
+=======
+                    companyCredits = 10.0;
+>>>>>>> c253b56dce7364f7c7750f76775629288b29f9ac
                     break;
                 case "":
                 default:
