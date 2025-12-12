@@ -1,119 +1,122 @@
-// src/pages/user/UserResults.jsx
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import UserSidebar from "../Components/UserSideBar";
-
-
 export default function UserResults() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const data = location.state;
-
-  const emissions = data?.emissions || "0.00";
-  const inputs = data?.inputs || {
-    origin: "-",
-    destination: "-",
-    distance: "-",
-    weight: "-",
-    mode: "Road",
-  };
-
-  const numericEmissions = parseFloat(emissions);
-  const rating =
-    numericEmissions <= 20
-      ? "Low"
-      : numericEmissions <= 60
-      ? "Moderate"
-      : "High";
-
-  const pillClass =
-    rating === "Low"
-      ? "pill-low"
-      : rating === "Moderate"
-      ? "pill-moderate"
-      : "pill-high";
-
   return (
-    <div className="dashboard-root">
-      <UserSidebar />
-      <main className="main-content">
-        <header className="content-header">
-          <div>
-            <h1 className="page-title">Emission Results</h1>
-            <p className="page-subtitle">
-              Summary of estimated emissions for your road shipment.
-            </p>
-          </div>
-        </header>
+    <div className="space-y-10">
 
-        <section className="cards-row">
-          <article className="card wide-card">
-            <h3>Estimated CO₂ emissions</h3>
-            <p className="result-number">{emissions} kg CO₂</p>
-            <p className="card-meta">
-              Based on distance and weight for road transport.
-            </p>
-            <p className="result-rating">
-              Rating:{" "}
-              <span className={`pill ${pillClass}`}>{rating}</span>
-            </p>
-          </article>
-        </section>
+      {/* PAGE TITLE */}
+      <h1 className="text-2xl font-semibold">Calculation Results</h1>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Input summary</h2>
-          </div>
-          <div className="result-grid">
-            <div className="result-item">
-              <span className="result-label">Origin</span>
-              <span className="result-value">{inputs.origin}</span>
-            </div>
-            <div className="result-item">
-              <span className="result-label">Destination</span>
-              <span className="result-value">{inputs.destination}</span>
-            </div>
-            <div className="result-item">
-              <span className="result-label">Distance</span>
-              <span className="result-value">{inputs.distance} km</span>
-            </div>
-            <div className="result-item">
-              <span className="result-label">Weight</span>
-              <span className="result-value">{inputs.weight} tons</span>
-            </div>
-            <div className="result-item">
-              <span className="result-label">Mode</span>
-              <span className="result-value">{inputs.mode}</span>
-            </div>
-          </div>
-        </section>
+      <h2 className="text-3xl font-bold">Carbon Footprint Results</h2>
+      <p className="text-gray-500">
+        A summary of the calculated emissions based on your shipment details.
+      </p>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Recommendations</h2>
-          </div>
-          <ul className="recommendations">
-            <li>
-              Combine smaller shipments into a single truck to avoid multiple trips.
-            </li>
-            <li>
-              Optimize routes to reduce empty return trips and idle time in traffic.
-            </li>
-            <li>
-              Use well-maintained vehicles and proper tyre pressure to improve fuel
-              efficiency.
-            </li>
-          </ul>
+      {/* QUOTE CARDS */}
+      <div className="grid grid-cols-3 gap-6">
 
-          <button
-            className="btn-secondary"
-            onClick={() => navigate("/user/calculator")}
-          >
-            Recalculate
+        {/* CARD 1 – Most Sustainable */}
+        <div className="border rounded-xl p-6 shadow-sm hover:shadow-md transition">
+          <p className="text-sm font-semibold text-emerald-600 flex items-center gap-2">
+            <span className="material-icons text-emerald-600">eco</span>
+            MOST SUSTAINABLE
+          </p>
+
+          <h3 className="text-3xl font-bold mt-3">125.2 kg CO₂e</h3>
+          <p className="text-gray-500 text-sm mt-1">6,120 km</p>
+          <p className="text-gray-500 text-sm">CHE → MUM</p>
+
+          <button className="w-full mt-6 py-3 text-white bg-emerald-500 rounded-lg font-semibold hover:bg-emerald-600 transition">
+            Select Quote
           </button>
-        </section>
-      </main>
+        </div>
+
+        {/* CARD 2 */}
+        <div className="border rounded-xl p-6 shadow-sm hover:shadow-md transition">
+          <h3 className="text-3xl font-bold">150.7 kg CO₂e</h3>
+          <p className="text-gray-500 text-sm mt-1">5,570 km</p>
+          <p className="text-gray-500 text-sm">CHE → MUM</p>
+
+          <button className="w-full mt-6 py-3 bg-emerald-100 text-emerald-600 rounded-lg font-semibold">
+            Select Quote
+          </button>
+        </div>
+
+        {/* CARD 3 – Fast */}
+        <div className="border rounded-xl p-6 shadow-sm hover:shadow-md transition">
+          <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <span className="material-icons text-gray-600">bolt</span>
+            QUICK DELIVERY
+          </p>
+
+          <h3 className="text-3xl font-bold">182.4 kg CO₂e</h3>
+          <p className="text-gray-500 text-sm mt-1">5,150 km</p>
+          <p className="text-gray-500 text-sm">CHE → MUM</p>
+
+          <button className="w-full mt-6 py-3 bg-emerald-100 text-emerald-600 rounded-lg font-semibold">
+            Select Quote
+          </button>
+        </div>
+      </div>
+
+      {/* SHIPMENT SUMMARY */}
+      <div>
+        <h2 className="text-xl font-semibold mb-3">Shipment Details Summary</h2>
+
+        <div className="border rounded-xl p-6 shadow-sm bg-white">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+
+            <div>
+              <p className="text-gray-600">Origin</p>
+              <p className="font-semibold">Chennai, India</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Destination</p>
+              <p className="font-semibold">Mumbai, India</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Distance</p>
+              <p className="font-semibold">5,570 km</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Weight</p>
+              <p className="font-semibold">1,200 kg</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Shipment Type</p>
+              <p className="font-semibold">Shared</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Freight Type</p>
+              <p className="font-semibold">General Cargo</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Transport Mode</p>
+              <p className="font-semibold">Air Freight</p>
+            </div>
+
+            <div>
+              <p className="text-gray-600">Vehicle Type</p>
+              <p className="font-semibold">Boeing 747</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BUTTONS */}
+      <div className="flex gap-4 mt-4">
+        <button className="px-6 py-3 border rounded-lg font-semibold hover:bg-gray-100 transition">
+          Start a New Quote
+        </button>
+
+        <button className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition">
+          Place Shipment Order
+        </button>
+      </div>
     </div>
   );
 }
