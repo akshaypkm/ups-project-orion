@@ -65,7 +65,7 @@ namespace EcoRoute.Services
                     {
                         CompanyName = userSignUpDto.CompanyName,
                         CompanySector = userSignUpDto.CompanySector,
-                        CompanyCredits = CalculateCompanyCredits(userSignUpDto.CompanySector)
+                        CompanyCredits = await CalculateCompanyCredits(userSignUpDto.CompanySector)
                     };
 
                     await _companyRepo.AddCompanyAsync(company);
@@ -87,7 +87,7 @@ namespace EcoRoute.Services
                 return (false, "User registration failed, please do try again");
             }
         }
-        private double CalculateCompanyCredits(string companySector)
+        private async Task<double> CalculateCompanyCredits(string companySector)
         {   
             if(companySector == null)
             {
@@ -97,19 +97,34 @@ namespace EcoRoute.Services
             double companyCredits;
             switch (companySector.ToLower())
             {
-                case "iron and steel":
-<<<<<<< HEAD
-                    companyCredits =100;
-=======
-                    companyCredits = 10.0;
->>>>>>> c253b56dce7364f7c7750f76775629288b29f9ac
+                case "Iron and Steel":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
                     break;
-                case "":
+                case "Cement Industry":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Agriculture":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Solid Fuel Manufacturing":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Industrial Engineering":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Pulp and Paper Industries":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Brick Manufacturing":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
+                case "Chemicals":
+                    companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
+                    break;
                 default:
                     companyCredits = 0.0;
                     break;
             }
-
             return companyCredits;
         }    
 
