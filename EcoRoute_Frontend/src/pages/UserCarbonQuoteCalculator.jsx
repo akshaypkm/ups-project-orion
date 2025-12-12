@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function UserCarbonQuoteCalculator() {
   const [nature, setNature] = useState("Upstream");
@@ -221,7 +223,7 @@ export default function UserCarbonQuoteCalculator() {
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
+          <button onClick={() => navigate("/user/results")} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
             Calculate Footprint →
           </button>
         </div>
