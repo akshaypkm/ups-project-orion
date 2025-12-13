@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/UserDashboard.css";
-import CarbonQuoteCalculator from "../pages/UserCarbonQuoteCalculator"
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -14,11 +13,6 @@ export default function Sidebar() {
     navigate("/");
   };
 
-  const handleCarbonQuoteCalculator = () => {
-    navigate(CarbonQuoteCalculator);
-  }
-
-  // Helper for dynamic classes based on active state
   const getNavItemClasses = (path) => {
     const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition w-full text-left";
     const activeClasses = "bg-emerald-100 text-emerald-600";
@@ -29,9 +23,10 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6 fixed left-0 top-0 z-50">
+      
       {/* Brand Logo */}
       <div className="flex items-center gap-2 mb-10">
-        <span className="material-symbols-outlined text-emerald-500" style={{fontSize: '28px'}}>
+        <span className="material-symbols-outlined text-emerald-500" style={{ fontSize: '28px' }}>
           eco
         </span>
         <h1 className="text-2xl font-semibold text-emerald-500">EcoRoute</h1>
@@ -48,19 +43,15 @@ export default function Sidebar() {
         </button>
         
         <button 
-          className={getNavItemClasses('/calculator')}
-<<<<<<< HEAD
+          className={getNavItemClasses('/user/calculator')}
           onClick={() => navigate('/user/calculator')}
-=======
-          onClick={() => navigate(handleCarbonQuoteCalculator)}
->>>>>>> c253b56dce7364f7c7750f76775629288b29f9ac
         >
           <span className="material-symbols-outlined">calculate</span>
           Carbon Quote Calculator
         </button>
         
         <button 
-          className={getNavItemClasses('/history')}
+          className={getNavItemClasses('/user/shipments')}
           onClick={() => navigate('/user/shipments')}
         >
           <span className="material-symbols-outlined">history</span>
@@ -68,18 +59,19 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Logout at Bottom */}
+      {/* Logout */}
       <div className="mt-auto">
         <button 
           className="flex items-center gap-3 text-gray-500 hover:text-red-500 transition w-full text-left px-4 py-3 text-sm font-medium" 
           onClick={handleLogout}
         >
-          <span className="material-symbols-outlined" style={{transform: 'rotate(180deg)'}}>
+          <span className="material-symbols-outlined" style={{ transform: 'rotate(180deg)' }}>
             logout
           </span>
           Log Out
         </button>
       </div>
+
     </aside>
   );
 }

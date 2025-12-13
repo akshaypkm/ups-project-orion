@@ -18,6 +18,8 @@ namespace EcoRoute.Repositories
         Task<double> GetCompanyCreditsByNameAsync(string CompanyName);
 
         Task<int> GetCompanyIdByName(string CompanyName);
+
+        Task<double> GetCompanyCreditsBySectorAsync(string CompanySector);
     }
     public class CompanyRepository : ICompanyRepository
     {
@@ -57,6 +59,13 @@ namespace EcoRoute.Repositories
         {
             return await dbContext.Companies.Where(c => c.CompanyName == CompanyName)
                                             .Select(c => c.Id).FirstOrDefaultAsync();
+        }
+
+        public async Task<double> GetCompanyCreditsBySectorAsync(string CompanySector)
+        {
+            return await dbContext.Credits.Where(c => c.Sector == CompanySector)
+                                            .Select(c => c.SectorCredits).FirstOrDefaultAsync();
+            
         }
     }
 }
