@@ -27,9 +27,9 @@ export default function App() {
       {/* USER ROUTES */}
 {/* <Route path="/user/home" element={<clientDashboard />} /> */}
 <Route path="/client-dashboard" element={<UserDashboard />} />
-<Route path="/user/shipments" element={<UserShipments />} />
-<Route path="/user/calculator" element={<UserCarbonQuoteCalculator />} />
-<Route path="/user/results" element={<UserResults />} />
+<Route path="/client-shipments" element={<UserShipments />} />
+<Route path="/carbon-quote-calculator" element={<UserCarbonQuoteCalculator />} />
+<Route path="/quote-results" element={<UserResults />} />
 
 
       {/* ADMIN ROUTES */}

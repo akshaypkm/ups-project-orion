@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/UserDashboard.css";
+import UserCarbonQuoteCalculator from "../App.jsx"
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Sidebar() {
     navigate("/");
   };
 
+  // Helper for dynamic classes based on active state
   const getNavItemClasses = (path) => {
     const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition w-full text-left";
     const activeClasses = "bg-emerald-100 text-emerald-600";
@@ -43,16 +45,16 @@ export default function Sidebar() {
         </button>
         
         <button 
-          className={getNavItemClasses('/user/calculator')}
-          onClick={() => navigate('/user/calculator')}
+          className={getNavItemClasses('/carbon-quote-calculator')}
+          onClick={() => navigate('/carbon-quote-calculator')}
         >
           <span className="material-symbols-outlined">calculate</span>
           Carbon Quote Calculator
         </button>
         
         <button 
-          className={getNavItemClasses('/user/shipments')}
-          onClick={() => navigate('/user/shipments')}
+          className={getNavItemClasses('/client-shipments')}
+          onClick={() => navigate('/client-shipments')}
         >
           <span className="material-symbols-outlined">history</span>
           Shipment History
