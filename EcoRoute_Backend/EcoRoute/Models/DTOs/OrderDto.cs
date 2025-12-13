@@ -3,7 +3,7 @@ namespace EcoRoute.Models
     public class OrderDto
     {
 
-        public double OrderCo2Emission{get;set;}
+        public double OrderCO2Emission{get;set;}
 
         public string SelectedRouteSummary{get; set;}
 
@@ -43,5 +43,7 @@ namespace EcoRoute.Models
         public int CompanyId{get; set;}
 
         public double RouteDuration{get; set;}
+
+        public DateTime OrderDate{get; set;}
     }
 }
