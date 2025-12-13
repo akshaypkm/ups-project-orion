@@ -25,9 +25,10 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6 fixed left-0 top-0 z-50">
+      
       {/* Brand Logo */}
       <div className="flex items-center gap-2 mb-10">
-        <span className="material-symbols-outlined text-emerald-500" style={{fontSize: '28px'}}>
+        <span className="material-symbols-outlined text-emerald-500" style={{ fontSize: '28px' }}>
           eco
         </span>
         <h1 className="text-2xl font-semibold text-emerald-500">EcoRoute</h1>
@@ -60,18 +61,19 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Logout at Bottom */}
+      {/* Logout */}
       <div className="mt-auto">
         <button 
           className="flex items-center gap-3 text-gray-500 hover:text-red-500 transition w-full text-left px-4 py-3 text-sm font-medium" 
           onClick={handleLogout}
         >
-          <span className="material-symbols-outlined" style={{transform: 'rotate(180deg)'}}>
+          <span className="material-symbols-outlined" style={{ transform: 'rotate(180deg)' }}>
             logout
           </span>
           Log Out
         </button>
       </div>
+
     </aside>
   );
 }
