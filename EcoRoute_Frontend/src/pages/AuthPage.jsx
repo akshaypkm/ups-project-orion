@@ -265,10 +265,7 @@ export default function AuthPage() {
           </div>
         </form>
 
-        <div className="note">
-          <strong>Tip:</strong> For quick admin access during testing use username
-          <code>admin</code>.
-        </div>
+        
       </div>
     </div>
   );

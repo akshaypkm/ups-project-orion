@@ -82,7 +82,7 @@ namespace EcoRoute.Services
                 {
                     shipmentCode = "-";
                 }
-                shipmentCode = await _shipmentRepo.GetShipmentCodeByShipmentId((int) order.ShipmentId);
+                shipmentCode = await _shipmentRepo.GetShipmentCodeByShipmentId( order.ShipmentId);
             
                 var orderHistoryDto = _mapper.Map<OrderHistoryDto>(order);
                 orderHistoryDto.ShipmentCode = shipmentCode;

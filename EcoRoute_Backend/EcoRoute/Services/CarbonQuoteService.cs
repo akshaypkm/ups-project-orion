@@ -62,7 +62,7 @@ namespace EcoRoute.Services
             }
 
             var truckType = await _truckRepo.GetTruckTypeAsync(orderRequestDto);
-
+            Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
             if(truckType == null){
                 truckType = await _truckRepo.GetOpenTrailerTruckAsync();
             }
@@ -146,9 +146,10 @@ namespace EcoRoute.Services
 
                     var orderDto = _mapper.Map<OrderDto>(orderRequestDto);
 
-                    orderDto.OrderCo2Emission = result.totalKgCO2_per_tonne;
+
+                    orderDto.OrderCO2Emission = Math.Round(result.totalKgCO2_per_tonne,2);
                     orderDto.SelectedRouteSummary = summary;
-                    orderDto.OrderDistance = totalDistanceKm;
+                    orderDto.OrderDistance = Math.Round(totalDistanceKm, 2);
                     orderDto.TransportVehicle = truckType.TruckName;
                     orderDto.TransportMode = "truck";
                     orderDto.OrderStatus = "processing";
