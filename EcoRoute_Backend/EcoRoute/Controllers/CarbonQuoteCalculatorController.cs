@@ -41,7 +41,7 @@ namespace EcoRoute.Controllers
             {
                 return Unauthorized("token is missing the right company name");
             }
-
+            Console.WriteLine($"ORder request: DATE::::: {orderRequestDto.OrderDate}");
             if (orderRequestDto.OrderLength > 18.75 &&
                 orderRequestDto.OrderWidth > 5.0 &&
                 orderRequestDto.OrderHeight > 4.0)

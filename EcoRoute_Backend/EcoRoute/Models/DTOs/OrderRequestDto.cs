@@ -23,5 +23,7 @@ namespace EcoRoute.Models
         public string OrderOrigin{get; set;}
 
         public string OrderDestination{get; set;}
+
+        public DateTime OrderDate{get; set;}
     }
 }

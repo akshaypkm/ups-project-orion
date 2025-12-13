@@ -19,10 +19,13 @@ namespace EcoRoute.Repositories
                                             && s.ShipmentDate >= ShipmentStartDate && s.ShipmentDate <= ShipmentEndDate).CountAsync();
         }
 
-        public async Task<string?> GetShipmentCodeByShipmentId(int shipmentId)
+        public async Task<string> GetShipmentCodeByShipmentId(int shipmentId)
         {
-            return await dbContext.Shipments.Where(s => s.Id == shipmentId)
+            string shipmentCode = await dbContext.Shipments.Where(s => s.Id == shipmentId)
                                             .Select(s => s.ShipmentCode).FirstOrDefaultAsync();
+
+            Console.WriteLine($"shipment code: {shipmentCode}");
+            return shipmentCode;
         }
     }
 }

@@ -25,7 +25,7 @@ namespace EcoRoute.Controllers
             
             var order = new Order
             {
-                OrderCO2Emission = orderDto.OrderCo2Emission,
+                OrderCO2Emission = orderDto.OrderCO2Emission,
                 SelectedRouteSummary = orderDto.SelectedRouteSummary,
                 SelectedPolyline = orderDto.SelectedPolyline,
                 OrderDistance = orderDto.OrderDistance,

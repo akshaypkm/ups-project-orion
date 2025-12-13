@@ -2,7 +2,7 @@ namespace EcoRoute.Models
 {
     public class OrderHistoryDto
     {
-        public string ShipmentCode{get; set;} = string.Empty;
+        public string ShipmentCode{get; set;} = "-";
 
         public DateTime OrderDate{get; set;}
 
@@ -17,5 +17,7 @@ namespace EcoRoute.Models
         public double OrderCO2Emission{get; set;}
 
         public double OrderEmissionsSaved{get; set;}
+
+        public string OrderStatus{get; set;}
     }
 }

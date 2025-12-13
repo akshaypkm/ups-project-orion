@@ -55,7 +55,7 @@ namespace EcoRoute.Models.Entities
         [ForeignKey("CompanyId")]
         public Company Company{get; set;}
 
-        public int? ShipmentId{get; set;}
+        public int ShipmentId{get; set;} = 0;
         [ForeignKey("ShipmentId")]
         public Shipment Shipment{get; set;}
     }
