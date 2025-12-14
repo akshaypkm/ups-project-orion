@@ -91,6 +91,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 builder.Services.AddScoped<ICarbonQuoteService, CarbonQuoteService>();
 builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryService>();
+builder.Services.AddScoped<IForeCastService,ForeCastService>();
 
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICreditRepository, CreditRepository>();
@@ -100,6 +101,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITruckRepository, TruckRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IForeCastRepository,ForeCastRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
