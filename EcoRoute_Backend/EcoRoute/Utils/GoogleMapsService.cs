@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using EcoRoute.Models;
+using static EcoRoute.Utils.PolyLineEncoder;
 
 namespace EcoRoute.Services
 {
@@ -17,7 +18,7 @@ namespace EcoRoute.Services
             this.API_KEY = API_KEY;
         }
 
-        public async Task<List<(List<RoutePoint> Points, string Summary, double Duration)>> GetRoutePointsAsync(string origin, string destination, string API_KEY)
+        public async Task<List<(List<RoutePoint> Points, string Summary, double Duration, string encodedString)>> GetRoutePointsAsync(string origin, string destination, string API_KEY)
         {
             string url = $"https://maps.googleapis.com/maps/api/directions/json?origin={Uri.EscapeDataString(origin)}&destination={Uri.EscapeDataString(destination)}&alternatives=true&key={API_KEY}";
 
@@ -31,7 +32,7 @@ namespace EcoRoute.Services
                 throw new Exception($"Directions API error: {status.GetString()} - {err}");
             }
 
-            var finalRoutes = new List<(List<RoutePoint> Points, string Summary, double Duration)>();
+            var finalRoutes = new List<(List<RoutePoint> Points, string Summary, double Duration, string encodedString)>();
 
             if(root.TryGetProperty("routes", out var routes) && routes.GetArrayLength() > 0)
             {
@@ -41,7 +42,6 @@ namespace EcoRoute.Services
                 foreach(var routeJson in routes.EnumerateArray())
                 {
                     string summary = routeJson.TryGetProperty("summary", out var s) ? s.GetString() : "";
-
                     double duration = 0.0;
 
                     var singleRoutePoints = new List<RoutePoint>();
@@ -65,7 +65,6 @@ namespace EcoRoute.Services
                                     {
                                         string encoded = pts.GetString();
                                         var decoded = PolyLineDecoder.Decode(encoded);
-
                                         foreach(var p in decoded)
                                         {
                                             singleRoutePoints.Add(new RoutePoint
@@ -88,7 +87,8 @@ namespace EcoRoute.Services
                             compact.Add(singleRoutePoints[i]);
                         }
                     }
-                    finalRoutes.Add((compact, summary, duration));
+                    var encodedString = PolylineEncoder.Encode(compact);
+                    finalRoutes.Add((compact, summary, duration, encodedString));
                 }
             }
             return finalRoutes ;

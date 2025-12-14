@@ -30,7 +30,7 @@ namespace EcoRoute.Models
 
         public string OrderDestination{get; set;}
 
-        public string OrderStatus{get; set;} = "transit";
+        public string OrderStatus{get; set;}
 
         public string OrderNature{get; set;} // UPSTREAM OR DOWNSTREAM
 
