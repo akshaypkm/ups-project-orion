@@ -2,45 +2,52 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import Sidebar from "../Components/UserSideBar";
+import RouteMap from "../Components/RouteMap"; // Ensure this uses the FIXED version I gave you earlier
 import "../styles/UserDashboard.css";
 
 export default function UserResults() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Retrieve data passed from Calculator
+  
   const { quotes, request } = location.state || {};
-
-  // State for the currently selected route
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Calculate Minimums for badges
   const minCO2 = quotes?.length > 0 ? Math.min(...quotes.map(q => q.totalCO2Emission || q.orderCO2Emission)) : 0;
   const minDuration = quotes?.length > 0 ? Math.min(...quotes.map(q => q.routeDuration)) : 0;
 
-  // Redirect if no data (e.g., user refreshed page)
   useEffect(() => {
-    // Console.Log("inside the page");
     if (!quotes || !request) {
       navigate("/carbon-quote-calculator");
     } else if (quotes.length > 0) {
-    // Console.Log("data available");
-
-      // Auto-select the first option by default
-      setSelectedQuote(quotes[0]);
+      // Auto-select the first (Best) route
+      // We sort the data first to ensure index 0 is always the sustainable one
+      const sortedQuotes = [...quotes].sort((a, b) => {
+        const co2A = a.totalCO2Emission || a.orderCO2Emission || 0;
+        const co2B = b.totalCO2Emission || b.orderCO2Emission || 0;
+        return co2A - co2B;
+      });
+      setSelectedQuote(sortedQuotes[0]);
     }
   }, [quotes, request, navigate]);
 
-  // Handle Placing Order
   const handlePlaceOrder = async () => {
     if (!selectedQuote) return alert("Please select a quote first.");
-
     setLoading(true);
+
+    // 1. Find the Fastest Route (Baseline for Standard Emissions)
+    // We assume the "Fastest" route represents the standard, non-optimized way.
+    const fastestQuote = quotes && quotes.length > 0 
+      ? quotes.reduce((prev, current) => (prev.routeDuration < current.routeDuration) ? prev : current)
+      : selectedQuote;
+
+    // 2. Extract CO2 from that fastest route
+    const standardEmissions = fastestQuote.totalCO2Emission || fastestQuote.orderCO2Emission || 0;
+
     const orderPayload = {
-      ...selectedQuote, // CO2, Distance, Route Summary, etc.
-      selectedPolyline: selectedQuote.selectedPolyline || " ",
-      // Map fields from the original request 
-      // (Ensure these keys match your C# OrderDto properties exactly)
+      ...selectedQuote,
+      selectedPolyline: selectedQuote.selectedPolyline || "", 
       orderNature: request.orderNature || request.natureOfTransport,
       transportMode: request.transportMode || request.transportMethod,
       orderTotalItems: request.orderTotalItems || request.unitCount,
@@ -48,41 +55,44 @@ export default function UserResults() {
       orderLength: request.orderLength,
       orderWidth: request.orderWidth,
       orderHeight: request.orderHeight,
-      // If backend expects string "Shared" or bool, handle accordingly:
       orderMode: request.orderMode || (request.isShared ? "Shared" : "Dedicated"), 
       isRefrigerated: request.isRefrigerated,
       orderOrigin: request.orderOrigin || request.origin,
       orderDestination: request.orderDestination || request.destination,
-      shipmentDate: request.shipmentDate || new Date().toISOString()
+      shipmentDate: request.shipmentDate || new Date().toISOString(),
+      orderStandardCO2Emissions : standardEmissions
     };
 
-    console.log("Sending Payload:", JSON.stringify(orderPayload, null, 2)); // Debugging
     try {
-      // Call the backend endpoint
       await api.post("/api/calculate-carbon-quote/place-order", orderPayload);
-      
       alert("Order placed successfully!");
-      navigate("/client-shipments"); // Redirect to history after success
+      navigate("/client-shipments");
     } catch (err) {
       console.error("Order placement failed:", err);
-      alert(err.response?.data || "Failed to place order. Please try again.");
+      if (err.response && err.response.data) {
+        alert(`Failed: ${typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data)}`);
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  if (!quotes || !request) return null; // Prevent flicker before redirect
+  if (!quotes || !request) return null;
 
+  // Pre-sort quotes so Sustainable is always top
+  const sortedQuotes = [...quotes].sort((a, b) => {
+    const co2A = a.totalCO2Emission || a.orderCO2Emission || 0;
+    const co2B = b.totalCO2Emission || b.orderCO2Emission || 0;
+    return co2A - co2B;
+  });
 
-  
   return (
     <div className="dashboard-container">
       <Sidebar />
 
-        {/* 2. Main Content Area */}
-        {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
         <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
-        
         <header className="top-bar">
           <h2 className="page-title">Calculation Results</h2>
           <div className="header-actions">
@@ -91,190 +101,196 @@ export default function UserResults() {
         </header>
 
         <div className="content-scroll-area">
-          <div className="space-y-10 max-w-6xl mx-auto">
+          <div className="space-y-8 max-w-5xl mx-auto">
 
             <div>
-              <h2 className="text-3xl font-bold text-gray-800">Carbon Footprint Results</h2>
+              <h2 className="text-3xl font-bold text-gray-800">Route Options</h2>
               <p className="text-gray-500 mt-1">
-                A summary of the calculated emissions based on your shipment details.
+                Select a route to view the full map and details.
               </p>
             </div>
 
-            {/* DYNAMIC QUOTE CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* 1. SORT: Sustainable (Lowest CO2) First */}
-              {[...quotes]
-                .sort((a, b) => {
-                  const co2A = a.totalCO2Emission || a.orderCO2Emission || 0;
-                  const co2B = b.totalCO2Emission || b.orderCO2Emission || 0;
-                  return co2A - co2B;
-                })
-                .map((quote, index) => {
+            {/* --- VERTICAL EXPANDABLE LIST --- */}
+            <div className="space-y-4">
+              {sortedQuotes.map((quote, index) => {
                 const isSelected = selectedQuote === quote;
                 
-                // Determine styling based on index (Mocking "Sustainable" vs "Fast" logic)
-                // You can replace this logic if your backend returns a 'tag' or 'type' field
-                const currentCO2 = quote.totalCO2Emission || quote.orderCO2Emission;
+                const currentCO2 = quote.orderCO2Emission;
                 const currentDuration = quote.routeDuration;
-
                 const isSustainable = currentCO2 === minCO2;
                 const isFast = currentDuration === minDuration;
-                
-                // If neither, it's a normal route
-                const isNormalRoute = !isSustainable && !isFast;
 
                 return (
                   <div 
                     key={index}
-                    onClick={() => setSelectedQuote(quote)}
-                    className={`border rounded-xl p-6 shadow-sm transition cursor-pointer relative bg-white
-                      ${isSelected ? "ring-2 ring-emerald-500 bg-emerald-50" : "hover:shadow-md"}
+                    // OLD: onClick={() => setSelectedQuote(quote)}
+
+                    // NEW: Toggle logic
+                    onClick={() => {
+                    if (selectedQuote === quote) {
+                        setSelectedQuote(null); // Deselect if already open
+                    } else {
+                        setSelectedQuote(quote); // Select if closed
+                    }
+                    }}
+                    className={`border rounded-xl transition-all duration-300 bg-white overflow-hidden
+                      ${isSelected ? "ring-2 ring-emerald-500 shadow-md" : "hover:shadow-md border-gray-200 cursor-pointer"}
                     `}
                   >
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 mb-3 min-h-[24px]">
-                    {/* Badge logic */}
-                    {isSustainable && (
-                        <p className="text-sm font-bold text-emerald-600 flex items-center gap-2">
-                          <span className="material-symbols-outlined text-emerald-600 text-lg">eco</span>
-                          MOST SUSTAINABLE
-                        </p>
-                      )}
-                      
-                      {isFast && (
-                        <p className="text-sm font-bold text-amber-600 flex items-center gap-2">
-                          <span className="material-symbols-outlined text-amber-600 text-lg">bolt</span>
-                          QUICK DELIVERY
-                        </p>
-                      )}
+                    {/* Header Row (Always Visible) */}
+                    <div className={`p-6 flex items-center justify-between ${isSelected ? 'bg-emerald-50/50' : ''}`}>
+                      <div className="flex items-center gap-6">
+                        
+                        {/* Radio Indicator */}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                          ${isSelected ? 'border-emerald-500' : 'border-gray-300'}
+                        `}>
+                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>}
+                        </div>
 
-                      {/* Spacer for alignment if no badges exist */}
-                      {isNormalRoute && (
-                        <p className="text-sm font-bold text-transparent flex items-center gap-2 select-none" aria-hidden="true">
-                          <span className="material-symbols-outlined text-lg">eco</span>
-                          SPACER
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Data from Quote Object */}
-                    {/* Ensure these property names match your C# OrderDto exactly */}
-                    <h3 className="text-3xl font-bold text-gray-800">
-                      {((request.orderWeightKg / 1000) * quote.orderCO2Emission).toFixed(2) || "0"} kg CO₂e
-                    </h3>
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-  
-                      {/* Distance Badge */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 text-gray-700 text-sm font-medium">
-                        <span className="material-symbols-outlined text-emerald-500 text-[18px]">straighten</span>
-                        <span>{quote.orderDistance || "N/A"} km</span>
+                        {/* Summary Info */}
+                        <div>
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-xl font-bold text-gray-800">
+                              {(currentCO2).toFixed(2)} kg CO₂e
+                            </h3>
+                            {/* Badges Inline */}
+                            {isSustainable && (
+                              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">eco</span> Sustainable
+                              </span>
+                            )}
+                            {isFast && (
+                              <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">bolt</span> Fast
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1 text-emerald-500">
+                              <span className="material-symbols-outlined text-[16px]">straighten</span> 
+                              {quote.orderDistance} km
+                            </span>
+                            <span className="flex items-center gap-1 text-purple-500">
+                              <span className="material-symbols-outlined text-[16px]">schedule</span> 
+                              {(quote.routeDuration / 60).toFixed(0)} mins
+                            </span>
+                            <span className="flex items-center gap-1  text-orange-500 text-truncate max-w-[500px]">
+                              <span className="material-symbols-outlined text-[16px]">alt_route</span> 
+                              Via {quote.selectedRouteSummary}
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Duration Badge */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 text-gray-700 text-sm font-medium">
-                        <span className="material-symbols-outlined text-emerald-500 text-[18px]">schedule</span>
-                        <span>{(quote.routeDuration / 60).toFixed(0) || "N/A"} mins</span>
-                      </div>
-
-                    </div>
-
-                    <div className = "bottom gap mt-4">
-                      </div>
-
-                    {/* Display Route Code if available, or Origin -> Dest */}
-                    <div className="flex items-center gap-1.5 mt-3 text-gray-500 text-sm">
-                      <span className="material-symbols-outlined text-[18px] text-gray-400">alt_route</span>
-                      <span className="font-medium truncate max-w-[250px]" title={quote.selectedRouteSummary}>
-                        VIA {quote.selectedRouteSummary?.toUpperCase() || "N/A"}
+                      {/* Expand/Collapse Icon */}
+                      <span className="material-symbols-outlined text-gray-400">
+                        {isSelected ? "expand_less" : "expand_more"}
                       </span>
                     </div>
 
-                    <button 
-                      className={`w-full mt-6 py-3 rounded-lg font-semibold transition-colors
-                        ${isSelected 
-                          ? "bg-emerald-500 text-white hover:bg-emerald-600" 
-                          : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}
-                      `}
-                    >
-                      {isSelected ? "Selected" : "Select Quote"}
-                    </button>
+                    {/* Expanded Content (Map & Details) */}
+                    {isSelected && (
+                    <div 
+                        className="border-t border-emerald-100 p-6 animate-in fade-in slide-in-from-top-2 duration-300 cursor-default"
+                        onClick={(e) => e.stopPropagation()} 
+                      >                        
+                        {/* THE MAP (Now huge and reliable) */}
+                        <div className="w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-inner mb-6 relative">
+                          {quote.selectedPolyline ? (
+                            <RouteMap encodedPolyline={quote.selectedPolyline} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Map Data Available
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Bar */}
+                        <div className="flex justify-end items-center gap-4">
+                          <span className="text-sm text-gray-500">
+                            Selecting this route will place an order request.
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent toggling the card
+                              handlePlaceOrder();
+                            }}
+                            disabled={loading}
+                            className={`px-8 py-3 bg-emerald-500 text-white rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-transform hover:scale-105 active:scale-95
+                              ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-emerald-600"}
+                            `}
+                          >
+                            {loading ? "Processing..." : "Confirm & Place Order"}
+                            {!loading && <span className="material-symbols-outlined text-sm">check</span>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            {/* SHIPMENT SUMMARY (From Request Data) */}
-            <div>
-              <h2 className="text-xl font-semibold mb-3 text-gray-800">Shipment Details Summary</h2>
-
-              <div className="border rounded-xl p-6 shadow-sm bg-white border-gray-200">
-                <div className="grid grid-cols-2 gap-y-6 gap-x-12 text-sm">
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">From</span>
-                    <span className="font-semibold text-gray-800">{request.orderOrigin}</span>
+            {/* SUMMARY SECTION (Unchanged) */}
+            <div className="pt-8 pb-10">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Shipment Summary</h2>
+              
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                {/* We use a definition list style grid for better alignment */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                  
+                  {/* Column 1 */}
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">From</span>
+                      <span className="text-gray-800 font-medium text-lg block">{request.orderOrigin}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">To</span>
+                      <span className="text-gray-800 font-medium text-lg block">{request.orderDestination}</span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">To</span>
-                    <span className="font-semibold text-gray-800">{request.orderDestination}</span>
+                  {/* Column 2 */}
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Total Items</span>
+                      <span className="text-gray-800 font-medium block">{request.orderTotalItems} units</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Total Weight of the Order</span>
+                      <span className="text-gray-800 font-medium block">{request.orderWeightKg} kg</span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Total Items in Order</span>
-                    <span className="font-semibold text-gray-800">{request.orderTotalItems}</span>
+                  {/* Column 3 */}
+                  <div className="p-6 space-y-4">
+                     <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Shipment Mode</span>
+                      <span className="inline-block px-2 py-1 bg-gray-100 rounded text-gray-700 text-sm font-medium">{request.isShared ? "Shared" : "Dedicated"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Transport Vehicle</span>
+                      <span className="text-gray-800 font-medium block">{selectedQuote?.transportVehicle}</span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Total Weight of the Order</span>
-                    <span className="font-semibold text-gray-800">{request.orderWeightKg} kg</span>
-                  </div>
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Shipment Mode</span>
-                    <span className="font-semibold text-gray-800">{request.isShared ? "Shared" : "Dedicated"}</span>
-                  </div>
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Transport Vehicle Assigned</span>
-                    <span className="font-semibold text-gray-800">{selectedQuote?.transportVehicle}</span>
-                  </div>
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Dimensions (LxWxH)</span>
-                    <span className="font-semibold text-gray-800">
-                      {request.orderLength}x{request.orderWidth}x{request.orderHeight} m
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-500">Order Type</span>
-                    <span className="font-semibold text-gray-800">{request.orderNature}</span>
+                  {/* Column 4 */}
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Dimensions</span>
+                      <span className="text-gray-800 font-medium block">{request.orderLength}x{request.orderWidth}x{request.orderHeight} m</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Order Type</span>
+                      <span className="text-gray-800 font-medium block capitalize">{request.orderNature}</span>
+                    </div>
                   </div>
 
                 </div>
               </div>
-            </div>
-
-            {/* ACTION BUTTONS */}
-            <div className="flex flex-wrap gap-4 mt-8 pb-10">
-              <button 
-                onClick={() => navigate("/carbon-quote-calculator")}
-                className="px-6 py-3 border border-emerald-500 text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 transition"
-              >
-                Start a New Quote
-              </button>
-
-              <button 
-                onClick={handlePlaceOrder}
-                disabled={loading || !selectedQuote}
-                className={`px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold flex items-center gap-2 transition shadow-sm
-                  ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-emerald-600 hover:shadow"}
-                `}
-              >
-                {loading ? "Processing..." : "Place Shipment Order"}
-                {!loading && <span className="material-symbols-outlined text-sm">check</span>}
-              </button>
             </div>
 
           </div>

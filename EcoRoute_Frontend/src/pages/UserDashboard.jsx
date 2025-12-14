@@ -171,7 +171,7 @@ export default function ClientDashboard() {
 
       {/* 2. Main Content Area */}
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
-      <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
+      <main className="flex-1 p-8 ml-0 md:ml-[300px]"> 
         
         {/* Top Header (Preserved Functionality + New Style) */}
         <header className="flex justify-between items-center mb-8">
@@ -435,7 +435,7 @@ export default function ClientDashboard() {
                   Emissions saved by choosing sustainable routes.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved} t</p>
+                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved.toFixed(2)} kg CO₂e</p>
 
                 <div className="mt-4 flex gap-2">
                   {['Today', 'Month', 'Year'].map(p => (

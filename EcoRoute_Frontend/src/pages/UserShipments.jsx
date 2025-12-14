@@ -68,8 +68,10 @@ export default function UserShipments() {
   // Helper for Status Colors
   const getStatusColor = (status) => {
     const s = status?.toLowerCase() || "";
-    if (s === "placed" || s === "shipping") return "bg-purple-100 text-purple-600";
-    if (s === "transit" ||  s === "in review") return "bg-yellow-100 text-yellow-600";
+    if (s === "placed" ) return "bg-darkgreen-100 text-darkgreen-600";
+    if (s === "processing" ) return "bg-orange-100 text-orange-600";
+    if (s === "planned" ) return "bg-yellow-100 text-yellow-600";
+
     return "bg-gray-100 text-gray-600";
   };
 
@@ -118,7 +120,7 @@ export default function UserShipments() {
                   name="search"
                   value={filters.search}
                   onChange={handleFilterChange}
-                  placeholder="🔍  Search by ID, Origin, Destination..."
+                  placeholder="Search by ID, Origin, Destination..."
                   className="w-full px-4 py-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
               </div>
@@ -131,6 +133,7 @@ export default function UserShipments() {
                   onChange={(e) => setOrderPeriod(e.target.value)}
                   className="px-4 py-3 border rounded-lg bg-gray-50 cursor-pointer focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
+                  <option value="day">This Day</option>
                   <option value="month">This Month</option>
                   <option value="year">This Year</option>
                 </select>
@@ -144,8 +147,10 @@ export default function UserShipments() {
                 className="px-4 py-3 border rounded-lg bg-gray-50 cursor-pointer focus:ring-2 focus:ring-emerald-500 outline-none"
               >
                 <option>All Status</option>
-                <option>Shipment Ready</option>
-                <option>In Transit</option>
+                <option>Placed</option>
+                <option>Processing</option>
+                <option>Planned</option>
+
               </select>
 
             </div>
@@ -187,7 +192,7 @@ export default function UserShipments() {
                         {/* Mode pill */}
                         <td>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getModeColor(row.orderEmissionsSaved)}`}>
-                            {row.orderEmissionsSaved}
+                            {(row.orderEmissionsSaved.toFixed(2))} Kg CO₂e
                           </span>
                         </td>
 
@@ -215,14 +220,14 @@ export default function UserShipments() {
             </p>
 
             {/* --- Pagination (Visual Only for now) --- */}
-            <div className="flex items-center justify-center gap-2 mt-4">
+            {/* <div className="flex items-center justify-center gap-2 mt-4">
               <button className="px-3 py-1 border rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100">{"<"}</button>
               <button className="px-3 py-1 border rounded-lg bg-emerald-500 text-white">1</button>
               <button className="px-3 py-1 border rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100">2</button>
               <button className="px-3 py-1 border rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100">3</button>
               <span className="px-3 py-1 border rounded-lg bg-gray-50 text-gray-400">...</span>
               <button className="px-3 py-1 border rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100">{">"}</button>
-            </div>
+            </div> */}
 
           </div>
         </div>
