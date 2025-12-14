@@ -18,7 +18,7 @@ namespace EcoRoute.Controllers
             _forecastService = forecastService;
         }
         [HttpGet("company")]
-        public async Task<ActionResult<ForecastDto>> GetCompanyForecast([FromQuery] DateTime? asOfDate)
+        public async Task<ActionResult<ForecastDto>> GetCompanyForecast([FromQuery] DateTime? asOfDate,[FromQuery] string mode = "year")
         {
             var companyClaim = User.FindFirst("CompanyName");
             if (companyClaim == null)
