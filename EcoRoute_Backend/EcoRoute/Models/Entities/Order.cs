@@ -33,7 +33,7 @@ namespace EcoRoute.Models.Entities
 
         public string OrderDestination{get; set;} = string.Empty;
         
-        public string OrderStatus{get; set;} = "transit";
+        public string? OrderStatus{get; set;}
 
         public DateTime OrderDate{get; set;} = DateTime.Now;
 
@@ -41,6 +41,7 @@ namespace EcoRoute.Models.Entities
 
         public string TransportMode {get; set;} = "Ground"; // WE DO ONLY FOR GROUND TRANS
 
+        public string? TransportVehicle{get; set;}
         public string OrderMode {get; set;} = string.Empty; // SHARED OR DEDICATED
         
         public bool IsRefrigerated{get; set;}
@@ -55,7 +56,7 @@ namespace EcoRoute.Models.Entities
         [ForeignKey("CompanyId")]
         public Company Company{get; set;}
 
-        public int ShipmentId{get; set;} = 0;
+        public int? ShipmentId{get; set;}
         [ForeignKey("ShipmentId")]
         public Shipment Shipment{get; set;}
     }

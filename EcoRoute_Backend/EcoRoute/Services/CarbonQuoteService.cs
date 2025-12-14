@@ -91,6 +91,7 @@ namespace EcoRoute.Services
                     var route = r.Points;
                     var summary = r.Summary;
                     var routeDuration = r.Duration;
+                    
 
                     Console.WriteLine($"Duration for ROUTE::::::::::::: {routeDuration}");
 
@@ -147,7 +148,7 @@ namespace EcoRoute.Services
                     var orderDto = _mapper.Map<OrderDto>(orderRequestDto);
 
 
-                    orderDto.OrderCO2Emission = Math.Round(result.totalKgCO2_per_tonne,2);
+                    orderDto.OrderCO2Emission = Math.Round(result.totalKgCO2_per_tonne,2) * orderRequestDto.OrderWeightKg / 1000;
                     orderDto.SelectedRouteSummary = summary;
                     orderDto.OrderDistance = Math.Round(totalDistanceKm, 2);
                     orderDto.TransportVehicle = truckType.TruckName;
@@ -155,6 +156,7 @@ namespace EcoRoute.Services
                     orderDto.OrderStatus = "processing";
                     orderDto.CompanyId = companyId;
                     orderDto.RouteDuration = routeDuration;
+                    orderDto.SelectedPolyline = r.encodedString;
 
                     routeIndex++;
 
@@ -179,6 +181,16 @@ namespace EcoRoute.Services
             var orderToDb = _mapper.Map<Order>(orderDto);
 
             orderToDb.CompanyId = companyId;
+            if(orderDto.OrderDate > DateTime.Now)
+            {
+                orderToDb.OrderStatus = "planned";
+            }
+            else
+            {
+                orderToDb.OrderStatus = "processing";
+            }
+
+            orderToDb.OrderCO2Emission = orderDto.OrderCO2Emission;
 
             await _orderRepo.AddOrdersAsync(orderToDb);
             await _orderRepo.SaveChangesAsync();

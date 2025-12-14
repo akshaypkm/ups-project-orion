@@ -30,19 +30,23 @@ namespace EcoRoute.Services
             var query = _orderRepo.GetOrdersByCompanyId(company.Id);
 
             DateTime OrderStartDate;
-            DateTime OrderEndDate = DateTime.Now;
+            DateTime OrderEndDate;
 
             switch (OrderPeriod.ToLower())
             {
                 case "year":
                     OrderStartDate = new DateTime(DateTime.Now.Year, 1, 1);
+                    OrderEndDate = new DateTime(DateTime.Now.Year, 12, 31, 23, 59, 59);
                     break;
                 case "day":
                     OrderStartDate = DateTime.Today;
+                    OrderEndDate = DateTime.Today.AddDays(1).AddTicks(-1);
                     break;
                 case "month":
                 default:
                     OrderStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    int daysInMonth = DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month);
+                    OrderEndDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month,daysInMonth, 23, 59, 59);
                     break;
             }
 
@@ -78,11 +82,14 @@ namespace EcoRoute.Services
             foreach(var order in orders)
             {
                 string shipmentCode;
-                if(order.ShipmentId == null)
+                if (order.ShipmentId != null && order.ShipmentId != 0)
                 {
-                    shipmentCode = "-";
+                    shipmentCode = await _shipmentRepo.GetShipmentCodeByShipmentId(order.ShipmentId.Value);
                 }
-                shipmentCode = await _shipmentRepo.GetShipmentCodeByShipmentId( order.ShipmentId);
+                else
+                {
+                    shipmentCode = "-"; // or "Pending"
+                }
             
                 var orderHistoryDto = _mapper.Map<OrderHistoryDto>(order);
                 orderHistoryDto.ShipmentCode = shipmentCode;
