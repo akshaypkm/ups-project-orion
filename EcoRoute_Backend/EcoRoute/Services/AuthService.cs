@@ -58,8 +58,8 @@ namespace EcoRoute.Services
                     Role = userSignUpDto.Role,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(userSignUpDto.Password)
                 };
-                
-                if(!await _companyRepo.CompanyExistsByNameAsync(userSignUpDto.CompanyName))
+
+                if(!await _companyRepo.CompanyExistsByNameAsync(userSignUpDto.CompanyName) && !(userSignUpDto.Role == "admin"))
                 {
                     var company = new Company
                     {
@@ -95,7 +95,7 @@ namespace EcoRoute.Services
             }
 
             double companyCredits;
-            switch (companySector.ToLower())
+            switch (companySector)
             {
                 case "Iron and Steel":
                     companyCredits = await _companyRepo.GetCompanyCreditsBySectorAsync(companySector);
@@ -125,6 +125,11 @@ namespace EcoRoute.Services
                     companyCredits = 0.0;
                     break;
             }
+            Console.WriteLine($"company credits:============================= ");
+            Console.WriteLine($"company credits:============================= {companyCredits}");
+            Console.WriteLine($"company credits:============================= ");
+            Console.WriteLine($"company credits:============================= {companyCredits}");
+            Console.WriteLine($"company credits:============================= ");
             return companyCredits;
         }    
 
@@ -143,6 +148,7 @@ namespace EcoRoute.Services
                 return (false, "Password is incorrect", null, null, null);
             }
 
+            // Console.WriteLine($"ROLE::::::::::::::::{user.Role}");
             string token = CreateToken(user);
 
             return (true, "Login success", token, user.Role, user.CompanyName);
