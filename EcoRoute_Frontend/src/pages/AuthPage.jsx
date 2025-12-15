@@ -81,7 +81,7 @@ export default function AuthPage() {
 
   const redirectByRole = (role) => {
     if (role === "admin") {
-      navigate("/admin");
+      navigate("/admin-dashboard");
     } else {
       navigate("/client-dashboard");
     }
@@ -187,9 +187,8 @@ export default function AuthPage() {
                             required
                         >
                             <option value="" disabled>Select Company</option>
-                            <option value="EcoRoute Admin Corp">EcoRoute Admin Corp</option>
-                            <option value="Global Logistics HQ">Global Logistics HQ</option>
-                            <option value="Sustainable Supply Chain Inc">Sustainable Supply Chain Inc</option>
+                            <option value="EcoRoute Admin Corp">EcoRoute Admin</option>
+                            
                         </select>
                     ) : (
                         <input
@@ -213,11 +212,14 @@ export default function AuthPage() {
                             required
                         >
                             <option value="" disabled>Select Sector</option>
-                            <option value="Logistics">Logistics</option>
-                            <option value="Retail">Retail</option>
-                            <option value="Manufacturing">Manufacturing</option>
-                            <option value="E-commerce">E-commerce</option>
-                            <option value="Pharmaceuticals">Pharmaceuticals</option>
+                            <option value="Cement Industry">Cement Industry</option>
+                            <option value="Agriculture">Agriculture</option>
+                            <option value="Solid Fuel Manufacturing">Solid Fuel Manufacturing</option>
+                            <option value="Industrial Engineering">Industrial Engineering</option>
+                            <option value="Pulp and Paper Industries">Pulp and Paper Industries</option>
+                            <option value="Brick Manufacturing">Brick Manufacturing</option>
+                            <option value="Chemicals">Chemicals</option>
+                            <option value="Iron and Steel">Iron and Steel</option>
                         </select>
                     ) : (
                         <input
