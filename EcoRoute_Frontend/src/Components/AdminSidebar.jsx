@@ -1,92 +1,95 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-// Ensure you have the icons font link in your index.html or import it
-// <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  FiHome,
+  FiTruck,
+  FiSettings,
+  FiCheckCircle,
+  FiLogOut,
+} from "react-icons/fi";
 
 export default function AdminSidebar() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isActive = (path) => location.pathname === path;
-
-  const handleLogout = () => {
-    localStorage.removeItem("ecoroute_token");
-    navigate("/");
-  };
-
-  // Styles matching admin_home_page.html
-  // Primary Color: #4A90E2 (Blue)
+  // Function to apply active styles
   const getNavItemClasses = (path) => {
-    const baseClasses = "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium leading-normal transition-colors w-full text-left";
-    // Active: Blue background tint + Blue text
-    const activeClasses = "bg-[#4A90E2]/20 text-[#4A90E2]"; 
-    // Inactive: Gray text + Hover blue tint
-    const inactiveClasses = "text-gray-600 hover:bg-[#4A90E2]/10";
+    const isActive = location.pathname === path;
 
-    return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
+    return `
+      flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+      transition-all cursor-pointer
+      ${
+        isActive
+          ? "bg-blue-100 text-blue-700"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      }
+    `;
   };
 
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col justify-between p-4 fixed left-0 top-0 z-50">
-      <div className="flex flex-col gap-8">
-        
-        {/* Brand Logo */}
-        <div className="flex items-center gap-3 px-2">
-          <div className="bg-[#4A90E2]/20 rounded-lg p-2 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[#4A90E2] text-2xl">eco</span>
+    <div className="w-64 min-h-screen bg-white border-r flex flex-col justify-between">
+      {/* TOP SECTION */}
+      <div>
+        {/* LOGO */}
+        <div className="flex items-center gap-3 px-4 py-6">
+          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <span className="text-blue-600 font-bold text-lg">⛯</span>
           </div>
-          <div className="flex flex-col">
-            <h1 className="text-gray-800 text-base font-bold leading-normal">EcoRoute</h1>
-            <p className="text-gray-400 text-xs font-normal">Admin</p>
+          <div>
+            <p className="font-semibold text-gray-900">EcoRoute</p>
+            <p className="text-xs text-gray-500">Admin</p>
           </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex flex-col gap-2">
-          <button 
-            className={getNavItemClasses('/admin-dashboard')}
-            onClick={() => navigate('/admin-dashboard')}
+        {/* NAVIGATION */}
+        <nav className="px-3 space-y-1">
+          <div
+            className={getNavItemClasses("/admin-dashboard")}
+            onClick={() => navigate("/admin-dashboard")}
           >
-            <span className={`material-symbols-outlined ${isActive('/admin-dashboard') ? 'fill' : ''}`}>dashboard</span>
+            <FiHome className="text-lg" />
             Dashboard
-          </button>
+          </div>
 
-          <button 
-            className={getNavItemClasses('/admin/shipments')}
-            onClick={() => navigate('/admin/shipments')}
+          <div
+            className={getNavItemClasses("/admin-shipments")}
+            onClick={() => navigate("/admin-shipments")}
           >
-            <span className="material-symbols-outlined">history</span>
+            <FiTruck className="text-lg" />
             Shipment History
-          </button>
+          </div>
 
-          <button 
-            className={getNavItemClasses('/admin/monitor')}
-            onClick={() => navigate('/admin/monitor')}
+          <div
+            className={getNavItemClasses("/admin-monitor")}
+            onClick={() => navigate("/admin-monitor")}
           >
-            <span className="material-symbols-outlined">monitoring</span>
+            <FiSettings className="text-lg" />
             Monitor Parameters
-          </button>
-          
-          <button 
-            className={getNavItemClasses('/admin/shipments/review')}
-            onClick={() => navigate('/admin/shipments/review')}
+          </div>
+
+          <div
+            className={getNavItemClasses("/admin-review")}
+            onClick={() => navigate("/admin-review")}
           >
-            <span className="material-symbols-outlined">rate_review</span>
+            <FiCheckCircle className="text-lg" />
             Review Requests
-          </button>
+          </div>
         </nav>
       </div>
 
-      {/* Logout */}
-      <div className="flex flex-col gap-1 border-t border-gray-200 pt-4">
-        <button 
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
-          onClick={handleLogout}
+      {/* BOTTOM SECTION */}
+      <div className="px-4 py-4 border-t">
+        <button
+          className="flex items-center gap-3 text-sm text-gray-500 hover:text-red-600 transition"
+          onClick={() => {
+            // add logout logic if needed
+            navigate("/");
+          }}
         >
-          <span className="material-symbols-outlined">logout</span>
-          <span className="text-sm font-medium leading-normal">Logout</span>
+          <FiLogOut />
+          Logout
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

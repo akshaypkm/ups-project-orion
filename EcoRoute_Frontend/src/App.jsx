@@ -11,11 +11,12 @@ import UserCarbonQuoteCalculator from "./pages/UserCarbonQuoteCalculator";
 import UserResults from "./pages/UserResults";
 
 // ADMIN PAGES
+
 import AdminPanel from "./pages/AdminPanel";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminShipments from "./pages/AdminShipments";
-import AdminShipmentsReview from "./pages/AdminShipmentsReview";
 import AdminMonitorParams from "./pages/AdminMonitorParams";
+import AdminShipmentsReview from "./pages/AdminShipmentsReview";
 
 export default function App() {
   return (
@@ -32,12 +33,22 @@ export default function App() {
 <Route path="/quote-results" element={<UserResults />} />
 
 
-      {/* ADMIN ROUTES */}
-      <Route path="/admin" element={<AdminPanel />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/shipments" element={<AdminShipments />} />
-      <Route path="/admin/shipments/review" element={<AdminShipmentsReview />} />
-      <Route path="/admin/monitor" element={<AdminMonitorParams />} />
+     {/* ADMIN ROUTES */}
+      <Route path="/admin-dashboard" element={<AdminPanel />}>
+        <Route index element={<AdminDashboard />} />
+      </Route>
+
+      <Route path="/admin-shipments" element={<AdminPanel />}>
+        <Route index element={<AdminShipments />} />
+      </Route>
+
+      <Route path="/admin-monitor" element={<AdminPanel />}>
+        <Route index element={<AdminMonitorParams />} />
+      </Route>
+
+      <Route path="/admin-review" element={<AdminPanel />}>
+        <Route index element={<AdminShipmentsReview />} />
+      </Route>
 
     </Routes>
   );
@@ -58,5 +69,5 @@ export default function App() {
 //       <Route path="/UserDashboard" element={<Dashboard />} />
 //       <Route path="/admin" element={<AdminPanel />} />
 //     </Routes>
-//   );
+// );
 // }

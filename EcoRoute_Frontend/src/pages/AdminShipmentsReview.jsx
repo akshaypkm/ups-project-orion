@@ -1,92 +1,90 @@
-// src/pages/admin/AdminShipmentsReview.jsx
-import React from "react";
-import AdminSidebar from "../Components/AdminSidebar";
-
+import { FiSearch, FiChevronRight } from "react-icons/fi";
+import RouteMap from "../Components/RouteMap";
 
 export default function AdminShipmentsReview() {
   return (
-    <div className="dashboard-root">
-      <AdminSidebar />
-      <main className="main-content">
-        <header className="content-header">
-          <div>
-            <h1 className="page-title">Shipment Review</h1>
-            <p className="page-subtitle">
-              Review high-emission road shipments and suggest optimizations.
-            </p>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Shipment Review</h1>
+      <p className="text-gray-500">
+        Review and approve pending shipments for carbon compliance.
+      </p>
+
+      {/* Filters */}
+      <div className="flex gap-3">
+        <div className="flex items-center gap-2 px-3 py-2 border rounded-lg bg-white w-64">
+          <FiSearch className="text-gray-400" />
+          <input
+            placeholder="Search by Order ID..."
+            className="outline-none text-sm w-full"
+          />
+        </div>
+
+        <select className="px-3 py-2 border rounded-lg bg-white text-sm">
+          <option>Status: Pending</option>
+        </select>
+
+        <select className="px-3 py-2 border rounded-lg bg-white text-sm">
+          <option>Filter by Region</option>
+        </select>
+      </div>
+
+      {/* Selected Order */}
+      <div className="bg-white border rounded-xl shadow-sm p-4">
+        <div className="flex justify-between items-center mb-3">
+          <div className="font-semibold text-blue-600">
+            ORD-10384
           </div>
-        </header>
+          <span className="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+            Pending Review
+          </span>
+        </div>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Pending reviews</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* MAP */}
+          <div className="md:col-span-2 rounded-lg overflow-hidden h-[360px]">
+            <RouteMap encodedPolyline="" />
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Shipment ID</th>
-                <th>User</th>
-                <th>Route</th>
-                <th>CO₂ (kg)</th>
-                <th>Current comment</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>#REV-3001</td>
-                <td>Logistics A</td>
-                <td>Chennai → Delhi</td>
-                <td>80.4</td>
-                <td>Road route via high traffic corridor</td>
-              </tr>
-              <tr>
-                <td>#REV-3002</td>
-                <td>Logistics B</td>
-                <td>Chennai → Mumbai</td>
-                <td>65.2</td>
-                <td>Multiple partial loads on same truck</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Review actions</h2>
-          </div>
-          <form className="form-grid">
-            <label className="label">
-              Shipment ID
-              <input type="text" placeholder="e.g., REV-3001" />
-            </label>
+          {/* DETAILS */}
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="font-semibold">Shipment Details</h3>
 
-            <label className="label">
-              Suggested action
-              <select>
-                <option>Optimize route</option>
-                <option>Consolidate loads</option>
-                <option>Reschedule to off-peak hours</option>
-                <option>Use higher capacity vehicle</option>
-              </select>
-            </label>
+            <Detail label="Shippers" value="StyleShoe Ltd, TechParts Co." />
+            <Detail label="Date" value="14 Nov 2023" />
+            <Detail label="Weight" value="4,200 kg" />
+            <Detail label="Route Distance" value="1,420 km (Road)" />
 
-            <label className="label full-width">
-              Comments
-              <textarea
-                rows="3"
-                className="textarea"
-                placeholder="Explain why you suggest this change..."
-              />
-            </label>
+            <div className="bg-green-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600">Total Emissions</p>
+              <p className="text-2xl font-bold text-green-600">
+                368 kg
+              </p>
+              <p className="text-xs text-green-600">▼ 12.4%</p>
+            </div>
 
-            <div className="form-actions">
-              <button type="button" className="btn">
-                Save review
+            <div className="flex gap-2 pt-2">
+              <button className="px-4 py-2 bg-gray-200 rounded-lg">
+                Close
+              </button>
+              <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+                Cancel
+              </button>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Approve
               </button>
             </div>
-          </form>
-        </section>
-      </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div className="text-sm">
+      <p className="text-gray-500">{label}</p>
+      <p className="font-medium">{value}</p>
     </div>
   );
 }

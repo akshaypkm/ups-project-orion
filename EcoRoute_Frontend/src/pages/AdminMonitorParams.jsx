@@ -1,79 +1,30 @@
-// src/pages/admin/AdminMonitorParams.jsx
-import React from "react";
-import AdminSidebar from "../Components/AdminSidebar";
-
+import { FiEdit } from "react-icons/fi";
 
 export default function AdminMonitorParams() {
   return (
-    <div className="dashboard-root">
-      <AdminSidebar />
-      <main className="main-content">
-        <header className="content-header">
-          <div>
-            <h1 className="page-title">Monitor parameters</h1>
-            <p className="page-subtitle">
-              Configure thresholds and emission factors for road transport.
-            </p>
-          </div>
-        </header>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Monitor Parameters</h1>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Road emission factor (sample)</h2>
-          </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Mode</th>
-                <th>Factor (kg CO₂ per ton-km)</th>
-                <th>Low threshold</th>
-                <th>High threshold</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Road</td>
-                <td>0.15</td>
-                <td>0 – 20 kg</td>
-                <td>60+ kg</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+      <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+        <Row label="Fuel Type" value="Diesel" />
+        <Row label="Fuel emission factor" value="2.68 kg CO₂/L" />
+        <Row label="Fuel efficiency" value="30 L / 100 km" />
+        <Row label="Refrigerant potential factor" value="1430" />
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Update thresholds</h2>
-          </div>
-          <form className="form-grid">
-            <label className="label">
-              Mode
-              <input
-                type="text"
-                value="Road"
-                disabled
-                className="disabled-input"
-              />
-            </label>
+        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg">
+          <FiEdit />
+          Edit Parameters
+        </button>
+      </div>
+    </div>
+  );
+}
 
-            <label className="label">
-              Low threshold (kg)
-              <input type="number" min="0" placeholder="e.g., 20" />
-            </label>
-
-            <label className="label">
-              High threshold (kg)
-              <input type="number" min="0" placeholder="e.g., 60" />
-            </label>
-
-            <div className="form-actions">
-              <button type="button" className="btn">
-                Save parameters
-              </button>
-            </div>
-          </form>
-        </section>
-      </main>
+function Row({ label, value }) {
+  return (
+    <div className="flex justify-between text-sm">
+      <p className="text-gray-500">{label}</p>
+      <p className="font-medium">{value}</p>
     </div>
   );
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRoute.Migrations
 {
     [DbContext(typeof(EcoRouteDbContext))]
-    [Migration("20251214081018_TransportVehicleAddedToOrdersTable")]
-    partial class TransportVehicleAddedToOrdersTable
+    [Migration("20251215102319_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
