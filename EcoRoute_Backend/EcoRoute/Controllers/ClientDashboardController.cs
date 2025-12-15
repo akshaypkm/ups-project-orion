@@ -13,6 +13,8 @@ namespace EcoRoute.Controllers
 {
     [Route("api/client-dashboard")]
     [ApiController]
+    [Authorize(Roles = "Client")]
+
     public class ClientDashboardController : ControllerBase
     {
         
@@ -23,7 +25,6 @@ namespace EcoRoute.Controllers
         }
 
         [HttpGet("stats")]
-        [Authorize(Roles = "Client")]
         public async Task<IActionResult> GetDashboardStat([FromQuery] string EmissionPeriod, [FromQuery] string ShipmentPeriod,[FromQuery] string EmissionsSavedPeriod)
         {
             var userRole = User.FindFirst("role");
