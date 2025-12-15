@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   // Filters (matching controller params)
   const [emissionsPeriod, setEmissionsPeriod] = useState("month");
   const [shipmentsPeriod, setShipmentsPeriod] = useState("month");
-  const [emissionSavedPeriod, setEmissionSavedPeriod] = useState("month");
+  const [emissionSavedPeriod, setEmissionSavedPeriod] = useState("year");
 
   // The controller asks for EmissionsSavedPeriod, but HTML shows "API Calls/Clients".
   // We'll keep this state in case we need to filter the 3rd/4th cards.
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
           params: {
             EmissionsPeriod: emissionsPeriod,
             ShipmentsPeriod: shipmentsPeriod,
-            EmissionsSavedPeriod: generalPeriod, // passing to backend as requested
+            EmissionsSavedPeriod: emissionSavedPeriod, // passing to backend as requested
           },
         });
         setStats(res.data);
@@ -61,11 +61,11 @@ export default function AdminDashboard() {
 
   // --- Chart Config ---
   const chartData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"], // Static or dynamic based on data
+    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], // Static or dynamic based on data
     datasets: [
       {
-        label: "CO2e (tons)",
-        data: stats.graphData?.length > 0 ? stats.graphData : [0, 0, 0, 0, 0, 0],
+        label: "CO2e (kg CO₂e)",
+        data: stats.graphData?.length > 0 ? stats.graphData : [0, 0, 0, 0, 0, 0, 0,0,0,0,0,0],
         backgroundColor: "rgba(74, 144, 226, 0.6)", // Primary Blue #4A90E2 with opacity
         borderColor: "#4A90E2",
         borderWidth: 1,
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
         titleFont: { size: 13 },
         bodyFont: { size: 13, weight: 'bold' },
         callbacks: {
-          label: (context) => `${context.raw} tons`
+          label: (context) => `${context.raw} kg CO₂e`
         }
       }
     },
@@ -136,8 +136,8 @@ export default function AdminDashboard() {
                 <span className="material-symbols-outlined text-[#4A90E2]">co2</span>
                 <p className="text-gray-600 text-sm font-medium">Total CO2e tracked</p>
               </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions} t</p>
-              <p className="text-[#50E3C2] text-sm font-medium">+5.2% vs last month</p>
+              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions} kg CO₂e</p>
+              {/* <p className="text-[#50E3C2] text-sm font-medium">+5.2% vs last month</p> */}
               
               {/* Filter Toggle */}
               <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
                 <p className="text-gray-600 text-sm font-medium">Total Shipments</p>
               </div>
               <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalShipments}</p>
-              <p className="text-[#50E3C2] text-sm font-medium">+10.1% vs last month</p>
+              {/* <p className="text-[#50E3C2] text-sm font-medium">+10.1% vs last month</p> */}
               
               {/* Filter Toggle */}
               <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
@@ -184,8 +184,8 @@ export default function AdminDashboard() {
                 <p className="text-gray-600 text-sm font-medium">Total Emissions Saved</p>
               </div>
 
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalEmissionsSaved} {"kg CO₂e"}</p>
-              <p className="text-[#50E3C2] text-sm font-medium">+1.3% vs last month</p>
+              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalEmissionsSaved.toFixed(2)} {"kg CO₂e"}</p>
+              {/* <p className="text-[#50E3C2] text-sm font-medium">+1.3% vs last month</p>  */}
               <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
                  {['today', 'month', 'year'].map(p => (
                    <button key={p} onClick={() => setEmissionSavedPeriod(p)} className={`text-[10px] px-2 py-0.5 rounded uppercase ${emissionSavedPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'}`}>{p}</button>
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col">
               <p className="text-gray-800 text-lg font-bold">CO2e Emissions by Month</p>
-              <p className="text-gray-500 text-sm">Last 6 Months Trend</p>
+              <p className="text-gray-500 text-sm">Last 12 Months Trend</p>
             </div>
             
             <div className="h-[300px] w-full">
