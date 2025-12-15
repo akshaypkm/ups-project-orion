@@ -242,7 +242,7 @@ export default function ClientDashboard() {
             {/* Card 1: Emissions */}
             <div className="bg-white p-6 rounded-xl shadow-sm border">
               <h2 className="text-lg font-semibold text-gray-700">Total CO2e emissions</h2>
-              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} t</p>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} kg CO₂e</p>
 
               <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
