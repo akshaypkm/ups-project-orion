@@ -92,6 +92,9 @@ builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 builder.Services.AddScoped<ICarbonQuoteService, CarbonQuoteService>();
 builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryService>();
 builder.Services.AddScoped<IForeCastService,ForeCastService>();
+builder.Services.AddScoped<IAdminShipmentReviewService, AdminShipmentReviewService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
 
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICreditRepository, CreditRepository>();

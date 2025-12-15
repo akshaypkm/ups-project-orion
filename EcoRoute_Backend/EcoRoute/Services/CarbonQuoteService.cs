@@ -189,9 +189,11 @@ namespace EcoRoute.Services
             {
                 orderToDb.OrderStatus = "processing";
             }
-
             orderToDb.OrderCO2Emission = orderDto.OrderCO2Emission;
 
+            await _companyRepo.UpdateCompanyCreditsAsync(companyId, orderDto.OrderCO2Emission);
+            await _companyRepo.SaveChangesAsync();
+            
             await _orderRepo.AddOrdersAsync(orderToDb);
             await _orderRepo.SaveChangesAsync();
 
