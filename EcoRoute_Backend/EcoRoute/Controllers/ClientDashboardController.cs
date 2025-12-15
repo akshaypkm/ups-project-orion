@@ -16,19 +16,23 @@ namespace EcoRoute.Controllers
     public class ClientDashboardController : ControllerBase
     {
         
-        private readonly EcoRouteDbContext dbContext;
         private readonly IClientDashboardService _clientDashboardService; 
-        public ClientDashboardController(EcoRouteDbContext dbContext, IClientDashboardService _clientDashboardService)
+        public ClientDashboardController(IClientDashboardService _clientDashboardService)
         {
-            this.dbContext = dbContext;
             this._clientDashboardService = _clientDashboardService;
         }
 
         [HttpGet("stats")]
-        [Authorize]
+        [Authorize(Roles = "Client")]
         public async Task<IActionResult> GetDashboardStat([FromQuery] string EmissionPeriod, [FromQuery] string ShipmentPeriod,[FromQuery] string EmissionsSavedPeriod)
         {
-            
+            var userRole = User.FindFirst("role");
+
+            // if(userRole?.Value == "admin")
+            // {
+            //     return NotFound("Page not found");
+            // }
+
             var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
 
             var companyClaim = User.FindFirst("CompanyName");
