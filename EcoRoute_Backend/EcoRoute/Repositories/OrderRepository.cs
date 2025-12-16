@@ -18,6 +18,7 @@ namespace EcoRoute.Repositories
 
         // CONTRACTS FOR ADMIN
         Task<int> GetAdminDashTotalOrdersForReview();
+        Task ChangeOrderStatus(int orderId, string status);
 
     }
     public class OrderRepository(EcoRouteDbContext dbContext) : IOrderRepository
@@ -50,6 +51,12 @@ namespace EcoRoute.Repositories
         public async Task<int>  GetAdminDashTotalOrdersForReview()
         {
             return await dbContext.Orders.Where(o => o.OrderStatus == "processing").CountAsync();
+        }
+
+        public async Task ChangeOrderStatus(int orderId, string status)
+        {
+            await dbContext.Orders.Where(o => o.Id == orderId).
+                                        ExecuteUpdateAsync(o => o.SetProperty(o => o.OrderStatus, status));
         }
     }
 }

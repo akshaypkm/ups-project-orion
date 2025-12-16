@@ -1,4 +1,5 @@
 using EcoRoute.Data;
+using EcoRoute.Models;
 using EcoRoute.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,8 @@ namespace EcoRoute.Repositories
         Task<int> GetSoFarReviewedShipmentCount();
 
         Task<List<Order>> GetShipmentsForReview();
+
+        Task CreateShipment(OrderDto orderDto);
     }
     public class ShipmentRepository(EcoRouteDbContext dbContext) : IShipmentRepository
     {
@@ -56,7 +59,29 @@ namespace EcoRoute.Repositories
 
         public async Task<List<Order>> GetShipmentsForReview()
         {
-            return await dbContext.Orders.Where(o => o.OrderStatus == "processing").ToListAsync();
+            return await dbContext.Orders.Where(o => o.OrderStatus == "processing" 
+                                        || o.OrderStatus == "planned").ToListAsync();
+        }
+
+        public async Task CreateShipment(OrderDto orderDto)
+        {
+            var shipmentToAdd = new Shipment()
+            {
+                ShipmentCO2Emission = orderDto.OrderCO2Emission,
+                ShipmentDate = orderDto.OrderDate,
+                ShipmentTotalItems = orderDto.OrderTotalItems,
+                ShipmentWeightKg = orderDto.OrderWeightKg,
+                ShipmentLength = orderDto.OrderLength,
+                ShipmentWidth = orderDto.OrderWidth,
+                ShipmentHeight= orderDto.OrderHeight,
+                ShipmentOrgin = orderDto.OrderOrigin,
+                ShipmentDestination = orderDto.OrderDestination,
+                ShipmentDistance = orderDto.OrderDistance,
+                Vehicle = orderDto.TransportVehicle
+            };
+
+            await dbContext.AddAsync(shipmentToAdd);
+            await dbContext.SaveChangesAsync();
         }
     }
 }
