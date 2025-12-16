@@ -21,6 +21,8 @@ namespace EcoRoute.Models
  
         public double EmissionsSaved{get; set;}
 
+        public double CompanyEmissionBudget{get; set;}
+
         public double[] GraphData{get; set;} = new double[12];
     }
 }

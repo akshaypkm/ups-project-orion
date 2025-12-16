@@ -3,6 +3,10 @@ namespace EcoRoute.Models
     public class OrderDto
     {
 
+        public int OrderId{get; set;}
+
+        public string? OrderCode{get; set;}
+
         public double OrderCO2Emission{get;set;}
 
         public string SelectedRouteSummary{get; set;}
