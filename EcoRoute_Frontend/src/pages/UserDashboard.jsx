@@ -41,6 +41,7 @@ export default function ClientDashboard() {
     totalForecastedEmissions: 0,
     emissionsSaved: 0,
     graphData: [],
+    companyEmissionBudget : 0
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -242,7 +243,7 @@ export default function ClientDashboard() {
             {/* Card 1: Emissions */}
             <div className="bg-white p-6 rounded-xl shadow-sm border">
               <h2 className="text-lg font-semibold text-gray-700">Total CO2e emissions</h2>
-              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} kg CO₂e</p>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions.toFixed(2)} kg CO₂e</p>
 
               <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
@@ -301,7 +302,7 @@ export default function ClientDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Forecast (for this month)</p>
-                  <p className="text-xl font-semibold">{stats.forecastedEmissions} t</p>
+                  <p className="text-xl font-semibold">{stats.forecastedEmissions.toFixed(2)} kg CO₂e</p>
                 </div>
               </div>
 
@@ -411,17 +412,17 @@ export default function ClientDashboard() {
                   Expected annual emission based on current trend.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.totalForecastedEmissions} t</p>
+                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.totalForecastedEmissions.toFixed(2)} kg CO₂e</p>
 
                 {/* Progress Bar Logic: Assuming 1200 is cap */}
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-3 overflow-hidden">
                   <div 
                     className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min((stats.totalForecastedEmissions / 1200) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((stats.totalForecastedEmissions / 100) * 100, 100)}%` }}
                   ></div>
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">/ 1,200 t (Annual Cap)</p>
+                <p className="text-xs text-gray-500 mt-1">/ {stats.companyEmissionBudget}</p>
               </div>
 
               {/* Emissions Saved */}

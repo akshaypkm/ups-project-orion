@@ -1,92 +1,304 @@
-// src/pages/admin/AdminShipmentsReview.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
+// Adjusted paths to use ../../ based on folder depth
 import AdminSidebar from "../Components/AdminSidebar";
-
+import RouteMap from "../Components/RouteMap"; 
+import api from "../api/api"; 
+import { Search } from "lucide-react";
 
 export default function AdminShipmentsReview() {
+  const [loading, setLoading] = useState(true);
+  const [shipments, setShipments] = useState([]);
+  const [openCard, setOpenCard] = useState(null);
+  
+  // Filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  // --- 1. Fetch Data from Backend ---
+  useEffect(() => {
+    const fetchShipments = async () => {
+      try {
+        const res = await api.get("/api/admin-shipments-review/get-review-shipments");
+        setShipments(res.data);
+      } catch (err) {
+        console.error("Failed to fetch review shipments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShipments();
+  }, []);
+
+  // --- 2. Action Handlers ---
+
+  const handleApprove = async (shipment) => {
+    try {
+      // Send the entire shipment DTO to the backend
+      await api.post("/api/admin-shipments-review/approve", shipment);
+      
+      // Update UI: Remove or update status
+      setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+      alert(`Shipment #${shipment.orderId} Approved Successfully!`);
+    } catch (err) {
+      console.error("Approval failed:", err);
+      alert("Failed to approve shipment.");
+    }
+  };
+
+  const handleCancel = async (shipment) => {
+    if(!window.confirm("Are you sure you want to cancel this shipment?")) return;
+
+    try {
+      // Send the entire shipment DTO to the backend
+      await api.post("/api/admin-shipments-review/cancel", shipment);
+      
+      // Update UI: Remove or update status
+      setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+      alert(`Shipment #${shipment.orderId} Cancelled.`);
+    } catch (err) {
+      console.error("Cancellation failed:", err);
+      alert("Failed to cancel shipment.");
+    }
+  };
+
+  // --- 3. Filter Logic ---
+  const filteredShipments = shipments.filter((ship) => {
+    // Search by ID, Origin, or Destination
+    const searchTerm = search.toLowerCase();
+    const matchSearch = 
+      (ship.orderId?.toString().toLowerCase().includes(searchTerm)) ||
+      (ship.orderOrigin?.toLowerCase().includes(searchTerm)) ||
+      (ship.orderDestination?.toLowerCase().includes(searchTerm));
+
+    // Filter by Status (Map backend status to UI options if needed)
+    const matchStatus =
+      statusFilter === "All" || 
+      (ship.orderStatus && ship.orderStatus.toLowerCase() === statusFilter.toLowerCase());
+
+    return matchSearch && matchStatus;
+  });
+
+  // --- Helper: Calculate Emission Reduction ---
+  const calculateReduction = (actual, standard) => {
+    if (!standard || standard === 0) return 0;
+    const reduction = ((standard - actual) / standard) * 100;
+    return reduction.toFixed(1);
+  };
+
   return (
-    <div className="dashboard-root">
+    <div className="flex min-h-screen bg-[#f5f7fb]">
+      {/* SIDEBAR */}
       <AdminSidebar />
-      <main className="main-content">
-        <header className="content-header">
-          <div>
-            <h1 className="page-title">Shipment Review</h1>
-            <p className="page-subtitle">
-              Review high-emission road shipments and suggest optimizations.
-            </p>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 ml-64 px-10 py-8">
+        
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Shipment Review</h1>
+          <p className="text-gray-500 mt-1">
+            Review and approve pending shipments for carbon compliance.
+          </p>
+        </div>
+
+        {/* FILTER BAR */}
+        <div className="flex items-center gap-4 mb-8">
+          {/* SEARCH */}
+          <div className="relative flex-1 max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by Order ID, Origin or Destination..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+            />
           </div>
-        </header>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Pending reviews</h2>
-          </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Shipment ID</th>
-                <th>User</th>
-                <th>Route</th>
-                <th>CO₂ (kg)</th>
-                <th>Current comment</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>#REV-3001</td>
-                <td>Logistics A</td>
-                <td>Chennai → Delhi</td>
-                <td>80.4</td>
-                <td>Road route via high traffic corridor</td>
-              </tr>
-              <tr>
-                <td>#REV-3002</td>
-                <td>Logistics B</td>
-                <td>Chennai → Mumbai</td>
-                <td>65.2</td>
-                <td>Multiple partial loads on same truck</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+          {/* STATUS FILTER */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+          >
+            <option value="All">Status: All</option>
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Review">In Review</option>
+          </select>
+        </div>
 
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Review actions</h2>
-          </div>
-          <form className="form-grid">
-            <label className="label">
-              Shipment ID
-              <input type="text" placeholder="e.g., REV-3001" />
-            </label>
-
-            <label className="label">
-              Suggested action
-              <select>
-                <option>Optimize route</option>
-                <option>Consolidate loads</option>
-                <option>Reschedule to off-peak hours</option>
-                <option>Use higher capacity vehicle</option>
-              </select>
-            </label>
-
-            <label className="label full-width">
-              Comments
-              <textarea
-                rows="3"
-                className="textarea"
-                placeholder="Explain why you suggest this change..."
-              />
-            </label>
-
-            <div className="form-actions">
-              <button type="button" className="btn">
-                Save review
-              </button>
+        {/* SHIPMENT CARDS */}
+        <div className="space-y-5">
+          {loading ? (
+            <div className="text-center py-10 text-gray-500">Loading shipments...</div>
+          ) : filteredShipments.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed">
+              No shipments found matching your criteria.
             </div>
-          </form>
-        </section>
-      </main>
+          ) : (
+            filteredShipments.map((ship, index) => {
+              // Use explicit ID or fallback to index if missing in DTO
+              const uniqueId = ship.orderId || `ship-${index}`; 
+              const isOpen = openCard === uniqueId;
+              
+              // Calculate reduction if standard emissions exist
+              const reduction = calculateReduction(ship.orderCO2Emission, ship.orderStandardCO2Emissions);
+              const isPositiveReduction = reduction > 0;
+
+              return (
+                <div
+                  key={uniqueId}
+                  className={`bg-white rounded-xl border transition-all duration-200 ${
+                    isOpen ? "ring-2 ring-blue-400 shadow-md" : "hover:shadow-md"
+                  }`}
+                >
+                  {/* CARD HEADER (Click to Expand) */}
+                  <div
+                    onClick={() => setOpenCard(isOpen ? null : uniqueId)}
+                    className="px-6 py-5 flex justify-between items-center cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-6">
+                      {/* ID & Route */}
+                      <div>
+                        <p className="text-blue-600 font-bold text-lg">#{uniqueId}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                          <span className="font-medium text-gray-700">{ship.orderOrigin}</span>
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                          <span className="font-medium text-gray-700">{ship.orderDestination}</span>
+                        </div>
+                      </div>
+
+                      {/* Quick Stats (Visible when collapsed) */}
+                      {!isOpen && (
+                        <div className="hidden md:flex gap-6 text-sm text-gray-500 border-l pl-6 ml-2">
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">Date</span>
+                            {ship.orderDate ? new Date(ship.orderDate).toLocaleDateString() : "N/A"}
+                          </div>
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">Weight</span>
+                            {ship.orderWeightKg} kg
+                          </div>
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">CO2e</span>
+                            {ship.orderCO2Emission?.toFixed(2)} kg
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      {/* Status Badge */}
+                      <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${
+                        ship.orderStatus === 'Pending' ? "bg-yellow-100 text-yellow-700" :
+                        ship.orderStatus === 'Approved' ? "bg-green-100 text-green-700" :
+                        "bg-gray-100 text-gray-600"
+                      }`}>
+                        {ship.orderStatus || "Unknown"}
+                      </span>
+                      
+                      {/* Chevron Icon */}
+                      <span className={`material-symbols-outlined text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}>
+                        expand_more
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* EXPANDED VIEW */}
+                  {isOpen && (
+                    <div className="border-t border-gray-100 px-6 py-6 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        
+                        {/* LEFT: MAP */}
+                        <div className="flex-1 min-h-[300px] h-[350px] bg-gray-50 rounded-xl overflow-hidden border border-gray-200 relative">
+                          {ship.selectedPolyline ? (
+                            <RouteMap encodedPolyline={ship.selectedPolyline} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Route Data Available
+                            </div>
+                          )}
+                        </div>
+
+                        {/* RIGHT: DETAILS */}
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                            
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Transport Mode</p>
+                              <p className="font-medium text-gray-800 capitalize">{ship.transportMode || "N/A"}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Vehicle</p>
+                              <p className="font-medium text-gray-800">{ship.transportVehicle || "Standard Fleet"}</p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Distance</p>
+                              <p className="font-medium text-gray-800">{ship.orderDistance} km</p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Actual Emissions</p>
+                              <p className="font-medium text-gray-800 text-lg">
+                                {ship.orderCO2Emission?.toFixed(2)} kg
+                              </p>
+                            </div>
+
+                            <div className="col-span-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-500 font-medium">Standard Baseline</span>
+                                <span className="text-xs font-bold text-gray-700">{ship.orderStandardCO2Emissions?.toFixed(2)} kg</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500 font-medium">Carbon Savings</span>
+                                <span className={`text-sm font-bold ${isPositiveReduction ? "text-green-600" : "text-red-500"}`}>
+                                  {isPositiveReduction ? `-${reduction}% Reduction` : `${Math.abs(reduction)}% Increase`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ACTION BUTTONS */}
+                          
+                          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                            
+                            <button
+                              onClick={() => setOpenCard(null)}
+                              className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
+                            >
+                              Close
+                            </button>
+
+                            <button 
+                              className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
+                              onClick={() => handleCancel(ship)} 
+                            >
+                              <span className="material-symbols-outlined text-sm">close</span>
+                              Cancel Shipment
+                            </button>
+
+                            <button 
+                              className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+                              onClick={() => handleApprove(ship)} 
+                            >
+                              <span className="material-symbols-outlined text-sm">check</span>
+                              Approve Shipment
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

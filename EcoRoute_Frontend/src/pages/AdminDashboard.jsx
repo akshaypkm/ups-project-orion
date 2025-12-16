@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                 <span className="material-symbols-outlined text-[#4A90E2]">co2</span>
                 <p className="text-gray-600 text-sm font-medium">Total CO2e tracked</p>
               </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions} kg CO₂e</p>
+              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions.toFixed(2)} kg CO₂e</p>
               {/* <p className="text-[#50E3C2] text-sm font-medium">+5.2% vs last month</p> */}
               
               {/* Filter Toggle */}
