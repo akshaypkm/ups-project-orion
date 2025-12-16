@@ -7,6 +7,8 @@ import api from "../api/api";
 export default function UserCarbonQuoteCalculator() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  // Toggle state for the methodology section
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
@@ -111,6 +113,120 @@ export default function UserCarbonQuoteCalculator() {
         {/* Scrollable Content Area */}
         <div className="content-scroll-area">
           <div className="space-y-6 max-w-5xl mx-auto">
+            {/* METHODOLOGY & STANDARDS SECTION */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full">
+              <button
+                onClick={() => setShowMethodology(!showMethodology)}
+                className="w-full px-8 py-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-emerald-600 bg-emerald-100 p-2 rounded-lg">verified</span>
+                  <div>
+                    <h3 className="font-bold text-gray-800">Methodology & Environmental Standards</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">How EcoRoute validates and calculates carbon footprints</p>
+                  </div>
+                </div>
+                <span className={`material-symbols-outlined text-gray-400 transition-transform duration-300 ${showMethodology ? "rotate-180" : ""}`}>
+                  expand_more
+                </span>
+              </button>
+
+              {showMethodology && (
+                <div className="p-8 border-t border-gray-200 space-y-8 animate-in slide-in-from-top-2 text-sm">
+                  
+                  {/* Section 1 */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1">
+                      <h4 className="font-bold text-gray-800 mb-1">Data Acquisition</h4>
+                      <p className="text-gray-500 text-xs">The Foundation</p>
+                    </div>
+                    <div className="md:col-span-3 space-y-3 text-gray-600">
+                      <p>
+                        <strong className="text-gray-800">Route Geometry:</strong> We utilize the <span className="text-emerald-600 font-medium">Google Maps Directions API</span> to obtain precise, turn-by-turn polyline data for every shipment.
+                      </p>
+                      <p>
+                        <strong className="text-gray-800">Elevation Mapping:</strong> Routes are cross-referenced with the <span className="text-emerald-600 font-medium">Google Elevation API</span> to determine grade (slope) profiles, ensuring that uphill climbs which consume significantly more fuel are accounted.
+                      </p>
+                      <p>
+                        <strong className="text-gray-800">Geospatial Processing:</strong> Raw GPS points are densified to 50-meter segments using <strong>Haversine</strong> distance formulas to ensure granular accuracy.
+                      </p>
+                    </div>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* Section 2 */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1">
+                      <h4 className="font-bold text-gray-800 mb-1">Physics Engine</h4>
+                      <p className="text-gray-500 text-xs">Vehicle Dynamics</p>
+                    </div>
+                    <div className="md:col-span-3 space-y-4 text-gray-600">
+                      <p>
+                        Our engine doesn't just use "average MPG." It models the primary forces resisting motion:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>
+                          <strong>Grade Resistance:</strong> <code className="bg-gray-100 px-1 rounded">E<sub>grade</sub> = m · g · Δh</code> (Energy required to lift the truck uphill).
+                        </li>
+                        <li>
+                          <strong>Rolling Resistance:</strong> <code className="bg-gray-100 px-1 rounded">E<sub>roll</sub> = m · g · d · C<sub>rr</sub></code> (Friction between tires and road).
+                        </li>
+                      </ul>
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-blue-800 text-xs mt-2">
+                        <strong>Dynamic Mass Calculation:</strong> We calculate the Effective Mass by combining the Tare Weight (empty truck) with your specific Payload Weight.
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* Section 3 */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1">
+                      <h4 className="font-bold text-gray-800 mb-1">Carbon Standards</h4>
+                      <p className="text-gray-500 text-xs">Conversion Factors</p>
+                    </div>
+                    <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <p className="text-gray-500 text-xs uppercase font-bold mb-1">Engine Efficiency</p>
+                        <p className="text-gray-800 font-medium">35% (Brake Thermal Efficiency)</p>
+                        <p className="text-xs text-gray-500 mt-1">Based on real-world heavy-duty diesel performance.</p>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <p className="text-gray-500 text-xs uppercase font-bold mb-1">Emission Factor</p>
+                        <p className="text-gray-800 font-medium">2.70 kg CO₂e / Liter</p>
+                        <p className="text-xs text-gray-500 mt-1">Well-to-Wheel (Lifecycle) standard including upstream refining.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* Section 4 */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1">
+                      <h4 className="font-bold text-gray-800 mb-1">Selection Algorithm</h4>
+                      <p className="text-gray-500 text-xs">Optimization Logic</p>
+                    </div>
+                    <div className="md:col-span-3 text-gray-600 space-y-2">
+                      <p>
+                        Our algorithm automatically selects the <strong>smallest efficient vehicle</strong> that fits your cargo's weight and volume dimensions.
+                      </p>
+                      <p>
+                        We apply a <strong>90% Packing Efficiency Factor</strong> to ensure goods physically fit inside the cargo bay, preventing "ghost" capacity errors.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-100 p-4 rounded-lg text-xs text-gray-500 mt-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">info</span>
+                    <span>Methodology aligned with the <strong>GLEC Framework</strong> for logistics emissions. Physics constants sourced from <em>Internal Combustion Engine Fundamentals (Heywood)</em>.</span>
+                  </div>
+
+                </div>
+              )}
+            </div>
             
             <div>
               <h1 className="text-3xl font-bold text-gray-800">New Quote</h1>
