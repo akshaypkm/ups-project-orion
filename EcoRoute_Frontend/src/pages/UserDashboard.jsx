@@ -171,7 +171,7 @@ export default function ClientDashboard() {
 
       {/* 2. Main Content Area */}
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
-      <main className="flex-1 p-8 ml-0 md:ml-[300px]"> 
+      <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
         
         {/* Top Header (Preserved Functionality + New Style) */}
         <header className="flex justify-between items-center mb-8">
@@ -242,7 +242,7 @@ export default function ClientDashboard() {
             {/* Card 1: Emissions */}
             <div className="bg-white p-6 rounded-xl shadow-sm border">
               <h2 className="text-lg font-semibold text-gray-700">Total CO2e emissions</h2>
-              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} t</p>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} kg CO₂e</p>
 
               <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
@@ -297,7 +297,7 @@ export default function ClientDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Credits Left</p>
-                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits}</p>
+                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits.toFixed(2)}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Forecast (for this month)</p>
@@ -435,7 +435,7 @@ export default function ClientDashboard() {
                   Emissions saved by choosing sustainable routes.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved.toFixed(2)} kg CO₂e</p>
+                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved} t</p>
 
                 <div className="mt-4 flex gap-2">
                   {['Today', 'Month', 'Year'].map(p => (
