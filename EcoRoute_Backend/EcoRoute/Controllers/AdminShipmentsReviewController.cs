@@ -8,7 +8,8 @@ namespace EcoRoute.Controllers
 {
 
     [Route("api/admin-shipments-review")]
-    [Authorize]
+    [ApiController]
+    [Authorize(Roles = "admin")]
     public class AdminShipmentsReviewController : ControllerBase
     {
         private readonly IAdminShipmentReviewService _adminShipmentReviewService;
@@ -43,7 +44,7 @@ namespace EcoRoute.Controllers
         [HttpPost("cancel")]
         public async Task<IActionResult> CancelShipment([FromBody] OrderDto orderDto)
         {
-            
+
             await _adminShipmentReviewService.CancelShipment(orderDto);
 
             return Ok();

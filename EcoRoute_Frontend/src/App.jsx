@@ -15,7 +15,7 @@ import AdminPanel from "./pages/AdminPanel";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminShipments from "./pages/AdminShipments";
 import AdminShipmentsReview from "./pages/AdminShipmentsReview";
-import AdminMonitorParams from "./pages/AdminMonitorParams";
+// import AdminMonitorParams from "./pages/AdminMonitorParams";
 
 export default function App() {
   return (
@@ -35,9 +35,9 @@ export default function App() {
       {/* ADMIN ROUTES */}
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/shipments" element={<AdminShipments />} />
-      <Route path="/admin/shipments/review" element={<AdminShipmentsReview />} />
-      <Route path="/admin/monitor" element={<AdminMonitorParams />} />
+      <Route path="/admin-shipments" element={<AdminShipments />} />
+      <Route path="/admin-shipments-review" element={<AdminShipmentsReview />} />
+      {/* <Route path="/admin/monitor" element={<AdminMonitorParams />} /> */}
 
     </Routes>
   );

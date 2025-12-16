@@ -100,6 +100,7 @@ export default function ClientDashboard() {
 
   // --- Handlers ---
   const handleSell = async () => {
+    if(!window.confirm("Are you sure you want to sell this shipment?")) return;
     if (!sellAmount || parseFloat(sellAmount) <= 0) return alert("Enter valid amount");
     try {
       await api.post("/api/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {

@@ -52,24 +52,18 @@ export default function AdminSidebar() {
           </button>
 
           <button 
-            className={getNavItemClasses('/admin/shipments')}
-            onClick={() => navigate('/admin/shipments')}
+            className={getNavItemClasses('/admin-shipments')}
+            onClick={() => navigate('/admin-shipments')}
           >
             <span className="material-symbols-outlined">history</span>
             Shipment History
           </button>
 
-          <button 
-            className={getNavItemClasses('/admin/monitor')}
-            onClick={() => navigate('/admin/monitor')}
-          >
-            <span className="material-symbols-outlined">monitoring</span>
-            Monitor Parameters
-          </button>
+          
           
           <button 
-            className={getNavItemClasses('/admin/shipments/review')}
-            onClick={() => navigate('/admin/shipments/review')}
+            className={getNavItemClasses('/admin-shipments-review')}
+            onClick={() => navigate('/admin-shipments-review')}
           >
             <span className="material-symbols-outlined">rate_review</span>
             Review Requests

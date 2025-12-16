@@ -10,6 +10,8 @@ namespace EcoRoute.Controllers
 {
     [Route("api/client-shipment-history")]
     [ApiController]
+    [Authorize(Roles = "client")]
+
     public class ClientShipmentHistoryController : ControllerBase
     {
         private readonly EcoRouteDbContext dbContext;

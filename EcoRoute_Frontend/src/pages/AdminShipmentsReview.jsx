@@ -120,12 +120,11 @@ export default function AdminShipmentsReview() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+            className="px-6 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
           >
             <option value="All">Status: All</option>
-            <option value="Pending">Pending</option>
             <option value="Processing">Processing</option>
-            <option value="Review">In Review</option>
+            <option value="Planned">Planned</option>
           </select>
         </div>
 

@@ -8,7 +8,8 @@ namespace EcoRoute.Controllers
 {
     [Route("api/forecast")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "client")]
+    
     public class ForecastController : ControllerBase
     {
         private readonly IForeCastService _forecastService;
