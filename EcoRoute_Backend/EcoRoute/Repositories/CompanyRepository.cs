@@ -20,6 +20,9 @@ namespace EcoRoute.Repositories
         Task<int> GetCompanyIdByName(string CompanyName);
 
         Task<double> GetCompanyCreditsBySectorAsync(string CompanySector);
+
+        Task UpdateCompanyCreditsAsync(int CompanyId, double OrderCO2Emission);
+        
     }
     public class CompanyRepository : ICompanyRepository
     {
@@ -63,9 +66,24 @@ namespace EcoRoute.Repositories
 
         public async Task<double> GetCompanyCreditsBySectorAsync(string CompanySector)
         {
-            return await dbContext.Credits.Where(c => c.Sector == CompanySector)
+            var credits =  await dbContext.Credits.Where(c => c.Sector.ToLower().Equals(CompanySector.ToLower()))
                                             .Select(c => c.SectorCredits).FirstOrDefaultAsync();
             
+            Console.WriteLine($"CREDITs::::::::::::::::::::::::::::{credits}");
+
+            return credits;
         }
+
+        public async Task UpdateCompanyCreditsAsync(int CompanyId, double OrderCO2Emission)
+        {
+            var company = await dbContext.Companies.Where(c => c.Id == CompanyId).FirstOrDefaultAsync();
+
+            double emissionTonnes = OrderCO2Emission / 1000;
+            
+            company.CompanyCredits -= emissionTonnes;
+
+        }
+
+        
     }
 }

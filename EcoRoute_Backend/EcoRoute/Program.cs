@@ -91,8 +91,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 builder.Services.AddScoped<ICarbonQuoteService, CarbonQuoteService>();
 builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryService>();
+<<<<<<< HEAD
 builder.Services.AddScoped<IForeCastService,ForeCastService>();
 builder.Services.AddScoped<IAdminShipmentService, AdminShipmentService>();
+=======
+builder.Services.AddScoped<IAdminShipmentReviewService, AdminShipmentReviewService>();
+
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+>>>>>>> c3541239f518c2ad0b7e8340eff09055e8d18b95
 
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICreditRepository, CreditRepository>();

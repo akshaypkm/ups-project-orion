@@ -297,7 +297,7 @@ export default function ClientDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Credits Left</p>
-                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits}</p>
+                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits.toFixed(2)}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Forecast (for this month)</p>

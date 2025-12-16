@@ -12,6 +12,13 @@ namespace EcoRoute.Repositories
         Task SaveChangesAsync();
         IQueryable<Order> GetOrdersByCompanyId(int companyId);
         Task<IEnumerable<Order>> GetOrderByDateRange(DateTime startDate, DateTime endDate);
+
+
+
+
+        // CONTRACTS FOR ADMIN
+        Task<int> GetAdminDashTotalOrdersForReview();
+
     }
     public class OrderRepository(EcoRouteDbContext dbContext) : IOrderRepository
     {
@@ -34,6 +41,15 @@ namespace EcoRoute.Repositories
         public async Task<IEnumerable<Order>> GetOrderByDateRange(DateTime startDate, DateTime endDate)
         {
             return await dbContext.Orders.Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate).ToListAsync();
+        }
+
+
+
+
+        // METHODS FOR ADMIN
+        public async Task<int>  GetAdminDashTotalOrdersForReview()
+        {
+            return await dbContext.Orders.Where(o => o.OrderStatus == "processing").CountAsync();
         }
     }
 }
