@@ -163,7 +163,7 @@ export default function AdminShipments() {
 
               {filteredShipments.map((s) => (
                 <tr key={s.shipmentId}>
-                  <td>{s.shipmentId}</td>
+                  <td>{s.shipmentCode}</td>
                   <td>{s.shipmentDate}</td>
                   <td>{s.companyName}</td>
                   <td>{s.shipmentOrigin}</td>

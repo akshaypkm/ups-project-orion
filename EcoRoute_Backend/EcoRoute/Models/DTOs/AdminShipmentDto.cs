@@ -2,7 +2,7 @@ namespace EcoRoute.Models
 {
        public class AdminShipmentDto
     {
-        public int ShipmentId{get; set;}
+        public string ShipmentCode{get; set;}=string.Empty;
         public DateTime ShipmentDate{get; set;}
         public string CompanyName{get; set;} =string.Empty;
         public string ShipmentOrigin{get; set;} =string.Empty;

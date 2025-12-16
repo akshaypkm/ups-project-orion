@@ -26,7 +26,7 @@ namespace EcoRoute.Services
                 .ContinueWith(task => task.Result
                     .Select(s => new AdminShipmentDto
                     {
-                        ShipmentId = s.Id,
+                        ShipmentCode = s.ShipmentCode,
                         ShipmentDate = s.ShipmentDate,
                         CompanyName = s.OrderList.FirstOrDefault()?.Company?.CompanyName ?? string.Empty,
                         ShipmentOrigin = s.ShipmentOrgin,
