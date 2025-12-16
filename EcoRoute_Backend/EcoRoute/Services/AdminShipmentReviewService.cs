@@ -50,9 +50,11 @@ namespace EcoRoute.Services
         public async Task ApproveShipment(OrderDto orderDto)
         {
             string status = "placed";
-            await _orderRepo.ChangeOrderStatus(orderDto.OrderId, status);
             
-            await _shipmentRepo.CreateShipment(orderDto);
+            int shipId = await _shipmentRepo.CreateShipment(orderDto);
+
+            await _orderRepo.ChangeOrderStatus(orderDto.OrderId, status);
+            await _orderRepo.InsertShipmentIdInOrder(orderDto.OrderId, shipId);
 
             var notification = new Notification(){
                 Message = $"Your order for ID({orderDto.OrderCode}) from {orderDto.OrderOrigin} -> {orderDto.OrderDestination} has been placed successfully!",
@@ -62,7 +64,6 @@ namespace EcoRoute.Services
 
             await _notifRepo.AddNotificationAsync(notification);
             await _notifRepo.SaveChangesAsync();
-
         }
 
         public async Task CancelShipment(OrderDto orderDto)
