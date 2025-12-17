@@ -42,7 +42,7 @@ namespace EcoRoute.Services
                         double f = (double) s/(double) steps;
                         var ip = IntermediateGreatCircle((a.Lat, a.Lng), (b.Lat, b.Lng), f);
                         outPts.Add(new DensePoint
-                        {
+                        {   
                             Lat = ip.Lat,
                             Lng = ip.Lng
                         });
