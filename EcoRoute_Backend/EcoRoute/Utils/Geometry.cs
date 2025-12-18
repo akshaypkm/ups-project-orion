@@ -8,17 +8,29 @@ namespace EcoRoute.Services
         // CONSTANTS
         private static readonly double R = 6371000.0;
 
-        internal static List<DensePoint> Densify(List<RoutePoint> route, double maxSegmentMeters)
+        internal static (List<DensePoint> densePoints, RoutePoint OriginRP, RoutePoint DestinationRP) Densify(List<RoutePoint> route, double maxSegmentMeters)
         {
             var outPts = new List<DensePoint>();
 
-            if(route == null || route.Count == 0) return outPts;
+            if(route == null || route.Count == 0) return (outPts, null, null);
 
             outPts.Add(new DensePoint
             {
                 Lat = route[0].Lat,
                 Lng = route[0].Lng
             });
+
+            RoutePoint OriginRP = new RoutePoint()
+            {
+                Lat = route[0].Lat,
+                Lng = route[0].Lng
+            };
+
+            RoutePoint DestinationRP = new RoutePoint()
+            {
+                Lat = route[route.Count-1].Lat,
+                Lng = route[route.Count - 1].Lng
+            }; 
 
             for(int i = 0; i<route.Count - 1; i++)
             {
@@ -56,7 +68,7 @@ namespace EcoRoute.Services
             }
             if (outPts.Count > 0) outPts[outPts.Count - 1].SegmentMeters = 0.0;
 
-            return outPts;
+            return (outPts, OriginRP, DestinationRP);
         }
 
         internal static double HaversineMeters(double lat1, double lng1, double lat2, double lng2)

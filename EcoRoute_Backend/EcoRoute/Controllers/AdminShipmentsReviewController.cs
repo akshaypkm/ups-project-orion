@@ -49,5 +49,24 @@ namespace EcoRoute.Controllers
 
             return Ok();
         }
+
+        [HttpPost("improvise-shipment")]
+        public async Task<IActionResult> ImproviseShipment([FromBody] List<OrderDto> orderDtos)
+        {
+            var result = await _adminShipmentReviewService.ImproviseShipments(orderDtos);
+            return Ok(result);
+        }
+
+        [HttpPost("improvise-shipment-approve")]
+        public async Task<IActionResult> ApproveGroup([FromBody] List<OrderDto> orderDtos)
+        {
+            foreach(var orderDto in orderDtos)
+            {
+                await _adminShipmentReviewService.ApproveShipment(orderDto);
+            }
+
+            return Ok("order statuses changed");
+        }
+
     }
 }
