@@ -61,16 +61,10 @@ namespace EcoRoute.Services
                 return (false,"provide valid origin and destination", null);
             }
 
-            var truckType = await GetTruckType(orderRequestDto);
-
+            var truckType = await _truckRepo.GetTruckTypeAsync(orderRequestDto);
             Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
-            if(truckType == null && orderRequestDto.OrderMode.ToLower() == "dedicated"){
+            if(truckType == null){
                 truckType = await _truckRepo.GetOpenTrailerTruckAsync();
-            }
-
-            if(truckType == null)
-            {
-                return (false, "no trucks were assigned as per your requirements, recheck the order specifications", null);
             }
 
             double kerbWeight = truckType.KerbWeight;
@@ -105,10 +99,7 @@ namespace EcoRoute.Services
                     Console.WriteLine($"Decoded {route.Count} step-points from route.");
                     
                     double maxSegmentMeters = 50.0;
-
-                    var densePointsWithCoors = Geometry.Densify(route, maxSegmentMeters);
-                    var densePoints = densePointsWithCoors.densePoints;
-
+                    var densePoints = Geometry.Densify(route, maxSegmentMeters);
                     Console.WriteLine($"Densified to {densePoints.Count} points (max segment ~{maxSegmentMeters} m).");
 
                     Console.WriteLine("Fetching elevations for densified points (batch requests)...");
@@ -166,9 +157,6 @@ namespace EcoRoute.Services
                     orderDto.CompanyId = companyId;
                     orderDto.RouteDuration = routeDuration;
                     orderDto.SelectedPolyline = r.encodedString;
-                    orderDto.OriginRP = densePointsWithCoors.OriginRP;
-                    orderDto.DestinationRP = densePointsWithCoors.DestinationRP;
-                    orderDto.CompanyName = await _companyRepo.GetCompanyNameById(companyId);
 
                     routeIndex++;
 
@@ -212,57 +200,6 @@ namespace EcoRoute.Services
             await transaction.CommitAsync();
 
             return (true, "order has been placed successfully");
-        }
-
-        public async Task<TruckType> GetTruckType(OrderRequestDto orderRequestDto)
-        {
-            var trucks = await _truckRepo.GetTruckTypeAsync(orderRequestDto.OrderWeightKg);
-            
-            foreach (var truck in trucks)
-            {
-                if (CanFitOrder(orderRequestDto, truck))
-                    return truck;
-            }
-
-            return null;
-        }
-
-        public bool CanFitOrder(OrderRequestDto order, TruckType truck)
-        {
-            // Floor dimensions (orientation-aware)
-            double itemL = order.OrderLength;
-            double itemW = order.OrderWidth;
-            double itemH = order.OrderHeight;
-
-            double truckL = truck.CargoLengthMeters;
-            double truckW = truck.CargoWidthMeters;
-            double truckH = truck.CargoHeightMeters;
-
-            // 1. Check base orientation
-            bool fitsBase =
-                (itemL <= truckL && itemW <= truckW) ||
-                (itemW <= truckL && itemL <= truckW);
-
-            if (!fitsBase) return false;
-
-            // 2. Items per layer (2D packing approx)
-            int itemsPerRow = (int)(truckL / Math.Min(itemL, itemW));
-            int itemsPerCol = (int)(truckW / Math.Max(itemL, itemW));
-
-            int itemsPerLayer = Math.Max(1, itemsPerRow * itemsPerCol);
-
-            // 3. Required layers
-            int layersNeeded = (int)Math.Ceiling(
-                (double)order.OrderTotalItems / itemsPerLayer
-            );
-
-            // 4. Height feasibility
-            double requiredHeight = layersNeeded * itemH;
-
-            if (requiredHeight > truckH) return false;
-
-            // 5. Safety margin
-            return requiredHeight <= truckH * 0.9;
         }
     }
 }

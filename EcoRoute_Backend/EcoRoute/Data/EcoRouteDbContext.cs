@@ -27,23 +27,6 @@ namespace EcoRoute.Data
             modelBuilder.Entity<Shipment>()
             .Property(s => s.ShipmentCode)
             .HasComputedColumnSql("'SHIP-' + CAST(Id AS NVARCHAR(20))", stored: true);
-
-            modelBuilder.Entity<Order>(entity =>
-            {
-                // Map OriginRP to specific columns in the Orders table
-                entity.OwnsOne(o => o.OriginRP, rp =>
-                {
-                    rp.Property(p => p.Lat).HasColumnName("OriginLat");
-                    rp.Property(p => p.Lng).HasColumnName("OriginLng");
-                });
-
-                // Map DestinationRP to specific columns in the Orders table
-                entity.OwnsOne(o => o.DestinationRP, rp =>
-                {
-                    rp.Property(p => p.Lat).HasColumnName("DestinationLat");
-                    rp.Property(p => p.Lng).HasColumnName("DestinationLng");
-                });
-            });
         }
 
         public DbSet<User> Users{get; set;}

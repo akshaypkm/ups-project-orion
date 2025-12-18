@@ -34,10 +34,6 @@ namespace EcoRoute.Models
 
         public string OrderDestination{get; set;}
 
-        public RoutePoint OriginRP{get; set;}
-        
-        public RoutePoint DestinationRP{get; set;}
-
         public string OrderStatus{get; set;}
 
         public string OrderNature{get; set;} // UPSTREAM OR DOWNSTREAM
@@ -49,8 +45,6 @@ namespace EcoRoute.Models
         public double OrderStandardCO2Emissions{get; set;}
 
         public int CompanyId{get; set;}
-
-        public string CompanyName{get; set;}
 
         public double RouteDuration{get; set;}
 

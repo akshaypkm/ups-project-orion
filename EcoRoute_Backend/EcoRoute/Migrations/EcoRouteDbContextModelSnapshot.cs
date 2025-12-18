@@ -128,10 +128,6 @@ namespace EcoRoute.Migrations
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsRefrigerated")
                         .HasColumnType("bit");
 
@@ -386,55 +382,7 @@ namespace EcoRoute.Migrations
                         .WithMany("OrderList")
                         .HasForeignKey("ShipmentId");
 
-                    b.OwnsOne("EcoRoute.Models.RoutePoint", "DestinationRP", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<double>("Lat")
-                                .HasColumnType("float")
-                                .HasColumnName("DestinationLat");
-
-                            b1.Property<double>("Lng")
-                                .HasColumnType("float")
-                                .HasColumnName("DestinationLng");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.OwnsOne("EcoRoute.Models.RoutePoint", "OriginRP", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<double>("Lat")
-                                .HasColumnType("float")
-                                .HasColumnName("OriginLat");
-
-                            b1.Property<double>("Lng")
-                                .HasColumnType("float")
-                                .HasColumnName("OriginLng");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
                     b.Navigation("Company");
-
-                    b.Navigation("DestinationRP")
-                        .IsRequired();
-
-                    b.Navigation("OriginRP")
-                        .IsRequired();
 
                     b.Navigation("Shipment");
                 });
