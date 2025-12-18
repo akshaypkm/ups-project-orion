@@ -9,6 +9,8 @@ export default function AdminShipmentsReview() {
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState([]);
   const [openCard, setOpenCard] = useState(null);
+  const [improvisedGroups, setImprovisedGroups] = useState([]);
+  const [isImprovisedView, setIsImprovisedView] = useState(false);
   
   // Filters
   const [search, setSearch] = useState("");
@@ -62,6 +64,69 @@ export default function AdminShipmentsReview() {
     }
   };
 
+  const handleImprovise = async () => {
+  try {
+    const sharedShipments = shipments.filter(
+  s => s.orderMode?.toLowerCase() === "shared"
+);
+    setLoading(true);
+
+    const res = await api.post(
+      "/api/admin-shipments-review/improvise-shipment",
+      sharedShipments // send ALL currently loaded orders
+    );
+
+    setImprovisedGroups(res.data);
+    setIsImprovisedView(true);
+    setOpenCard(null);
+  } catch (err) {
+    console.error("Failed to improvise shipments:", err);
+    alert("Failed to improvise shipments");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleApproveGroup = async (group) => {
+  try {
+    await api.post(
+      "/api/admin-shipments-review/improvise-shipment-approve",
+      group.orders
+    );
+
+    // Remove approved orders from normal list
+    setShipments(prev =>
+      prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
+    );
+
+    alert("Grouped shipment approved");
+  } catch (err) {
+    console.error("Group approval failed:", err);
+    alert("Failed to approve grouped shipment");
+  }
+};
+
+const handleCancelGroup = async (group) => {
+  if (!window.confirm("Cancel all orders in this group?")) return;
+
+  try {
+    await api.post(
+      "/api/admin-shipments-review/cancel-group",
+      group.orders
+    );
+
+    setShipments(prev =>
+      prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
+    );
+
+    alert("Grouped shipment cancelled");
+  } catch (err) {
+    console.error("Group cancellation failed:", err);
+    alert("Failed to cancel grouped shipment");
+  }
+};
+
+
   // --- 3. Filter Logic ---
   const filteredShipments = shipments.filter((ship) => {
     // Search by ID, Origin, or Destination
@@ -105,7 +170,7 @@ export default function AdminShipmentsReview() {
         {/* FILTER BAR */}
         <div className="flex items-center gap-4 mb-8">
           {/* SEARCH */}
-          <div className="relative flex-1 max-w-lg">
+          {!isImprovisedView && <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
@@ -114,9 +179,34 @@ export default function AdminShipmentsReview() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
             />
-          </div>
+            
+          </div>}
+
+          {!isImprovisedView && <button
+              onClick={handleImprovise}
+              disabled={isImprovisedView}
+              className="px-6 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow-sm"
+            >
+              Improvise Shipments
+            </button>}
+
+          {isImprovisedView && (
+  <div className="mb-6 ">
+    <button
+      onClick={() => {
+        setIsImprovisedView(false);
+        setImprovisedGroups([]);
+        setOpenCard(null);
+      }}
+      className="px-5 py-2.5 rounded-lg border bg-red-400 border-red-400 hover:bg-gray-50 mt-6"
+    >
+      Back to Original Shipments
+    </button>
+  </div>
+)}
 
           {/* STATUS FILTER */}
+          {!isImprovisedView &&
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -125,22 +215,27 @@ export default function AdminShipmentsReview() {
             <option value="All">Status: All</option>
             <option value="Processing">Processing</option>
             <option value="Planned">Planned</option>
-          </select>
+          </select>}
         </div>
 
         {/* SHIPMENT CARDS */}
         <div className="space-y-5">
-          {loading ? (
-            <div className="text-center py-10 text-gray-500">Loading shipments...</div>
-          ) : filteredShipments.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed">
-              No shipments found matching your criteria.
-            </div>
-          ) : (
-            filteredShipments.map((ship, index) => {
-              // Use explicit ID or fallback to index if missing in DTO
-              const uniqueId = ship.orderId || `ship-${index}`; 
-              const isOpen = openCard === uniqueId;
+          {loading && (
+    <div className="text-center py-10 text-gray-500">
+      Loading shipments...
+    </div>
+  )}
+          {!loading && !isImprovisedView && filteredShipments.length === 0 && (
+    <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed">
+      No shipments found matching your criteria.
+    </div>
+  )}
+            
+           {/* NORMAL VIEW */}
+  {!loading && !isImprovisedView &&
+    filteredShipments.map((ship, index) => {
+      const uniqueId = ship.orderId || `ship-${index}`;
+      const isOpen = openCard === uniqueId;
               
               // Calculate reduction if standard emissions exist
               const reduction = calculateReduction(ship.orderCO2Emission, ship.orderStandardCO2Emissions);
@@ -263,39 +358,171 @@ export default function AdminShipmentsReview() {
 
                           {/* ACTION BUTTONS */}
                           
-                          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                          
+                            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
                             
-                            <button
-                              onClick={() => setOpenCard(null)}
-                              className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
-                            >
-                              Close
-                            </button>
+                              <button
+                                onClick={() => setOpenCard(null)}
+                                className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
+                              >
+                                Close
+                              </button>
 
-                            <button 
-                              className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
-                              onClick={() => handleCancel(ship)} 
-                            >
-                              <span className="material-symbols-outlined text-sm">close</span>
-                              Cancel Shipment
-                            </button>
+                              <button 
+                                className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
+                                onClick={() => handleCancel(ship)} 
+                              >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                                Cancel Shipment
+                              </button>
 
-                            <button 
-                              className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
-                              onClick={() => handleApprove(ship)} 
-                            >
-                              <span className="material-symbols-outlined text-sm">check</span>
-                              Approve Shipment
-                            </button>
-                          </div>
+                              <button 
+                                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+                                onClick={() => handleApprove(ship)} 
+                              >
+                                <span className="material-symbols-outlined text-sm">check</span>
+                                Approve Shipment
+                              </button>
+                            </div>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
               );
-            })
+            })}
+
+            {!loading && isImprovisedView &&
+    improvisedGroups.map((group, index) => {
+      const groupId = `group-${index}`;
+      const isOpen = openCard === groupId;
+
+      return (
+        <div
+          key={groupId}
+          className={`bg-white rounded-xl border ${
+            isOpen ? "ring-2 ring-green-400 shadow-md" : "hover:shadow-md"
+          }`}
+        >
+          {/* GROUP HEADER */}
+          <div
+            onClick={() => setOpenCard(isOpen ? null : groupId)}
+            className="px-6 py-5 flex justify-between items-center cursor-pointer"
+          >
+            <div>
+              <p className="text-green-600 font-bold text-lg">
+                Grouped Shipment #{index + 1}
+              </p>
+              <p className="text-sm text-gray-500">
+                {group.orders.length} Orders • {group.transportVehicle}
+              </p>
+            </div>
+
+            <span className={`material-symbols-outlined ${isOpen ? "rotate-180" : ""}`}>
+              expand_more
+            </span>
+          </div>
+
+          {/* EXPANDED */}
+          {isOpen && (
+
+            
+            <div className="border-t px-6 py-6">
+              <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* GROUP MAP */}
+                <div className="flex-1 h-[350px] rounded-xl overflow-hidden border">
+                  {group.optimizedGroupPolyline ? (
+                    <RouteMap
+                      encodedPolyline={group.optimizedGroupPolyline}
+                      routeStops={group.routeStops}
+                    />
+
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No Optimized Route
+                    </div>
+                  )}
+                </div>
+
+                {/* GROUP DETAILS */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Vehicle</p>
+                      <p className="font-medium">{group.transportVehicle}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Total Weight</p>
+                      <p className="font-medium">{group.combinedOrderWeightKg} kg</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Total Items</p>
+                      <p className="font-medium">{group.combinedOrderTotalItems}</p>
+                    </div>
+                  </div>
+
+                  {/* ORDERS LIST */}
+                  <div className="border rounded-lg divide-y">
+                    {group.orders.map(order => (
+                      <div
+                        key={order.orderId}
+                        className="p-3 text-sm flex justify-between items-center"
+                      >
+                        {/* LEFT: Order info */}
+                        <div>
+                          <b>{order.orderCode}</b>{" "}
+                          — {order.orderOrigin.toUpperCase()} → {order.orderDestination.toUpperCase()}
+                        </div>
+
+                        {/* RIGHT: Company name */}
+                        <div className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          {order.companyName || "Unknown Company"}
+                        </div>
+                      </div>
+                    
+                    ))}
+                    </div>
+                  </div>
+
+              </div>
+              {/* ACTION BUTTONS */}
+                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+
+                    <button
+                      onClick={() => setOpenCard(null)}
+                      className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
+                    >
+                      Close
+                    </button>
+
+                    <button
+                      onClick={() => handleCancelGroup(group)}
+                      className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                      Cancel Group
+                    </button>
+
+                    <button
+                      onClick={() => handleApproveGroup(group)}
+                      className="px-5 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow-sm flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">check</span>
+                      Approve Group
+                    </button>
+
+                  </div>
+            </div>
+            
+
+            
           )}
+        </div>
+      );
+    })
+  }
+          
         </div>
       </div>
     </div>

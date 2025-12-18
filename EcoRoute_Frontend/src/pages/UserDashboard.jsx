@@ -30,6 +30,13 @@ export default function ClientDashboard() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
+// shape: { type: "buy" | "sell", payload: any }
+
+
+
+
+  
 
   // --- Data State ---
   const [stats, setStats] = useState({
@@ -45,6 +52,25 @@ export default function ClientDashboard() {
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
+
+  const creditsColor =
+  stats.companyCredits < 0 ? "text-red-600" : "text-emerald-600";
+
+  const emissionsSavedColor = 
+  stats.emissionsSaved < 0 ? "text-red-600" : "text-emerald-600"; 
+
+  const usagePercent = Math.min(
+  (stats.totalForecastedEmissions / stats.companyEmissionBudget) * 100,
+  100
+);
+
+let barColor = "bg-emerald-500"; // 0–50%
+
+if (usagePercent > 50 && usagePercent <= 75) {
+  barColor = "bg-yellow-400";
+} else if (usagePercent > 75) {
+  barColor = "bg-red-500";
+}
 
   // --- API Logic ---
   const fetchStats = async () => {
@@ -100,13 +126,11 @@ export default function ClientDashboard() {
 
   // --- Handlers ---
   const handleSell = async () => {
-    if(!window.confirm("Are you sure you want to sell this shipment?")) return;
     if (!sellAmount || parseFloat(sellAmount) <= 0) return alert("Enter valid amount");
     try {
       await api.post("/api/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
         headers: { "Content-Type": "application/json" }
       });
-      alert("Listed successfully!");
       setSellAmount("");
       fetchStats(); 
       fetchListings();
@@ -121,9 +145,8 @@ export default function ClientDashboard() {
       });
       await fetchListings();
       await fetchStats(); 
-      alert("Purchase successful!");
     } catch (err) {
-      alert("failed to buy credits");
+      Console.Log(err);
     }
   };
 
@@ -224,7 +247,11 @@ export default function ClientDashboard() {
                     <p className="text-sm font-bold text-gray-800">User Profile</p>
                   </div>
                   <button 
-                    onClick={handleLogout} 
+                    onClick={() =>
+                      setConfirmAction({
+                        type: "logout"
+                      })
+                    }
                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-lg">logout</span> Log Out
@@ -298,8 +325,10 @@ export default function ClientDashboard() {
                   <p className="text-xl font-semibold">Rs {stats.creditMarketPrice}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-gray-500 text-sm">Credits Left</p>
-                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits.toFixed(2)}</p>
+                  <p className={`text-gray-500 text-sm ${creditsColor}`}>Credits Left</p>
+                  <p className={`text-xl font-semibold ${creditsColor}`}>
+                    {stats.companyCredits.toFixed(2)}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Forecast (for this month)</p>
@@ -346,7 +375,12 @@ export default function ClientDashboard() {
                                 <td className="px-2 py-2">{l.creditsListed}</td>
                                 <td className="px-2 py-2">
                                   <button 
-                                    onClick={() => handleBuy(l.saleUnitId, l.creditsListed)}
+                                    onClick={() =>
+                                      setConfirmAction({
+                                        type: "buy",
+                                        payload: l
+                                      })
+                                    }
                                     className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200"
                                   >
                                     Buy
@@ -375,7 +409,12 @@ export default function ClientDashboard() {
                           className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                         <button 
-                          onClick={handleSell}
+                          onClick={() =>
+                            setConfirmAction({
+                              type: "sell",
+                              payload: { amount: sellAmount }
+                            })
+                          }
                           className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
                         >
                           Confirm
@@ -417,13 +456,15 @@ export default function ClientDashboard() {
 
                 {/* Progress Bar Logic: Assuming 1200 is cap */}
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-3 overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min((stats.totalForecastedEmissions / 100) * 100, 100)}%` }}
-                  ></div>
+                  <div
+                    className={`h-full ${barColor} rounded-full transition-all duration-500`}
+                    style={{ width: `${usagePercent}%` }}
+                  />
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">/ {stats.companyEmissionBudget}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.totalForecastedEmissions.toFixed(2)} / {stats.companyEmissionBudget}
+                </p>
               </div>
 
               {/* Emissions Saved */}
@@ -437,7 +478,7 @@ export default function ClientDashboard() {
                   Emissions saved by choosing sustainable routes.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved.toFixed(2)} kg CO₂e</p>
+                <p className= {`text-3xl font-bold mt-3 text-emerald-600 ${emissionsSavedColor}`}>{stats.emissionsSaved.toFixed(2)} kg CO₂e</p>
 
                 <div className="mt-4 flex gap-2">
                   {['Today', 'Month', 'Year'].map(p => (
@@ -460,6 +501,83 @@ export default function ClientDashboard() {
           </div>
 
         </div>
+        {confirmAction && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+
+      {/* HEADER */}
+      <h3 className="text-lg font-bold text-gray-800 mb-2">
+        Confirm {confirmAction.type === "buy" ? "Purchase" : "Sale"}
+      </h3>
+
+      {/* BODY */}
+      <p className="text-sm text-gray-600 mb-4">
+        {confirmAction.type === "buy" && (
+          <>
+            You are about to <b>buy {confirmAction.payload.creditsListed}</b> credits
+            from <b>{confirmAction.payload.sellerCompanyName}</b>.
+          </>
+        )}
+
+        {confirmAction.type === "sell" && (
+          <>
+            You are about to <b>sell {confirmAction.payload.amount}</b> credits.
+          </>
+        )}
+
+        {confirmAction.type === "logout" && (
+          <>
+            You are about to <b>log out</b> of your account.
+            <br />
+            <span className="text-xs text-gray-500">
+              You will need to log in again to access the dashboard.
+            </span>
+          </>
+        )}
+      </p>
+
+
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <button
+          onClick={() => setConfirmAction(null)}
+          className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+
+       <button
+          onClick={async () => {
+            if (confirmAction.type === "buy") {
+              const l = confirmAction.payload;
+              await handleBuy(l.saleUnitId, l.creditsListed);
+            }
+
+            if (confirmAction.type === "sell") {
+              await handleSell();
+            }
+
+            if (confirmAction.type === "logout") {
+              handleLogout();
+            }
+
+            setConfirmAction(null);
+          }}
+          className={`px-4 py-2 text-sm rounded-lg text-white ${
+            confirmAction.type === "buy"
+              ? "bg-emerald-600 hover:bg-emerald-700"
+              : confirmAction.type === "sell"
+              ? "bg-gray-800 hover:bg-gray-700"
+              : "bg-red-600 hover:bg-red-700"
+          }`}
+        >
+          Confirm
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );
