@@ -13,6 +13,10 @@ namespace EcoRoute.Models.Entities
 
         public double OrderCO2Emission{get; set;}
 
+        public string OrderOrigin{get; set;} = string.Empty;
+
+        public string OrderDestination{get; set;} = string.Empty;
+
         public string SelectedRouteSummary{get; set;} = string.Empty;
 
         public string SelectedPolyline{get; set;} = string.Empty;
@@ -29,9 +33,10 @@ namespace EcoRoute.Models.Entities
 
         public int OrderTotalItems{get; set;}
 
-        public string OrderOrigin{get; set;} = string.Empty;
-
-        public string OrderDestination{get; set;} = string.Empty;
+        
+        public RoutePoint OriginRP{get; set;}
+        
+        public RoutePoint DestinationRP{get; set;}
         
         public string? OrderStatus{get; set;}
 
@@ -51,7 +56,8 @@ namespace EcoRoute.Models.Entities
         public double OrderEmissionsSaved => OrderStandardCO2Emissions - OrderCO2Emission;
 
         //relationships
-        
+        public string CompanyName{get; set;}
+
         public int CompanyId{get; set;}
         [ForeignKey("CompanyId")]
         public Company Company{get; set;}
