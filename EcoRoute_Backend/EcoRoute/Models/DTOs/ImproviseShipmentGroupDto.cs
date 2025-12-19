@@ -14,6 +14,8 @@ namespace EcoRoute.Models.DTOs
 
         public double ApproxCombinedVolume { get; set; }
 
+        public double OptimizedDistance{get; set;}
+
         public List<RouteStopDto> RouteStops { get; set; }
 
     }

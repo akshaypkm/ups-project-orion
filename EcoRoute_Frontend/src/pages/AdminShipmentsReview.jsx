@@ -91,7 +91,7 @@ const handleApproveGroup = async (group) => {
   try {
     await api.post(
       "/api/admin-shipments-review/improvise-shipment-approve",
-      group.orders
+      group
     );
 
     // Remove approved orders from normal list
@@ -112,7 +112,7 @@ const handleCancelGroup = async (group) => {
   try {
     await api.post(
       "/api/admin-shipments-review/cancel-group",
-      group.orders
+      group
     );
 
     setShipments(prev =>

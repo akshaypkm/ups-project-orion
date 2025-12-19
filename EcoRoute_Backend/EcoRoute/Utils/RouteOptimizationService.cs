@@ -88,12 +88,12 @@ namespace EcoRoute.Utils
         .Select(s => new RoutePoint { Lat = s.Lat, Lng = s.Lng })
         .ToList();
 
-    var polyline = await GetDirectionsPolylineAsync(routePoints);
-
+    var result = await GetDirectionsAsync(routePoints);
     return new OptimizedRouteResultDto
     {
-        Polyline = polyline,
-        Stops = finalStops
+        Polyline = result.polyline,
+        Stops = finalStops,
+        TotalDistanceMeters = result.distanceMeters / 1000
     };
 }
 
@@ -158,7 +158,7 @@ namespace EcoRoute.Utils
             return matrix;
         }
 
-        private async Task<string> GetDirectionsPolylineAsync(List<RoutePoint> orderedPoints)
+        private async Task<(string polyline, double distanceMeters)> GetDirectionsAsync(List<RoutePoint> orderedPoints)
         {
             var origin = orderedPoints.First();
             var dest = orderedPoints.Last();
@@ -171,14 +171,28 @@ namespace EcoRoute.Utils
             var response = await _http.GetStringAsync(url);
             using var doc = JsonDocument.Parse(response);
 
-            if (doc.RootElement.GetProperty("status").GetString() == "OK")
+            if (doc.RootElement.GetProperty("status").GetString() != "OK")
             {
-                return doc.RootElement.GetProperty("routes")[0]
-                                      .GetProperty("overview_polyline")
-                                      .GetProperty("points")
-                                      .GetString();
+                return (null, 0);
             }
-            return null;
+            
+            var route = doc.RootElement.GetProperty("routes")[0];
+
+            var polyline = route
+                .GetProperty("overview_polyline")
+                .GetProperty("points")
+                .GetString();
+            
+            double totalDistance = 0;
+            foreach (var leg in route.GetProperty("legs").EnumerateArray())
+            {
+                totalDistance += leg
+                    .GetProperty("distance")
+                    .GetProperty("value")
+                    .GetDouble(); // meters
+            }
+
+            return (polyline,totalDistance);
         }
 
         private bool IsSameLocation(RoutePoint a, RoutePoint b, double meters = 50)
