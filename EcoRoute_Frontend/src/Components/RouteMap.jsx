@@ -7,14 +7,10 @@ const containerStyle = {
   minHeight: "350px",
 };
 
-// ✅ Official Google polyline decode logic (clean)
 function decodePolyline(encoded) {
   if (!encoded) return [];
-
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-  const coordinates = [];
+  let index = 0, lat = 0, lng = 0;
+  const coords = [];
 
   while (index < encoded.length) {
     let b, shift = 0, result = 0;
@@ -23,8 +19,7 @@ function decodePolyline(encoded) {
       result |= (b & 0x1f) << shift;
       shift += 5;
     } while (b >= 0x20);
-    const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
-    lat += dlat;
+    lat += (result & 1) ? ~(result >> 1) : result >> 1;
 
     shift = 0;
     result = 0;
@@ -33,36 +28,29 @@ function decodePolyline(encoded) {
       result |= (b & 0x1f) << shift;
       shift += 5;
     } while (b >= 0x20);
-    const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
-    lng += dlng;
+    lng += (result & 1) ? ~(result >> 1) : result >> 1;
 
-    coordinates.push({ lat: lat / 1e5, lng: lng / 1e5 });
+    coords.push({ lat: lat / 1e5, lng: lng / 1e5 });
   }
 
-  return coordinates;
+  return coords;
 }
 
-export default function RouteMap({ encodedPolyline }) {
+export default function RouteMap({ encodedPolyline, routeStops = [] }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyAT3JLAYrONL07aN7lyWPdTfnGg-MyGZZ8",
   });
 
   const [map, setMap] = useState(null);
-
   const path = useMemo(() => decodePolyline(encodedPolyline), [encodedPolyline]);
 
-  // ✅ Correct fitting logic
   useEffect(() => {
     if (!map || path.length === 0) return;
-
     const bounds = new window.google.maps.LatLngBounds();
     path.forEach(p => bounds.extend(p));
-
-    // Delay ensures accordion + CSS settle
-    setTimeout(() => {
-      map.fitBounds(bounds);
-    }, 300);
-  }, [map, path]);
+    routeStops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
+    setTimeout(() => map.fitBounds(bounds), 300);
+  }, [map, path, routeStops]);
 
   if (!isLoaded) return <div className="w-full h-full bg-gray-100" />;
 
@@ -70,11 +58,9 @@ export default function RouteMap({ encodedPolyline }) {
     <GoogleMap
       mapContainerStyle={containerStyle}
       onLoad={setMap}
-      options={{
-        disableDefaultUI: true,
-        zoomControl: true,
-      }}
+      options={{ disableDefaultUI: true, zoomControl: true }}
     >
+      {/* ROUTE LINE */}
       {path.length > 1 && (
         <Polyline
           path={path}
@@ -86,12 +72,74 @@ export default function RouteMap({ encodedPolyline }) {
         />
       )}
 
-      {path[0] && (
-        <Marker position={path[0]} label="A" />
-      )}
+      {/* STOPS */}
+      {routeStops.map((stop, idx) => {
+        const isPickup = stop.stopType === "PICKUP";
 
-      {path.length > 1 && (
-        <Marker position={path[path.length - 1]} label="B" />
+
+       
+
+        return (
+          <Marker
+            key={`${stop.orderId}-${idx}`}
+            position={{ lat: stop.lat, lng: stop.lng }}
+            label={{
+              text: `${stop.orderCode}(${stop.sequence})`,
+              color: isPickup ? "green" : "red",
+              fontSize: "12px",
+              fontWeight: "bold",
+            }}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: isPickup ? "#16a34a" : "#dc2626",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+        );
+      })}
+
+       {/* FALLBACK MARKERS FOR SINGLE ORDER */}
+      {routeStops.length === 0 && path.length > 1 && (
+        <>
+          {/* START */}
+          <Marker
+            position={path[0]}
+            label={{
+              text: "START",
+              color: "#166534",
+              fontWeight: "bold",
+            }}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 9,
+              fillColor: "#16a34a",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+
+          {/* END */}
+          <Marker
+            position={path[path.length - 1]}
+            label={{
+              text: "END",
+              color: "#7f1d1d",
+              fontWeight: "bold",
+            }}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 9,
+              fillColor: "#dc2626",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+        </>
       )}
     </GoogleMap>
   );

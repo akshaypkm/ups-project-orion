@@ -29,7 +29,8 @@ namespace EcoRoute.Repositories
         public async Task<List<Notification>> GetNotificationsByCompanyIdAsync(int companyId)
         {
             return await dbContext.Notifications.Where(n => n.TargetCompanyId == companyId)
-                                        .ToListAsync();
+                                                    .OrderByDescending(n => n.CreatedAt)
+                                                        .ToListAsync();
         }
     }
 }

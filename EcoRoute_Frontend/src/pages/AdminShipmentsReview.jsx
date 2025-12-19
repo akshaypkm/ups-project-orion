@@ -1,56 +1,183 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+// Adjusted paths to use ../../ based on folder depth
 import AdminSidebar from "../Components/AdminSidebar";
-import RouteMap from "../Components/RouteMap";
+import RouteMap from "../Components/RouteMap"; 
+import api from "../api/api"; 
 import { Search } from "lucide-react";
 
-const mockShipments = [
-  {
-    orderId: "ORD-10384",
-    date: "2023-11-14",
-    origin: "Mumbai, IN",
-    destination: "Delhi, IN",
-    status: "Pending Review",
-    weight: 4200,
-    distance: 1420,
-    emissions: 368,
-    reduction: -12.4,
-    region: "IN",
-    polyline: "ENCODED_POLYLINE_STRING"
-  },
-  {
-    orderId: "ORD-10385",
-    date: "2023-11-15",
-    origin: "Chennai, IN",
-    destination: "Bangalore, IN",
-    status: "Pending",
-    weight: 3900,
-    distance: 350,
-    emissions: 210,
-    reduction: -8.1,
-    region: "IN",
-    polyline: "ENCODED_POLYLINE_STRING"
-  }
-];
-
 export default function AdminShipmentsReview() {
+  const [loading, setLoading] = useState(true);
+  const [shipments, setShipments] = useState([]);
   const [openCard, setOpenCard] = useState(null);
+  const [improvisedGroups, setImprovisedGroups] = useState([]);
+  const [isImprovisedView, setIsImprovisedView] = useState(false);
+  const [confirmBox, setConfirmBox] = useState({
+  open: false,
+  title: "",
+  message: "",
+  onConfirm: null,
+});
+  // Filters
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Pending");
-  const [regionFilter, setRegionFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  const filteredShipments = mockShipments.filter((ship) => {
-    const matchSearch = ship.orderId
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  // --- 1. Fetch Data from Backend ---
+  useEffect(() => {
+    const fetchShipments = async () => {
+      try {
+        const res = await api.get("/api/admin-shipments-review/get-review-shipments");
+        setShipments(res.data);
+      } catch (err) {
+        console.error("Failed to fetch review shipments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const matchStatus =
-      statusFilter === "All" || ship.status === statusFilter;
+    fetchShipments();
+  }, []);
 
-    const matchRegion =
-      regionFilter === "All" || ship.region === regionFilter;
+  // --- 2. Action Handlers ---
 
-    return matchSearch && matchStatus && matchRegion;
+const handleApprove = (shipment) => {
+  setConfirmBox({
+    open: true,
+    title: "Approve Shipment",
+    message: `Are you sure you want to approve shipment #${shipment.orderId}?`,
+    onConfirm: async () => {
+      try {
+        await api.post("/api/admin-shipments-review/approve", shipment);
+        setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+        alert(`Shipment #${shipment.orderId} approved`);
+      } catch (err) {
+        alert("Approval failed");
+      } finally {
+        setConfirmBox({ open: false });
+      }
+    },
   });
+};
+
+
+const handleCancel = (shipment) => {
+  setConfirmBox({
+    open: true,
+    title: "Cancel Shipment",
+    message: `Cancel shipment #${shipment.orderId}? This action cannot be undone.`,
+    onConfirm: async () => {
+      try {
+        await api.post("/api/admin-shipments-review/cancel", shipment);
+        setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+        alert(`Shipment #${shipment.orderId} cancelled`);
+      } catch (err) {
+        alert("Cancellation failed");
+      } finally {
+        setConfirmBox({ open: false });
+      }
+    },
+  });
+};
+
+
+  const handleImprovise = async () => {
+  try {
+    const sharedShipments = shipments.filter(
+  s => s.orderMode?.toLowerCase() === "shared"
+);
+    setLoading(true);
+
+    const res = await api.post(
+      "/api/admin-shipments-review/improvise-shipment",
+      sharedShipments // send ALL currently loaded orders
+    );
+
+    setImprovisedGroups(res.data);
+    setIsImprovisedView(true);
+    setOpenCard(null);
+  } catch (err) {
+    console.error("Failed to improvise shipments:", err);
+    alert("Failed to improvise shipments");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const approveGroup = async (group) => {
+  await api.post(
+    "/api/admin-shipments-review/improvise-shipment-approve",
+    group
+  );
+
+  setShipments(prev =>
+    prev.filter(
+      s => !group.orders.some(o => o.orderId === s.orderId)
+    )
+  );
+
+  // navigate("/admin-dashboard");
+};
+
+
+const handleApproveGroup = (group) => {
+  setConfirmBox({
+    open: true,
+    title: "Approve Grouped Shipment",
+    message: `Approve grouped shipment containing ${group.orders.length} orders?`,
+    onConfirm: () => {
+      setConfirmBox({ open: false });
+
+      approveGroup(group).catch(() => {
+        alert("Group approval failed");
+      });
+    },
+  });
+};
+
+
+// const handleCancelGroup = async (group) => {
+//   if (!window.confirm("Cancel all orders in this group?")) return;
+
+//   try {
+//     await api.post(
+//       "/api/admin-shipments-review/cancel-group",
+//       group
+//     );
+
+//     setShipments(prev =>
+//       prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
+//     );
+
+//     alert("Grouped shipment cancelled");
+//   } catch (err) {
+//     console.error("Group cancellation failed:", err);
+//     alert("Failed to cancel grouped shipment");
+//   }
+// };
+
+
+  // --- 3. Filter Logic ---
+  const filteredShipments = shipments.filter((ship) => {
+    // Search by ID, Origin, or Destination
+    const searchTerm = search.toLowerCase();
+    const matchSearch = 
+      (ship.orderId?.toString().toLowerCase().includes(searchTerm)) ||
+      (ship.orderOrigin?.toLowerCase().includes(searchTerm)) ||
+      (ship.orderDestination?.toLowerCase().includes(searchTerm));
+
+    // Filter by Status (Map backend status to UI options if needed)
+    const matchStatus =
+      statusFilter === "All" || 
+      (ship.orderStatus && ship.orderStatus.toLowerCase() === statusFilter.toLowerCase());
+
+    return matchSearch && matchStatus;
+  });
+
+  // --- Helper: Calculate Emission Reduction ---
+  const calculateReduction = (actual, standard) => {
+    if (!standard || standard === 0) return 0;
+    const reduction = ((standard - actual) / standard) * 100;
+    return reduction.toFixed(1);
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb]">
@@ -59,146 +186,420 @@ export default function AdminShipmentsReview() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 ml-64 px-10 py-8">
+        
         {/* HEADER */}
-        <h1 className="text-3xl font-bold text-gray-800">
-          Shipment Review
-        </h1>
-        <p className="text-gray-500 mb-6">
-          Review and approve pending shipments for carbon compliance.
-        </p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Shipment Review</h1>
+          <p className="text-gray-500 mt-1">
+            Review and approve pending shipments for carbon compliance.
+          </p>
+        </div>
 
         {/* FILTER BAR */}
         <div className="flex items-center gap-4 mb-8">
           {/* SEARCH */}
-          <div className="relative flex-1">
+          {!isImprovisedView && <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Search by Order ID..."
+              placeholder="Search by Order ID, Origin or Destination..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
             />
-          </div>
+            
+          </div>}
+
+          {!isImprovisedView && <button
+              onClick={handleImprovise}
+              disabled={isImprovisedView}
+              className="px-6 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow-sm"
+            >
+              Improvise Shipments
+            </button>}
+
+          {isImprovisedView && (
+  <div className="mb-6 ">
+    <button
+      onClick={() => {
+        setIsImprovisedView(false);
+        setImprovisedGroups([]);
+        setOpenCard(null);
+      }}
+      className="px-5 py-2.5 rounded-lg border bg-red-400 border-red-400 hover:bg-gray-50 mt-6"
+    >
+      Back to Original Shipments
+    </button>
+  </div>
+)}
 
           {/* STATUS FILTER */}
+          {!isImprovisedView &&
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
+            className="px-6 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
           >
             <option value="All">Status: All</option>
-            <option value="Pending">Pending</option>
-            <option value="Pending Review">Pending Review</option>
-          </select>
-
-          {/* REGION FILTER */}
-          <select
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
-          >
-            <option value="All">Filter by Region</option>
-            <option value="IN">India</option>
-          </select>
+            <option value="Processing">Processing</option>
+            <option value="Planned">Planned</option>
+          </select>}
         </div>
 
         {/* SHIPMENT CARDS */}
         <div className="space-y-5">
-          {filteredShipments.map((ship) => {
-            const isOpen = openCard === ship.orderId;
+          {loading && (
+    <div className="text-center py-10 text-gray-500">
+      Loading shipments...
+    </div>
+  )}
+          {!loading && !isImprovisedView && filteredShipments.length === 0 && (
+    <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed">
+      No shipments found matching your criteria.
+    </div>
+  )}
+            
+           {/* NORMAL VIEW */}
+  {!loading && !isImprovisedView &&
+    filteredShipments.map((ship, index) => {
+      const uniqueId = ship.orderId || `ship-${index}`;
+      const isOpen = openCard === uniqueId;
+              
+              // Calculate reduction if standard emissions exist
+              const reduction = calculateReduction(ship.orderCO2Emission, ship.orderStandardCO2Emissions);
+              const isPositiveReduction = reduction > 0;
 
-            return (
-              <div
-                key={ship.orderId}
-                className={`bg-white rounded-xl border transition ${
-                  isOpen
-                    ? "ring-2 ring-blue-400"
-                    : "hover:shadow-md"
-                }`}
-              >
-                {/* CARD HEADER */}
+              return (
                 <div
-                  onClick={() =>
-                    setOpenCard(isOpen ? null : ship.orderId)
-                  }
-                  className="px-6 py-5 flex justify-between items-center cursor-pointer"
+                  key={uniqueId}
+                  className={`bg-white rounded-xl border transition-all duration-200 ${
+                    isOpen ? "ring-2 ring-blue-400 shadow-md" : "hover:shadow-md"
+                  }`}
                 >
-                  <div>
-                    <p className="text-blue-600 font-semibold">
-                      {ship.orderId}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {ship.origin} → {ship.destination}
-                    </p>
+                  {/* CARD HEADER (Click to Expand) */}
+                  <div
+                    onClick={() => setOpenCard(isOpen ? null : uniqueId)}
+                    className="px-6 py-5 flex justify-between items-center cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-6">
+                      {/* ID & Route */}
+                      <div>
+                        <p className="text-blue-600 font-bold text-lg">#{uniqueId}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                          <span className="font-medium text-gray-700">{ship.orderOrigin}</span>
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                          <span className="font-medium text-gray-700">{ship.orderDestination}</span>
+                        </div>
+                      </div>
+
+                      {/* Quick Stats (Visible when collapsed) */}
+                      {!isOpen && (
+                        <div className="hidden md:flex gap-6 text-sm text-gray-500 border-l pl-6 ml-2">
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">Date</span>
+                            {ship.orderDate ? new Date(ship.orderDate).toLocaleDateString() : "N/A"}
+                          </div>
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">Weight</span>
+                            {ship.orderWeightKg} kg
+                          </div>
+                          <div>
+                            <span className="block text-xs uppercase text-gray-400">CO2e</span>
+                            {ship.orderCO2Emission?.toFixed(2)} kg
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      {/* Status Badge */}
+                      <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${
+                        ship.orderStatus === 'Pending' ? "bg-yellow-100 text-yellow-700" :
+                        ship.orderStatus === 'Approved' ? "bg-green-100 text-green-700" :
+                        "bg-gray-100 text-gray-600"
+                      }`}>
+                        {ship.orderStatus || "Unknown"}
+                      </span>
+                      
+                      {/* Chevron Icon */}
+                      <span className={`material-symbols-outlined text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}>
+                        expand_more
+                      </span>
+                    </div>
                   </div>
 
-                  <span
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      ship.status === "Pending Review"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {ship.status}
-                  </span>
+                  {/* EXPANDED VIEW */}
+                  {isOpen && (
+                    <div className="border-t border-gray-100 px-6 py-6 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        
+                        {/* LEFT: MAP */}
+                        <div className="flex-1 min-h-[300px] h-[350px] bg-gray-50 rounded-xl overflow-hidden border border-gray-200 relative">
+                          {ship.selectedPolyline ? (
+                            <RouteMap encodedPolyline={ship.selectedPolyline} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Route Data Available
+                            </div>
+                          )}
+                        </div>
+
+                        {/* RIGHT: DETAILS */}
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                            
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Transport Mode</p>
+                              <p className="font-medium text-gray-800 capitalize">{ship.transportMode || "N/A"}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Vehicle</p>
+                              <p className="font-medium text-gray-800">{ship.transportVehicle || "Standard Fleet"}</p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Distance</p>
+                              <p className="font-medium text-gray-800">{ship.orderDistance} km</p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400 uppercase font-bold">Actual Emissions</p>
+                              <p className="font-medium text-gray-800 text-lg">
+                                {ship.orderCO2Emission?.toFixed(2)} kg
+                              </p>
+                            </div>
+
+                            <div className="col-span-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-500 font-medium">Standard Baseline</span>
+                                <span className="text-xs font-bold text-gray-700">{ship.orderStandardCO2Emissions?.toFixed(2)} kg</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500 font-medium">Carbon Savings</span>
+                                <span className={`text-sm font-bold ${isPositiveReduction ? "text-green-600" : "text-red-500"}`}>
+                                  {isPositiveReduction ? `-${reduction}% Reduction` : `${Math.abs(reduction)}% Increase`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ACTION BUTTONS */}
+                          
+                          
+                            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                            
+                              <button
+                                onClick={() => setOpenCard(null)}
+                                className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
+                              >
+                                Close
+                              </button>
+
+                              <button 
+                                className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
+                                onClick={() => handleCancel(ship)} 
+                              >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                                Cancel Shipment
+                              </button>
+
+                              <button 
+                                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+                                onClick={() => handleApprove(ship)} 
+                              >
+                                <span className="material-symbols-outlined text-sm">check</span>
+                                Approve Shipment
+                              </button>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {!loading && isImprovisedView &&
+    improvisedGroups.map((group, index) => {
+      const groupId = `group-${index}`;
+      const isOpen = openCard === groupId;
+
+      return (
+        <div
+          key={groupId}
+          className={`bg-white rounded-xl border ${
+            isOpen ? "ring-2 ring-green-400 shadow-md" : "hover:shadow-md"
+          }`}
+        >
+          {/* GROUP HEADER */}
+          <div
+            onClick={() => setOpenCard(isOpen ? null : groupId)}
+            className="px-6 py-5 flex justify-between items-center cursor-pointer"
+          >
+            <div>
+              <p className="text-green-600 font-bold text-lg">
+                Grouped Shipment #{index + 1}
+              </p>
+              <p className="text-sm text-gray-500">
+                {group.orders.length} Orders • {group.transportVehicle}
+              </p>
+            </div>
+
+            <span className={`material-symbols-outlined ${isOpen ? "rotate-180" : ""}`}>
+              expand_more
+            </span>
+          </div>
+
+          {/* EXPANDED */}
+          {isOpen && (
+
+            
+            <div className="border-t px-6 py-6">
+              <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* GROUP MAP */}
+                <div className="flex-1 h-[350px] rounded-xl overflow-hidden border">
+                  {group.optimizedGroupPolyline ? (
+                    <RouteMap
+                      encodedPolyline={group.optimizedGroupPolyline}
+                      routeStops={group.routeStops}
+                    />
+
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No Optimized Route
+                    </div>
+                  )}
                 </div>
 
-                {/* EXPANDED VIEW */}
-                {isOpen && (
-                  <div className="border-t px-6 py-5 space-y-6">
-                    {/* MAP */}
-                    <div className="h-[360px] rounded-lg overflow-hidden border">
-                      <RouteMap encodedPolyline={ship.polyline} />
+                {/* GROUP DETAILS */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Vehicle</p>
+                      <p className="font-medium">{group.transportVehicle}</p>
                     </div>
-
-                    {/* DETAILS */}
-                    <div className="grid grid-cols-4 gap-6 text-sm">
-                      <div>
-                        <p className="text-gray-400">Date</p>
-                        <p className="font-medium">{ship.date}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Weight</p>
-                        <p className="font-medium">{ship.weight} kg</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Distance</p>
-                        <p className="font-medium">{ship.distance} km</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Emissions</p>
-                        <p className="font-medium text-green-600">
-                          {ship.emissions} kg CO₂e
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Total Weight</p>
+                      <p className="font-medium">{group.combinedOrderWeightKg} kg</p>
                     </div>
-
-                    {/* ACTIONS */}
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setOpenCard(null)}
-                        className="px-4 py-2 rounded-lg border"
-                      >
-                        Close
-                      </button>
-                      <button className="px-4 py-2 rounded-lg bg-blue-500 text-white">
-                        Approve
-                      </button>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase">Total Items</p>
+                      <p className="font-medium">{group.combinedOrderTotalItems}</p>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
 
-          {filteredShipments.length === 0 && (
-            <p className="text-center text-gray-500">
-              No shipments found
-            </p>
+                  {/* ORDERS LIST */}
+                  <div className="border rounded-lg divide-y">
+                    {group.orders.map(order => (
+                      <div
+                        key={order.orderId}
+                        className="p-3 text-sm flex justify-between items-center"
+                      >
+                        {/* LEFT: Order info */}
+                        <div>
+                          <b>{order.orderCode}</b>{" "}
+                          — {order.orderOrigin.toUpperCase()} → {order.orderDestination.toUpperCase()}
+                        </div>
+
+                        {/* RIGHT: Company name */}
+                        <div className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          {order.companyName || "Unknown Company"}
+                        </div>
+                      </div>
+                    
+                    ))}
+                    </div>
+                  </div>
+
+              </div>
+              {/* ACTION BUTTONS */}
+                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+
+                    <button
+                      onClick={() => setOpenCard(null)}
+                      className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition"
+                    >
+                      Close
+                    </button>
+
+                    {/* <button
+                      onClick={() => handleCancelGroup(group)}
+                      className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                      Cancel Group
+                    </button> */}
+
+                    <button
+                      onClick={() => handleApproveGroup(group)}
+                      className="px-5 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow-sm flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">check</span>
+                      Approve Group
+                    </button>
+
+                  </div>
+            </div>
+            
+
+            
           )}
+          
+        </div>
+      );
+    })
+    
+  }
+
+  
+          
+        </div>
+        
+      </div>
+      
+      <ConfirmDialog
+  open={confirmBox.open}
+  title={confirmBox.title}
+  message={confirmBox.message}
+  onCancel={() => setConfirmBox({ open: false })}
+  onConfirm={confirmBox.onConfirm}
+/>
+
+
+    </div>
+    
+  );
+
+
+}
+
+const ConfirmDialog = ({ open, title, message, onCancel, onConfirm }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">{title}</h3>
+        <p className="text-sm text-gray-600 mb-6">{message}</p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+          >
+            Confirm
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};

@@ -23,9 +23,13 @@ namespace EcoRoute.Repositories
 
         Task<List<Order>> GetShipmentsForReview();
 
-        Task CreateShipment(OrderDto orderDto);
+        Task<int> CreateShipment(OrderDto orderDto);
 
         Task<List<Shipment>> GetAllAdminShipmentsAsync();
+
+        Task AddShipmentAsync(Shipment shipment);
+
+        Task SaveChangesAsync();
     }
     public class ShipmentRepository(EcoRouteDbContext dbContext) : IShipmentRepository
     {
@@ -67,7 +71,7 @@ namespace EcoRoute.Repositories
                                         || o.OrderStatus == "planned").ToListAsync();
         }
 
-        public async Task CreateShipment(OrderDto orderDto)
+        public async Task<int> CreateShipment(OrderDto orderDto)
         {
             var shipmentToAdd = new Shipment()
             {
@@ -86,6 +90,10 @@ namespace EcoRoute.Repositories
 
             await dbContext.AddAsync(shipmentToAdd);
             await dbContext.SaveChangesAsync();
+
+            int shipId = shipmentToAdd.Id;
+
+            return shipId;
         }
 
         public async Task<List<Shipment>> GetAllAdminShipmentsAsync()
@@ -95,6 +103,16 @@ namespace EcoRoute.Repositories
                 .Include(s => s.OrderList)
                     .ThenInclude(o => o.Company)
                 .ToListAsync();
+        }
+
+        public async Task AddShipmentAsync(Shipment shipment)
+        {
+            await dbContext.AddAsync(shipment);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await dbContext.SaveChangesAsync();
         }
     }
 }

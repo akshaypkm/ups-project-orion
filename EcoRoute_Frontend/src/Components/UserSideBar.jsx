@@ -16,22 +16,23 @@ export default function Sidebar() {
 
   // Helper for dynamic classes based on active state
   const getNavItemClasses = (path) => {
-    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition w-full text-left";
+    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition w-full text-left hover:scale-[1.02] hover:text-emerald-600";
     const activeClasses = "bg-emerald-100 text-emerald-600";
     const inactiveClasses = "text-gray-600 hover:bg-gray-50";
 
     return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
-  };
+};
+
 
   return (
-    <aside className="w-64 h-screen bg-white border-r flex flex-col px-4 py-6 fixed left-0 top-0 z-50">
+    <aside className="w-64 h-screen bg-white/70 backdrop-blur-2xl border-r border-white/30 shadow-md flex flex-col px-4 py-6 fixed left-0 top-0 z-50 overflow-y-auto">
       
       {/* Brand Logo */}
       <div className="flex items-center gap-2 mb-10">
-        <span className="material-symbols-outlined text-emerald-500" style={{ fontSize: '28px' }}>
+        <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent" style={{ fontSize: '28px' }}>
           eco
         </span>
-        <h1 className="text-2xl font-semibold text-emerald-500">EcoRoute</h1>
+        <h1 className="text-2xl font-semibold bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">EcoRoute</h1>
       </div>
 
       {/* Navigation */}
@@ -61,18 +62,7 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Logout */}
-      <div className="mt-auto">
-        <button 
-          className="flex items-center gap-3 text-gray-500 hover:text-red-500 transition w-full text-left px-4 py-3 text-sm font-medium" 
-          onClick={handleLogout}
-        >
-          <span className="material-symbols-outlined" style={{ transform: 'rotate(180deg)' }}>
-            logout
-          </span>
-          Log Out
-        </button>
-      </div>
+      
 
     </aside>
   );

@@ -25,7 +25,10 @@ namespace EcoRoute.Mappings
             CreateMap<Order, OrderHistoryDto>()
                 .ForMember(dest => dest.ShipmentCode, opt => opt.Ignore());
 
-            CreateMap<Order, OrderDto>();
+            CreateMap<Order, OrderDto>()
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.Id));
+
+            // CreateMap<
                 
         }
 

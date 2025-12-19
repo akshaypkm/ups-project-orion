@@ -30,6 +30,13 @@ export default function ClientDashboard() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
+// shape: { type: "buy" | "sell", payload: any }
+
+
+
+
+  
 
   // --- Data State ---
   const [stats, setStats] = useState({
@@ -41,9 +48,29 @@ export default function ClientDashboard() {
     totalForecastedEmissions: 0,
     emissionsSaved: 0,
     graphData: [],
+    companyEmissionBudget : 0
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
+
+  const creditsColor =
+  stats.companyCredits < 0 ? "text-red-600" : "text-emerald-600";
+
+  const emissionsSavedColor = 
+  stats.emissionsSaved < 0 ? "text-red-600" : "text-emerald-600"; 
+
+  const usagePercent = Math.min(
+  (stats.totalForecastedEmissions / stats.companyEmissionBudget) * 100,
+  100
+);
+
+let barColor = "bg-emerald-500"; // 0–50%
+
+if (usagePercent > 50 && usagePercent <= 75) {
+  barColor = "bg-yellow-400";
+} else if (usagePercent > 75) {
+  barColor = "bg-red-500";
+}
 
   // --- API Logic ---
   const fetchStats = async () => {
@@ -104,7 +131,6 @@ export default function ClientDashboard() {
       await api.post("/api/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
         headers: { "Content-Type": "application/json" }
       });
-      alert("Listed successfully!");
       setSellAmount("");
       fetchStats(); 
       fetchListings();
@@ -119,9 +145,8 @@ export default function ClientDashboard() {
       });
       await fetchListings();
       await fetchStats(); 
-      alert("Purchase successful!");
     } catch (err) {
-      alert("failed to buy credits");
+      Console.Log(err);
     }
   };
 
@@ -162,7 +187,7 @@ export default function ClientDashboard() {
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Dashboard...</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100">
       
       {/* 1. Sidebar */}
       <div className="fixed inset-y-0 left-0 z-50">
@@ -171,11 +196,11 @@ export default function ClientDashboard() {
 
       {/* 2. Main Content Area */}
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
-      <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
+      <main className="flex-1 p-10 ml-0 md:ml-[250px]"> 
         
         {/* Top Header (Preserved Functionality + New Style) */}
         <header className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+          <h2 className="text-4xl font-extrabold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent">Dashboard</h2>
           
           <div className="flex items-center gap-4">
             
@@ -194,12 +219,12 @@ export default function ClientDashboard() {
               </button>
 
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-100 p-2 z-50 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
                   <h4 className="text-xs font-bold text-gray-400 uppercase px-2 py-1 mb-1">Notifications</h4>
                   {notifications.length > 0 ? (
                     <div className="space-y-1">
                       {notifications.map((n, i) => (
-                        <div key={i} className="p-3 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div key={i} className="p-3 text-sm text-green-700 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
                           {n.message}
                         </div>
                       ))}
@@ -217,12 +242,16 @@ export default function ClientDashboard() {
                 <span className="material-symbols-outlined text-gray-600 text-3xl">account_circle</span>
               </button>
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
                   <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-bold text-gray-800">User Profile</p>
+                    <p className="text-sm font-bold text-green-800">User Profile</p>
                   </div>
                   <button 
-                    onClick={handleLogout} 
+                    onClick={() =>
+                      setConfirmAction({
+                        type: "logout"
+                      })
+                    }
                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-lg">logout</span> Log Out
@@ -240,19 +269,22 @@ export default function ClientDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Card 1: Emissions */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border">
-              <h2 className="text-lg font-semibold text-gray-700">Total CO2e emissions</h2>
-              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions} kg CO₂e</p>
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">
+                  eco
+                  </span>Total CO2e emissions</h2>
+              <p className="text-4xl font-bold mt-3 text-gray-900">{stats.totalEmissions.toFixed(2)} kg CO₂e</p>
 
               <div className="mt-4 flex gap-2">
                 {['Today', 'Month', 'Year'].map(p => (
                   <button 
                     key={p}
                     onClick={() => setEmissionPeriod(p)}
-                    className={`px-3 py-1 text-sm rounded-lg transition ${
+                    className={`px-3 py-1 text-sm rounded-xl transition ${
                       emissionPeriod === p 
-                      ? 'bg-emerald-100 text-emerald-600 font-medium' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-green-100 text-green-700 font-semibold font-medium' 
+                      : 'bg-white/70 text-green-700 border border-green-200 hover:bg-green-50 hover:bg-gray-200'
                     }`}
                   >
                     {p}
@@ -262,8 +294,11 @@ export default function ClientDashboard() {
             </div>
 
             {/* Card 2: Shipments */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border">
-              <h2 className="text-lg font-semibold text-gray-700">Total Shipments</h2>
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">
+                  local_shipping
+                  </span>Total Shipments</h2>
               <p className="text-4xl font-bold mt-3 text-gray-900">{stats.shipments}</p>
 
               <div className="mt-4 flex gap-2">
@@ -271,10 +306,10 @@ export default function ClientDashboard() {
                   <button 
                     key={p}
                     onClick={() => setShipmentPeriod(p)}
-                    className={`px-3 py-1 text-sm rounded-lg transition ${
+                    className={`px-3 py-1 text-sm rounded-xl transition ${
                       shipmentPeriod === p 
-                      ? 'bg-emerald-100 text-emerald-600 font-medium' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-green-100 text-green-700 font-semibold font-medium' 
+                      : 'bg-white/70 text-green-700 border border-green-200 hover:bg-green-50 hover:bg-green-200/60 backdrop-blur-sm'
                     }`}
                   >
                     {p}
@@ -284,9 +319,9 @@ export default function ClientDashboard() {
             </div>
 
             {/* Card 3: Emissions Credit System */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border relative overflow-hidden">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                <span className="material-symbols-outlined text-emerald-500">credit_score</span>
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">credit_score</span>
                 Emissions Credit System
               </h2>
 
@@ -296,25 +331,26 @@ export default function ClientDashboard() {
                   <p className="text-xl font-semibold">Rs {stats.creditMarketPrice}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-gray-500 text-sm">Credits Left</p>
-                  <p className="text-xl font-semibold text-emerald-600">{stats.companyCredits.toFixed(2)}</p>
+                  <p className={`text-gray-500 text-sm`}>Credits Left (for this month)</p>
+                  <p className={`text-xl font-semibold`}>
+                    {(stats.companyCredits / 12).toFixed(2)}  |  {((stats.companyCredits / 12) * 1000).toFixed(2) } kg CO₂e
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-500 text-sm">Forecast (for this month)</p>
-                  <p className="text-xl font-semibold">{stats.forecastedEmissions} t</p>
+                  <p className="text-xl font-semibold">{stats.forecastedEmissions.toFixed(2)} kg CO₂e</p>
                 </div>
               </div>
 
               <div className="mt-5 flex gap-3">
                 <button 
                   onClick={() => setTradeSection(tradeSection === 'buy' ? null : 'buy')}
-                  className={`flex-1 px-4 py-2 rounded-lg transition ${tradeSection === 'buy' ? 'bg-emerald-600' : 'bg-emerald-500'} text-white hover:bg-emerald-600`}
-                >
+                  className={"flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 text-white font-semibold hover:scale-[1.03] transition-transform"}>
                   Buy
                 </button>
                 <button 
                   onClick={() => setTradeSection(tradeSection === 'sell' ? null : 'sell')}
-                  className={`flex-1 px-4 py-2 rounded-lg border border-emerald-500 text-emerald-500 hover:bg-emerald-50 transition ${tradeSection === 'sell' ? 'bg-emerald-50' : ''}`}
+                  className={`flex-1 px-4 py-2 rounded-xl border border-green-600 text-green-700 hover:bg-emerald-50 hover:scale-[1.03] transition-transform${tradeSection === 'sell' ? 'bg-emerald-50' : ''}`}
                 >
                   Sell
                 </button>
@@ -327,7 +363,7 @@ export default function ClientDashboard() {
                   {/* BUY TABLE */}
                   {tradeSection === 'buy' && (
                     <div>
-                      <h4 className="text-sm font-bold text-gray-700 mb-2">Available Listings</h4>
+                      <h4 className="text-sm font-bold text-gray-900 mb-2">Available Listings</h4>
                       <div className="max-h-40 overflow-y-auto pr-1">
                         <table className="w-full text-sm text-left">
                           <thead className="text-xs text-gray-500 bg-gray-50 uppercase">
@@ -344,7 +380,12 @@ export default function ClientDashboard() {
                                 <td className="px-2 py-2">{l.creditsListed}</td>
                                 <td className="px-2 py-2">
                                   <button 
-                                    onClick={() => handleBuy(l.saleUnitId, l.creditsListed)}
+                                    onClick={() =>
+                                      setConfirmAction({
+                                        type: "buy",
+                                        payload: l
+                                      })
+                                    }
                                     className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200"
                                   >
                                     Buy
@@ -363,18 +404,24 @@ export default function ClientDashboard() {
                   {/* SELL FORM */}
                   {tradeSection === 'sell' && (
                     <div>
-                      <h4 className="text-sm font-bold text-gray-700 mb-2">Sell Credits</h4>
+                      <h4 className="text-sm font-bold text-gray-900 mb-2">Sell Credits</h4>
                       <div className="flex gap-2">
                         <input 
                           type="number" 
                           placeholder="Amount" 
                           value={sellAmount} 
                           onChange={e => setSellAmount(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                         <button 
-                          onClick={handleSell}
-                          className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
+                          onClick={() =>
+                            setConfirmAction({
+                              type: "sell",
+                              payload: { amount: sellAmount }
+                            })
+                          }
+                          className="bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold 
+                          hover:scale-105 transition-transform"
                         >
                           Confirm
                         </button>
@@ -390,8 +437,11 @@ export default function ClientDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* BAR CHART */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border lg:col-span-2">
-              <h2 className="text-lg font-semibold mb-4 text-gray-700">CO2e Month Wise Emissions</h2>
+            <div className="bg-white/60 backdrop-blur-2xl relative overflow-hidden border border-white/30 p-6 lg:col-span-2 rounded-3xl shadow-2xl">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">bar_chart</span>
+                CO2e Month Wise Emissions
+              </h2>
               <div className="h-80 w-full">
                 <Bar data={chartData} options={chartOptions} />
               </div>
@@ -401,9 +451,9 @@ export default function ClientDashboard() {
             <div className="space-y-6">
               
               {/* Budget Card */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                  <span className="material-symbols-outlined text-emerald-500">analytics</span>
+              <div className="bg-white/60 backdrop-blur-2xl relative overflow-hidden border border-white/30 p-6 rounded-3xl shadow-2xl">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                  <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">analytics</span>
                   Carbon Budget Forecast
                 </h2>
 
@@ -411,23 +461,25 @@ export default function ClientDashboard() {
                   Expected annual emission based on current trend.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.totalForecastedEmissions} t</p>
+                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.totalForecastedEmissions.toFixed(2)} kg CO₂e</p>
 
                 {/* Progress Bar Logic: Assuming 1200 is cap */}
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-3 overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min((stats.totalForecastedEmissions / 1200) * 100, 100)}%` }}
-                  ></div>
+                  <div
+                    className={`h-full ${barColor} rounded-full transition-all duration-500`}
+                    style={{ width: `${usagePercent}%` }}
+                  />
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">/ 1,200 t (Annual Cap)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.totalForecastedEmissions.toFixed(2)} / {stats.companyEmissionBudget}
+                </p>
               </div>
 
               {/* Emissions Saved */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                  <span className="material-symbols-outlined text-emerald-500">eco</span>
+              <div className="bg-white/60 backdrop-blur-2xl relative overflow-hidden border border-white/30 p-6 rounded-3xl shadow-2xl">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-green-700">
+                  <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600 bg-clip-text text-transparent">eco</span>
                   Carbon Emissions Saved
                 </h2>
 
@@ -435,16 +487,16 @@ export default function ClientDashboard() {
                   Emissions saved by choosing sustainable routes.
                 </p>
 
-                <p className="text-3xl font-bold mt-3 text-emerald-600">{stats.emissionsSaved} t</p>
+                <p className="text-3xl font-bold mt-3 text-gray-900">{stats.emissionsSaved.toFixed(2)} kg CO₂e</p>
 
                 <div className="mt-4 flex gap-2">
                   {['Today', 'Month', 'Year'].map(p => (
                     <button 
                       key={p}
                       onClick={() => setSavingsPeriod(p)}
-                      className={`px-2 py-1 text-xs rounded-lg transition ${
+                      className={`px-2 py-1 text-xs rounded-xl transition ${
                         savingsPeriod === p 
-                        ? 'bg-emerald-100 text-emerald-600 font-medium' 
+                        ? 'bg-green-100 text-green-700 font-semibold font-medium' 
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                       }`}
                     >
@@ -458,6 +510,83 @@ export default function ClientDashboard() {
           </div>
 
         </div>
+        {confirmAction && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white/80 backdrop-blur-xl relative overflow-hidden w-full max-w-md p-6 border border-white/30 animate-in fade-in zoom-in-95">
+
+      {/* HEADER */}
+      <h3 className="text-lg font-bold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent mb-2">
+        Confirm {confirmAction.type === "buy" ? "Purchase" : "Sale"}
+      </h3>
+
+      {/* BODY */}
+      <p className="text-sm text-gray-600 mb-4">
+        {confirmAction.type === "buy" && (
+          <>
+            You are about to <b>buy {confirmAction.payload.creditsListed}</b> credits
+            from <b>{confirmAction.payload.sellerCompanyName}</b>.
+          </>
+        )}
+
+        {confirmAction.type === "sell" && (
+          <>
+            You are about to <b>sell {confirmAction.payload.amount}</b> credits.
+          </>
+        )}
+
+        {confirmAction.type === "logout" && (
+          <>
+            You are about to <b>log out</b> of your account.
+            <br />
+            <span className="text-xs text-gray-500">
+              You will need to log in again to access the dashboard.
+            </span>
+          </>
+        )}
+      </p>
+
+
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <button
+          onClick={() => setConfirmAction(null)}
+          className="px-4 py-2 text-sm rounded-xl border border-green-600 text-green-700 hover:bg-emerald-50 hover:scale-[1.03] transition-transform"
+        >
+          Cancel
+        </button>
+
+       <button
+          onClick={async () => {
+            if (confirmAction.type === "buy") {
+              const l = confirmAction.payload;
+              await handleBuy(l.saleUnitId, l.creditsListed);
+            }
+
+            if (confirmAction.type === "sell") {
+              await handleSell();
+            }
+
+            if (confirmAction.type === "logout") {
+              handleLogout();
+            }
+
+            setConfirmAction(null);
+          }}
+          className={`px-4 py-2 text-sm rounded-xl text-white ${
+            confirmAction.type === "buy"
+              ? "bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 hover:scale-105 transition-transform"
+              : confirmAction.type === "sell"
+              ? "bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 hover:scale-105 transition-transform"
+              : "bg-red-500 hover:bg-red-600 hover:bg-red-700"
+          }`}
+        >
+          Confirm
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );

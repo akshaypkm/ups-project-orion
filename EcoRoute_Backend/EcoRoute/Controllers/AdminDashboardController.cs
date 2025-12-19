@@ -8,6 +8,7 @@ namespace EcoRoute.Controllers
 {
     [Route("api/admin-dashboard")]
     [ApiController]
+    [Authorize(Roles = "admin")]
     public class AdminDashboardController : ControllerBase
     {
         private readonly IAdminDashboardService _adminDashboardService;
@@ -19,7 +20,7 @@ namespace EcoRoute.Controllers
 
         [HttpGet("stats")]
         [Authorize]
-        public async Task<ActionResult> GetDashboardStatAsync([FromQuery] string EmissionsPeriod = "month", string ShipmentsPeriod = "month", string EmissionsSavedPeriod = "year")
+        public async Task<ActionResult> GetDashboardStatAsync([FromQuery] string EmissionsPeriod = "month", [FromQuery] string ShipmentsPeriod = "month", [FromQuery] string EmissionsSavedPeriod = "year")
         {
             var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
 

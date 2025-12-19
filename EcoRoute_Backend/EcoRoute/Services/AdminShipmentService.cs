@@ -28,7 +28,10 @@ namespace EcoRoute.Services
                     {
                         ShipmentCode = s.ShipmentCode,
                         ShipmentDate = s.ShipmentDate,
-                        CompanyName = s.OrderList.FirstOrDefault()?.Company?.CompanyName ?? string.Empty,
+                        CompanyName = s.OrderList.Where(o => !string.IsNullOrWhiteSpace(o.CompanyName))
+                                                    .Select(o => o.CompanyName)
+                                                        .Distinct()
+                                                            .ToArray(),
                         ShipmentOrigin = s.ShipmentOrgin,
                         ShipmentDestination = s.ShipmentDestination,
                         ShipmentTotalItems = s.OrderList.Sum(o => o.OrderTotalItems),

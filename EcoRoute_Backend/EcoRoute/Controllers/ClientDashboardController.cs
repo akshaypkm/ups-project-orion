@@ -13,15 +13,18 @@ namespace EcoRoute.Controllers
 {
     [Route("api/client-dashboard")]
     [ApiController]
-    [Authorize(Roles = "Client")]
+    [Authorize(Roles = "client")]
 
     public class ClientDashboardController : ControllerBase
     {
         
         private readonly IClientDashboardService _clientDashboardService; 
-        public ClientDashboardController(IClientDashboardService _clientDashboardService)
+        private readonly IForeCastService _forecastService;
+
+        public ClientDashboardController(IClientDashboardService _clientDashboardService, IForeCastService _forecastService)
         {
             this._clientDashboardService = _clientDashboardService;
+            this._forecastService = _forecastService;
         }
 
         [HttpGet("stats")]
@@ -142,5 +145,19 @@ namespace EcoRoute.Controllers
 
             return notifications;
         } 
+
+        // [HttpGet("forecast")]
+        // public async Task<ActionResult<ForecastDto>> GetCompanyForecast()
+        // {
+        //     var companyClaim = User.FindFirst("CompanyName");
+        //     if (companyClaim == null)
+        //     {
+        //         return Unauthorized("Token does not contain CompanyName");
+        //     }
+        //     string companyName = companyClaim.Value;
+        //     DateTime effectiveDate = DateTime.Today;
+        //     var forecastResult =await _forecastService.GetCompanyEmissionForecastAsync(companyName,effectiveDate);
+        //     return Ok(forecastResult);
+        // }
     }
 }

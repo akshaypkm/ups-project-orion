@@ -115,7 +115,8 @@ export default function AdminShipments() {
             >
               <option>All Status</option>
               <option>Placed</option>
-              <option>Transit</option>
+              <option>Processing</option>
+              <option>Planed</option>
             </select>
 
             {/* TIME PERIOD FILTER */}
@@ -164,13 +165,13 @@ export default function AdminShipments() {
               {filteredShipments.map((s) => (
                 <tr key={s.shipmentId}>
                   <td>{s.shipmentCode}</td>
-                  <td>{s.shipmentDate}</td>
-                  <td>{s.companyName}</td>
-                  <td>{s.shipmentOrigin}</td>
-                  <td>{s.shipmentDestination}</td>
+                  <td>{new Date(s.shipmentDate).toLocaleDateString()}</td>
+                  <td>{s.companyName?.join(", ").toUpperCase()}</td>
+                  <td>{s.shipmentOrigin.toUpperCase()}</td>
+                  <td>{s.shipmentDestination.toUpperCase()}</td>
                   <td>{s.shipmentTotalItems}</td>
-                  <td>{s.shipmentCO2Emission}</td>
-                  <td>{s.shipmentStatus}</td>
+                  <td>{s.shipmentCO2Emission.toFixed(2)}</td>
+                  <td>{s.shipmentStatus.toUpperCase()}</td>
                 </tr>
               ))}
             </tbody>
