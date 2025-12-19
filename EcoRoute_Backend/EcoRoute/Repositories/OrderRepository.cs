@@ -23,6 +23,8 @@ namespace EcoRoute.Repositories
 
         Task InsertShipmentIdInOrder(int orderDto, int shipId);
 
+        Task<Order> GetOrderByOrderId(int OrderId);
+
     }
     public class OrderRepository(EcoRouteDbContext dbContext) : IOrderRepository
     {
@@ -66,6 +68,11 @@ namespace EcoRoute.Repositories
         {
             await dbContext.Orders.Where(o => o.Id == orderId).
                                     ExecuteUpdateAsync(o => o.SetProperty(o => o.ShipmentId, shipId));
+        }
+
+        public async Task<Order> GetOrderByOrderId(int OrderId)
+        {
+            return await dbContext.Orders.Where(o => o.Id == OrderId).FirstOrDefaultAsync();
         }
     }
 }

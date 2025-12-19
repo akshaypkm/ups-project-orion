@@ -39,9 +39,9 @@ export default function App() {
         }
       />
       <Route path="" element={<UserDashboard />} />
-      <Route path="shipments" element={<UserShipments />} />
-      <Route path="carbon-quote" element={<UserCarbonQuoteCalculator />} />
-      <Route path="results" element={<UserResults />} />
+      <Route path="client-shipments" element={<UserShipments />} />
+      <Route path="carbon-quote-calculator" element={<UserCarbonQuoteCalculator />} />
+      <Route path="quote-results" element={<UserResults />} />
 
 
       {/* ADMIN ROUTES */}
@@ -54,8 +54,8 @@ export default function App() {
         }
       />
       <Route path="" element={<AdminDashboard />} />
-      <Route path="shipments" element={<AdminShipments />} />
-      <Route path="shipments-review" element={<AdminShipmentsReview />} />
+      <Route path="admin-shipments" element={<AdminShipments />} />
+      <Route path="admin-shipments-review" element={<AdminShipmentsReview />} />
       {/* <Route path="/admin/monitor" element={<AdminMonitorParams />} /> */}
 
 

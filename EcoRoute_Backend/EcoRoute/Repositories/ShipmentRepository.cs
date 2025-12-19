@@ -26,6 +26,10 @@ namespace EcoRoute.Repositories
         Task<int> CreateShipment(OrderDto orderDto);
 
         Task<List<Shipment>> GetAllAdminShipmentsAsync();
+
+        Task AddShipmentAsync(Shipment shipment);
+
+        Task SaveChangesAsync();
     }
     public class ShipmentRepository(EcoRouteDbContext dbContext) : IShipmentRepository
     {
@@ -99,6 +103,16 @@ namespace EcoRoute.Repositories
                 .Include(s => s.OrderList)
                     .ThenInclude(o => o.Company)
                 .ToListAsync();
+        }
+
+        public async Task AddShipmentAsync(Shipment shipment)
+        {
+            await dbContext.AddAsync(shipment);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await dbContext.SaveChangesAsync();
         }
     }
 }

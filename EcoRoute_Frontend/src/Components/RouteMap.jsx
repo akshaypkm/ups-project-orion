@@ -76,6 +76,9 @@ export default function RouteMap({ encodedPolyline, routeStops = [] }) {
       {routeStops.map((stop, idx) => {
         const isPickup = stop.stopType === "PICKUP";
 
+
+       
+
         return (
           <Marker
             key={`${stop.orderId}-${idx}`}
@@ -97,6 +100,47 @@ export default function RouteMap({ encodedPolyline, routeStops = [] }) {
           />
         );
       })}
+
+       {/* FALLBACK MARKERS FOR SINGLE ORDER */}
+      {routeStops.length === 0 && path.length > 1 && (
+        <>
+          {/* START */}
+          <Marker
+            position={path[0]}
+            label={{
+              text: "START",
+              color: "#166534",
+              fontWeight: "bold",
+            }}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 9,
+              fillColor: "#16a34a",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+
+          {/* END */}
+          <Marker
+            position={path[path.length - 1]}
+            label={{
+              text: "END",
+              color: "#7f1d1d",
+              fontWeight: "bold",
+            }}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 9,
+              fillColor: "#dc2626",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+        </>
+      )}
     </GoogleMap>
   );
 }

@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using AutoMapper;
+using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.DTOs;
 using EcoRoute.Models.Entities;
@@ -18,6 +20,8 @@ namespace EcoRoute.Services
         Task CancelShipment(OrderDto orderDto);
 
         Task<List<ImproviseShipmentGroupDto>> ImproviseShipments(List<OrderDto> orderDtos);
+
+        Task ApproveGroupedShipment(ImproviseShipmentGroupDto groupDto);
     }
     public class AdminShipmentReviewService : IAdminShipmentReviewService
     {
@@ -31,9 +35,12 @@ namespace EcoRoute.Services
 
         private readonly RouteOptimizationService _ROS;
 
+        private readonly EcoRouteDbContext _dbcontext;
+
         public AdminShipmentReviewService(IShipmentRepository _shipmentRepo, IMapper _mapper
                                         , IOrderRepository _orderRepo, INotificationRepository _notifRepo,
-                                        ITruckRepository _truckRepo, RouteOptimizationService _ROS)
+                                        ITruckRepository _truckRepo, RouteOptimizationService _ROS
+                                        ,EcoRouteDbContext _dbcontext)
         {
             this._shipmentRepo = _shipmentRepo;
             this._mapper = _mapper;
@@ -41,6 +48,7 @@ namespace EcoRoute.Services
             this._notifRepo = _notifRepo;
             this._truckRepo = _truckRepo;
             this._ROS = _ROS;
+            this._dbcontext = _dbcontext;
         }
         
         public async Task<List<OrderDto>> GetShipmentsForReview()
@@ -176,6 +184,7 @@ namespace EcoRoute.Services
                         OptimizedGroupPolyline = optimizedRouteData.Polyline,
                         TransportVehicle = truck.TruckName,
                         RouteStops = optimizedRouteData.Stops,
+                        OptimizedDistance = optimizedRouteData.TotalDistanceMeters,
 
                         CombinedOrderWeightKg = packingInput.TotalWeightKg,
 
@@ -194,6 +203,65 @@ namespace EcoRoute.Services
                 }
             }
             return optimizedGroups;
+        }
+
+        public async Task ApproveGroupedShipment(ImproviseShipmentGroupDto groupDto)
+        {
+            if(groupDto.Orders == null || !groupDto.Orders.Any())
+            {
+                throw new Exception("empty shipment group");
+            }
+
+            using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+
+            var earliestDate = groupDto.Orders.Min(o => o.OrderDate);
+
+            var lastDrop = groupDto.RouteStops.Where(s => s.StopType == "DROP")
+                                                .OrderByDescending(s => s.Sequence)
+                                                    .FirstOrDefault();
+
+            if(lastDrop == null)
+            {
+                throw new InvalidOperationException("no DROP found for grouped shipment");
+            }
+
+            var destinationOrder = groupDto.Orders.First( o=> o.OrderId == lastDrop.OrderId);
+            var shipment =  new Shipment
+            {
+                ShipmentDate = earliestDate,
+                ShipmentOrgin = groupDto.RouteStops.OrderBy(s => s.Sequence)
+                                                        .First().StopType == "PICKUP"
+                                                            ? groupDto.Orders.First().OrderOrigin
+                                                            : groupDto.RouteStops.First().Lat + "," + groupDto.RouteStops.First().Lng,
+                
+                ShipmentDestination = destinationOrder.OrderDestination,
+
+                ShipmentTotalItems = groupDto.Orders.Sum(o => o.OrderTotalItems),
+                ShipmentWeightKg = groupDto.Orders.Sum(o => o.OrderWeightKg),
+
+                ShipmentLength = groupDto.Orders.Max(o => o.OrderLength),
+                ShipmentWidth  = groupDto.Orders.Max(o => o.OrderWidth),
+                ShipmentHeight = groupDto.Orders.Max(o => o.OrderHeight), 
+                ShipmentDistance =  groupDto.OptimizedDistance,
+                Vehicle = groupDto.TransportVehicle,
+                ShipmentCO2Emission = groupDto.Orders.Sum(o => o.OrderCO2Emission),
+
+                OrderList = new List<Order>()
+            };
+
+            foreach(var orderDto in groupDto.Orders)
+            {
+                var order = await _orderRepo.GetOrderByOrderId(orderDto.OrderId);
+
+                order.OrderStatus = "placed";
+                order.TransportVehicle = groupDto.TransportVehicle;
+                shipment.OrderList.Add(order);
+            }
+
+            await _shipmentRepo.AddShipmentAsync(shipment);
+            await _shipmentRepo.SaveChangesAsync();
+
+            await transaction.CommitAsync();
         }
 
         private async Task<bool> IsSpatiallyCompatible(OrderDto a, OrderDto b)

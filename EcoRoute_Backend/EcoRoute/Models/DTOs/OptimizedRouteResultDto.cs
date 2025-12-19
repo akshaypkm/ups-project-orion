@@ -4,6 +4,8 @@ namespace EcoRoute.Models.DTOs
     {
         public string Polyline { get; set; }
         public List<RouteStopDto> Stops { get; set; }
+
+        public double TotalDistanceMeters { get; set; }
     }
 
     public class RouteStopDto

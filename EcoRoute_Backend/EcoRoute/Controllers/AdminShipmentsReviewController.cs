@@ -1,4 +1,5 @@
 using EcoRoute.Models;
+using EcoRoute.Models.DTOs;
 using EcoRoute.Repositories;
 using EcoRoute.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -58,12 +59,9 @@ namespace EcoRoute.Controllers
         }
 
         [HttpPost("improvise-shipment-approve")]
-        public async Task<IActionResult> ApproveGroup([FromBody] List<OrderDto> orderDtos)
+        public async Task<IActionResult> ApproveGroup([FromBody] ImproviseShipmentGroupDto groupDto)
         {
-            foreach(var orderDto in orderDtos)
-            {
-                await _adminShipmentReviewService.ApproveShipment(orderDto);
-            }
+            await _adminShipmentReviewService.ApproveGroupedShipment(groupDto);
 
             return Ok("order statuses changed");
         }
