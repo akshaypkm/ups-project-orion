@@ -12,10 +12,7 @@ namespace EcoRoute.Controllers
 {
     [Route("api/admin/shipments")]
     [ApiController]
-<<<<<<< HEAD
-=======
     [Authorize(Roles = "admin")]
->>>>>>> 734630133bed76a0b2533263551d4783c6b60aa0
     public class AdminShipmentController : ControllerBase
     {
         private readonly IAdminShipmentService _AdminShipmentService;
@@ -26,24 +23,12 @@ namespace EcoRoute.Controllers
         }
 
         [HttpGet]
-<<<<<<< HEAD
-        [Authorize]
-        public async Task<ActionResult<List<AdminShipmentDto>>> GetAllCompanyNamesOfShipmentCodes()
-        {
-            var companyClaim = User.FindFirst("CompanyName");
-            if (companyClaim == null)
-            {
-                return Unauthorized("Token does not contain CompanyName");
-            }
-            var result = await _AdminShipmentService.GetAllCompanyShipmentsAsync();
-=======
         public async Task<ActionResult<List<AdminShipmentDto>>> GetAllCompanyNamesOfShipmentCodes()
         {
             
             var result = await _AdminShipmentService.GetAllCompanyShipmentsAsync();
 
 
->>>>>>> 734630133bed76a0b2533263551d4783c6b60aa0
             return Ok(result);
         }
     }
