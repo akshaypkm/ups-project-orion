@@ -20,7 +20,7 @@ namespace EcoRoute.Controllers
 
         [HttpGet("stats")]
         [Authorize]
-        public async Task<ActionResult> GetDashboardStatAsync([FromQuery] string EmissionsPeriod = "month", string ShipmentsPeriod = "month", string EmissionsSavedPeriod = "year")
+        public async Task<ActionResult> GetDashboardStatAsync([FromQuery] string EmissionsPeriod = "month", [FromQuery] string ShipmentsPeriod = "month", [FromQuery] string EmissionsSavedPeriod = "year")
         {
             var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
 
