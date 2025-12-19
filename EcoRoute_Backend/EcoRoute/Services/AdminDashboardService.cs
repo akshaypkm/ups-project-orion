@@ -24,6 +24,8 @@ namespace EcoRoute.Services
         }
         public async Task<AdminDashboardDto> GetDashboardStat(string EmissionsPeriod, string ShipmentsPeriod, string EmissionsSavedPeriod)
         {
+
+            Console.WriteLine($"SHIPMENT PERIOD TIMELINE ---------------------------{ShipmentsPeriod}");
             DateTime EmissionsStartDate;
             DateTime EmissionsEndDate = DateTime.Now;
 
@@ -41,7 +43,7 @@ namespace EcoRoute.Services
                 case "year":
                     EmissionsStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     EmissionsStartDate = DateTime.Today;
                     break;
                 case "month":
@@ -55,7 +57,7 @@ namespace EcoRoute.Services
                 case "year":
                     ShipmentStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     ShipmentStartDate = DateTime.Today;
                     break;
                 case "month":
@@ -69,7 +71,7 @@ namespace EcoRoute.Services
                 case "year":
                     EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     EmissionsSavedStartDate = DateTime.Today;
                     break;
                 case "month":

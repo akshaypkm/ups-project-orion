@@ -11,7 +11,12 @@ export default function AdminShipmentsReview() {
   const [openCard, setOpenCard] = useState(null);
   const [improvisedGroups, setImprovisedGroups] = useState([]);
   const [isImprovisedView, setIsImprovisedView] = useState(false);
-  
+  const [confirmBox, setConfirmBox] = useState({
+  open: false,
+  title: "",
+  message: "",
+  onConfirm: null,
+});
   // Filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -34,35 +39,45 @@ export default function AdminShipmentsReview() {
 
   // --- 2. Action Handlers ---
 
-  const handleApprove = async (shipment) => {
-    try {
-      // Send the entire shipment DTO to the backend
-      await api.post("/api/admin-shipments-review/approve", shipment);
-      
-      // Update UI: Remove or update status
-      setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
-      alert(`Shipment #${shipment.orderId} Approved Successfully!`);
-    } catch (err) {
-      console.error("Approval failed:", err);
-      alert("Failed to approve shipment.");
-    }
-  };
+const handleApprove = (shipment) => {
+  setConfirmBox({
+    open: true,
+    title: "Approve Shipment",
+    message: `Are you sure you want to approve shipment #${shipment.orderId}?`,
+    onConfirm: async () => {
+      try {
+        await api.post("/api/admin-shipments-review/approve", shipment);
+        setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+        alert(`Shipment #${shipment.orderId} approved`);
+      } catch (err) {
+        alert("Approval failed");
+      } finally {
+        setConfirmBox({ open: false });
+      }
+    },
+  });
+};
 
-  const handleCancel = async (shipment) => {
-    if(!window.confirm("Are you sure you want to cancel this shipment?")) return;
 
-    try {
-      // Send the entire shipment DTO to the backend
-      await api.post("/api/admin-shipments-review/cancel", shipment);
-      
-      // Update UI: Remove or update status
-      setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
-      alert(`Shipment #${shipment.orderId} Cancelled.`);
-    } catch (err) {
-      console.error("Cancellation failed:", err);
-      alert("Failed to cancel shipment.");
-    }
-  };
+const handleCancel = (shipment) => {
+  setConfirmBox({
+    open: true,
+    title: "Cancel Shipment",
+    message: `Cancel shipment #${shipment.orderId}? This action cannot be undone.`,
+    onConfirm: async () => {
+      try {
+        await api.post("/api/admin-shipments-review/cancel", shipment);
+        setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
+        alert(`Shipment #${shipment.orderId} cancelled`);
+      } catch (err) {
+        alert("Cancellation failed");
+      } finally {
+        setConfirmBox({ open: false });
+      }
+    },
+  });
+};
+
 
   const handleImprovise = async () => {
   try {
@@ -87,44 +102,57 @@ export default function AdminShipmentsReview() {
   }
 };
 
-const handleApproveGroup = async (group) => {
-  try {
-    await api.post(
-      "/api/admin-shipments-review/improvise-shipment-approve",
-      group
-    );
+const approveGroup = async (group) => {
+  await api.post(
+    "/api/admin-shipments-review/improvise-shipment-approve",
+    group
+  );
 
-    // Remove approved orders from normal list
-    setShipments(prev =>
-      prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
-    );
+  setShipments(prev =>
+    prev.filter(
+      s => !group.orders.some(o => o.orderId === s.orderId)
+    )
+  );
 
-    alert("Grouped shipment approved");
-  } catch (err) {
-    console.error("Group approval failed:", err);
-    alert("Failed to approve grouped shipment");
-  }
+  // navigate("/admin-dashboard");
 };
 
-const handleCancelGroup = async (group) => {
-  if (!window.confirm("Cancel all orders in this group?")) return;
 
-  try {
-    await api.post(
-      "/api/admin-shipments-review/cancel-group",
-      group
-    );
+const handleApproveGroup = (group) => {
+  setConfirmBox({
+    open: true,
+    title: "Approve Grouped Shipment",
+    message: `Approve grouped shipment containing ${group.orders.length} orders?`,
+    onConfirm: () => {
+      setConfirmBox({ open: false });
 
-    setShipments(prev =>
-      prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
-    );
-
-    alert("Grouped shipment cancelled");
-  } catch (err) {
-    console.error("Group cancellation failed:", err);
-    alert("Failed to cancel grouped shipment");
-  }
+      approveGroup(group).catch(() => {
+        alert("Group approval failed");
+      });
+    },
+  });
 };
+
+
+// const handleCancelGroup = async (group) => {
+//   if (!window.confirm("Cancel all orders in this group?")) return;
+
+//   try {
+//     await api.post(
+//       "/api/admin-shipments-review/cancel-group",
+//       group
+//     );
+
+//     setShipments(prev =>
+//       prev.filter(s => !group.orders.some(o => o.orderId === s.orderId))
+//     );
+
+//     alert("Grouped shipment cancelled");
+//   } catch (err) {
+//     console.error("Group cancellation failed:", err);
+//     alert("Failed to cancel grouped shipment");
+//   }
+// };
 
 
   // --- 3. Filter Logic ---
@@ -496,13 +524,13 @@ const handleCancelGroup = async (group) => {
                       Close
                     </button>
 
-                    <button
+                    {/* <button
                       onClick={() => handleCancelGroup(group)}
                       className="px-5 py-2.5 rounded-lg bg-red-100 text-red-600 font-medium hover:bg-red-200 transition shadow-sm flex items-center gap-2"
                     >
                       <span className="material-symbols-outlined text-sm">close</span>
                       Cancel Group
-                    </button>
+                    </button> */}
 
                     <button
                       onClick={() => handleApproveGroup(group)}
@@ -518,13 +546,60 @@ const handleCancelGroup = async (group) => {
 
             
           )}
+          
         </div>
       );
     })
+    
   }
+
+  
           
+        </div>
+        
+      </div>
+      
+      <ConfirmDialog
+  open={confirmBox.open}
+  title={confirmBox.title}
+  message={confirmBox.message}
+  onCancel={() => setConfirmBox({ open: false })}
+  onConfirm={confirmBox.onConfirm}
+/>
+
+
+    </div>
+    
+  );
+
+
+}
+
+const ConfirmDialog = ({ open, title, message, onCancel, onConfirm }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">{title}</h3>
+        <p className="text-sm text-gray-600 mb-6">{message}</p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+          >
+            Confirm
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};

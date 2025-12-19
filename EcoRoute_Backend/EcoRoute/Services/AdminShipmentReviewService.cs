@@ -28,7 +28,7 @@ namespace EcoRoute.Services
         private readonly IShipmentRepository _shipmentRepo;
         private readonly IOrderRepository _orderRepo;
         private readonly INotificationRepository _notifRepo;
-
+        private readonly ICompanyRepository _companyRepo;
         private readonly ITruckRepository _truckRepo;
 
         private readonly IMapper _mapper;
@@ -40,12 +40,13 @@ namespace EcoRoute.Services
         public AdminShipmentReviewService(IShipmentRepository _shipmentRepo, IMapper _mapper
                                         , IOrderRepository _orderRepo, INotificationRepository _notifRepo,
                                         ITruckRepository _truckRepo, RouteOptimizationService _ROS
-                                        ,EcoRouteDbContext _dbcontext)
+                                        ,EcoRouteDbContext _dbcontext, ICompanyRepository _companyRepo)
         {
             this._shipmentRepo = _shipmentRepo;
             this._mapper = _mapper;
             this._orderRepo = _orderRepo;
             this._notifRepo = _notifRepo;
+            this._companyRepo = _companyRepo;
             this._truckRepo = _truckRepo;
             this._ROS = _ROS;
             this._dbcontext = _dbcontext;
@@ -91,6 +92,9 @@ namespace EcoRoute.Services
         {
             string status = "cancelled";
             await _orderRepo.ChangeOrderStatus(orderDto.OrderId, status);
+
+            var refundCredits = orderDto.OrderCO2Emission / 1000;
+            await _companyRepo.RefundCompanyCredits(orderDto.CompanyId, refundCredits);
              
             var notification = new Notification(){
                 Message = $"Your order for ID({orderDto.OrderCode}) from {orderDto.OrderOrigin} -> {orderDto.OrderDestination} has been cancelled by the admin",

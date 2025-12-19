@@ -57,7 +57,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, [emissionsPeriod, shipmentsPeriod, generalPeriod]);
+  }, [emissionsPeriod, shipmentsPeriod, emissionSavedPeriod]);
 
   // --- Chart Config ---
   const chartData = {
