@@ -115,7 +115,8 @@ export default function AdminShipments() {
             >
               <option>All Status</option>
               <option>Placed</option>
-              <option>Transit</option>
+              <option>Processing</option>
+              <option>Planed</option>
             </select>
 
             {/* TIME PERIOD FILTER */}
