@@ -184,8 +184,8 @@ export default function UserShipments() {
                         <td className="text-gray-600">
                           {row.orderDate ? new Date(row.orderDate).toLocaleDateString() : "N/A"}
                         </td>
-                        <td className="font-medium text-gray-800">{row.orderOrigin}</td>
-                        <td className="font-medium text-gray-800">{row.orderDestination}</td>
+                        <td className="font-medium text-gray-800">{row.orderOrigin.toUpperCase()}</td>
+                        <td className="font-medium text-gray-800">{row.orderDestination.toUpperCase()}</td>
                         <td className="text-gray-600">{row.orderTotalItems || row.unitCount || 0} units</td>
                         <td className="text-gray-600">{row.orderWeightKg || 0} kg</td>
 
@@ -204,7 +204,7 @@ export default function UserShipments() {
                         {/* Status */}
                         <td>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(row.orderStatus)}`}>
-                            {row.orderStatus || "Pending"}
+                            {row.orderStatus.toUpperCase() || "Pending"}
                           </span>
                         </td>
                       </tr>
