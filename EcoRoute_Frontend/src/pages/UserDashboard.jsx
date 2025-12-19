@@ -291,7 +291,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
             </div>
 
             {/* Card 2: Shipments */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <div className="bg-white p-6 mr-12 w-[400px] rounded-xl shadow-sm border">
               <h2 className="text-lg font-semibold text-gray-700">Total Shipments</h2>
               <p className="text-4xl font-bold mt-3 text-gray-900">{stats.shipments}</p>
 
@@ -313,7 +313,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
             </div>
 
             {/* Card 3: Emissions Credit System */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border relative overflow-hidden">
+<div className="bg-white p-6 rounded-xl w-[581px] shadow-sm border relative overflow-hidden ml-[-90px]">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
                 <span className="material-symbols-outlined text-emerald-500">credit_score</span>
                 Emissions Credit System
@@ -325,9 +325,9 @@ if (usagePercent > 50 && usagePercent <= 75) {
                   <p className="text-xl font-semibold">Rs {stats.creditMarketPrice}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className={`text-gray-500 text-sm ${creditsColor}`}>Credits Left</p>
+                  <p className={`text-gray-500 text-sm ${creditsColor}`}>Credits Left (for this month)</p>
                   <p className={`text-xl font-semibold ${creditsColor}`}>
-                    {stats.companyCredits.toFixed(2)}
+                    {(stats.companyCredits / 12).toFixed(2)}  |  {((stats.companyCredits / 12) * 1000).toFixed(2) } kg CO₂e
                   </p>
                 </div>
                 <div className="flex justify-between items-center">
