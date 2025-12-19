@@ -24,6 +24,8 @@ namespace EcoRoute.Repositories
         Task UpdateCompanyCreditsAsync(int CompanyId, double OrderCO2Emission);
 
         Task<string> GetCompanyNameById(int CompanyId);
+
+        Task RefundCompanyCredits(int companyId, double refundCredits);
         
     }
     public class CompanyRepository : ICompanyRepository
@@ -91,6 +93,14 @@ namespace EcoRoute.Repositories
         public async Task<string> GetCompanyNameById(int CompanyId)
         {
             return await dbContext.Companies.Where(c => c.Id == CompanyId).Select(c => c.CompanyName).FirstOrDefaultAsync();
+        }
+
+        public async Task RefundCompanyCredits(int companyId, double refundCredits)
+        {
+            await dbContext.Companies.Where(c => c.Id == companyId).ExecuteUpdateAsync(setter => setter.SetProperty(
+                                                                                            c => c.CompanyCredits,
+                                                                                            c => c.CompanyCredits + refundCredits
+            ));
         }
     }
 }

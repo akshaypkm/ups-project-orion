@@ -65,10 +65,10 @@ namespace EcoRoute.Repositories
 
         public async Task<double> GetAdminDashTotalEmissions(DateTime EmissionsStartDate, DateTime EmissionsEndDate)
         {
-            return await dbContext.Orders.Where(o => o.OrderStatus == "placed"
-                                            && o.OrderDate >= EmissionsStartDate
-                                            && o.OrderDate <= EmissionsEndDate)
-                                            .SumAsync(o => o.OrderCO2Emission);
+            return await dbContext.Shipments.Where(o => 
+                                             o.ShipmentDate >= EmissionsStartDate
+                                            && o.ShipmentDate <= EmissionsEndDate)
+                                            .SumAsync(o => o.ShipmentCO2Emission);
         }
 
         public async Task<double> GetAdminDashTotalEmissionsSaved(DateTime EmissionsSavedStartDate, DateTime EmissionsSavedEndDate)
