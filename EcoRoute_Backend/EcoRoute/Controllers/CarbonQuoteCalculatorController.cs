@@ -13,6 +13,7 @@ namespace EcoRoute.Controllers
 {
     [Route("api/calculate-carbon-quote")]
     [ApiController]
+    [Authorize(Roles = "client")]
     public class CarbonQuoteCalculatorController : ControllerBase
     {
         private readonly EcoRouteDbContext dbContext;

@@ -34,10 +34,11 @@ namespace EcoRoute.Services
         private readonly IShipmentRepository _shipmentRepo;
         private readonly ICreditRepository _creditRepo;
         private readonly INotificationRepository _notificationRepo;
+        private readonly IForeCastRepository _forecastRepo;
         public ClientDashboardService(EcoRouteDbContext _dbContext, IUserRepository _userRepo, 
                             ICompanyRepository _companyRepo, IEmissionRepository _emissionRepo,
                             IShipmentRepository _shipmentRepo, ICreditRepository _creditRepo,
-                            INotificationRepository _notificationRepo)
+                            INotificationRepository _notificationRepo, IForeCastRepository _forecastRepo)
         {
             this._dbContext = _dbContext;
             this._userRepo = _userRepo;
@@ -46,6 +47,7 @@ namespace EcoRoute.Services
             this._shipmentRepo = _shipmentRepo;
             this._creditRepo = _creditRepo;
             this._notificationRepo = _notificationRepo;
+            this._forecastRepo = _forecastRepo;
         }
 
         public async Task<(bool Success, string Message, ClientDashboardDto? clientDashboardDto)> GetClientDashboardStatAsync(string CompanyName, string EmissionPeriod, string ShipmentPeriod, string EmissionsSavedPeriod)
@@ -117,10 +119,12 @@ namespace EcoRoute.Services
 
             var totalShipments = await _shipmentRepo.GetTotalShipmentsCompanyAndDateWise(company.Id, ShipmentStartDate, ShipmentEndDate);
 
-            var totalForecastedEmissions = await CalculateTotalForecastedEmissions(company.Id); // USED IN THE SECTION BELOW EMISSION CREDIT SYSTEM
+            var forecastDto = await GetCompanyEmissionForecastAsync(company.Id, DateTime.Now); // USED IN THE SECTION BELOW EMISSION CREDIT SYSTEM
 
-            var forecastedEmissions = await CalculateForecastedEmissions(company.Id); // USED IN EMISSION CREDIT SYSTEM
+            var totalForecastedEmissionsYear = forecastDto.EstimatedYearEndEmission; // USED IN EMISSION CREDIT SYSTEM
 
+            var totalForecastedEmissionsMonth = forecastDto.EstimatedMonthEndEmission;
+            
             var creditMarketPrice = await GetCreditMarketPrice();
 
             var rawData = await _emissionRepo.GetEmissionsDataForGraph(company.Id, GraphYearStart, GraphNowDate);
@@ -139,18 +143,70 @@ namespace EcoRoute.Services
                 CompanyCredits = company.CompanyCredits,
                 CreditMarketPrice = creditMarketPrice, 
                 TotalEmissions = totalEmissions,
-                ForecastedEmissions = forecastedEmissions,
-                TotalForecastedEmissions = totalForecastedEmissions, 
+                ForecastedEmissions = totalForecastedEmissionsMonth,
+                TotalForecastedEmissions = totalForecastedEmissionsYear, 
                 EmissionsSaved = totalEmissionsSaved, 
-                GraphData = finalGraphData
+                GraphData = finalGraphData,
+                CompanyEmissionBudget = company.CompanyEmissionBudget
             };
 
             return (true, "stats retrieved successfully", returnDto);
         }
 
-        private async Task<double> CalculateTotalForecastedEmissions(int companyId)
+        public async Task<ForecastDto> GetCompanyEmissionForecastAsync(int id,DateTime asOfDate)
         {
-            return 10.0;
+            // var companyId = await _forecastRepository.GetCompanyIdByName(companyName);
+            // if (companyId == null)
+            //     throw new Exception($"Company '{companyName}' not found");
+            // int id = companyId.Value;
+            var companyCreatedAt = await _forecastRepo.GetCompanyCreationDate(id);
+            var companySector = await _forecastRepo.GetCompanySector(id)
+                                ?? throw new Exception("Company sector not found");
+            var annualCreditLimit =await _forecastRepo.GetAnnualCreditLimitForSector(companySector);
+            int monthsActive =((asOfDate.Year - companyCreatedAt.Year) * 12) +(asOfDate.Month - companyCreatedAt.Month) + 1;
+            DateTime monthStart = new DateTime(asOfDate.Year, asOfDate.Month, 1);
+            DateTime yearStart = new DateTime(asOfDate.Year, 1, 1);
+            int daysInMonth = DateTime.DaysInMonth(asOfDate.Year, asOfDate.Month);
+            int daysPassed = asOfDate.Day;
+            int daysRemainingInMonth = daysInMonth - daysPassed;
+            int daysRemainingInYear = (new DateTime(asOfDate.Year, 12, 31) - asOfDate).Days;
+            double emissionsMTD =await _forecastRepo.GetTotalEmissionsForCompanyBetweenDates(id, monthStart, asOfDate);
+            double emissionsYTD =await _forecastRepo.GetTotalEmissionsForCompanyBetweenDates(id, yearStart, asOfDate);
+            double dailyAverageEmission;
+            if (monthsActive < 1)
+            {
+                dailyAverageEmission = emissionsMTD / Math.Max(daysPassed, 1);
+            }
+            else if (monthsActive < 3)
+            {
+                var monthlyStats = await _forecastRepo.GetMonthlyEmissionsForLastNMonths(id, monthsActive);
+                double totalEmission = monthlyStats.Sum(m => m.TotalEmissions);
+                dailyAverageEmission = totalEmission / Math.Max(monthlyStats.Count * 30, 1);
+            }
+            else
+            {
+                var last3MonthsStats = await _forecastRepo.GetMonthlyEmissionsForLastNMonths(id, 3);
+                double totalEmission = last3MonthsStats.Sum(m => m.TotalEmissions);
+                dailyAverageEmission = totalEmission / (3 * 30);
+            }
+            double forecastRemainingMonth = dailyAverageEmission * daysRemainingInMonth;
+            double forecastRemainingYear = dailyAverageEmission * daysRemainingInYear;
+            double estimatedMonthEndEmission = emissionsMTD + forecastRemainingMonth;
+            double estimatedYearEndEmission = emissionsYTD + forecastRemainingYear;
+            double creditsRemaining = annualCreditLimit - estimatedYearEndEmission;
+            string recommendation =creditsRemaining < 0 ? "BUY" :creditsRemaining > annualCreditLimit * 0.15 ? "SELL" : "SAFE";
+            return new ForecastDto
+            {
+                EmissionsMTD = emissionsMTD,
+                EmissionsYTD = emissionsYTD,
+                ForecastRemainingMonth = forecastRemainingMonth,
+                ForecastRemainingYear = forecastRemainingYear,
+                EstimatedMonthEndEmission = estimatedMonthEndEmission,
+                EstimatedYearEndEmission = estimatedYearEndEmission,
+                AnnualCreditLimit = annualCreditLimit,
+                CreditsRemaining = creditsRemaining,
+                Recommendation = recommendation
+            };
         }
 
         private async Task<double> CalculateForecastedEmissions(int companyId)

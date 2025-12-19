@@ -61,11 +61,14 @@ namespace EcoRoute.Services
 
                 if(!await _companyRepo.CompanyExistsByNameAsync(userSignUpDto.CompanyName) && !(userSignUpDto.Role == "admin"))
                 {
+                    var companyCredits = await CalculateCompanyCredits(userSignUpDto.CompanySector);
                     var company = new Company
                     {
                         CompanyName = userSignUpDto.CompanyName,
                         CompanySector = userSignUpDto.CompanySector,
-                        CompanyCredits = await CalculateCompanyCredits(userSignUpDto.CompanySector)
+                        CompanyCredits = companyCredits,
+                        MonthlyEmissionsCap = companyCredits / 12,
+                        CompanyEmissionBudget = companyCredits * 1000
                     };
 
                     await _companyRepo.AddCompanyAsync(company);
@@ -87,6 +90,8 @@ namespace EcoRoute.Services
                 return (false, "User registration failed, please do try again");
             }
         }
+
+       
         private async Task<double> CalculateCompanyCredits(string companySector)
         {   
             if(companySector == null)

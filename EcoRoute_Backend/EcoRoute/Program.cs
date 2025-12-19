@@ -3,6 +3,7 @@ using EcoRoute.Data;
 using EcoRoute.Models.Entities;
 using EcoRoute.Repositories;
 using EcoRoute.Services;
+using EcoRoute.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -94,8 +95,9 @@ builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryS
 builder.Services.AddScoped<IForeCastService,ForeCastService>();
 builder.Services.AddScoped<IAdminShipmentService, AdminShipmentService>();
 builder.Services.AddScoped<IAdminShipmentReviewService, AdminShipmentReviewService>();
-
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAdminShipmentService, AdminShipmentService>();
+builder.Services.AddScoped<RouteOptimizationService>();
 
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICreditRepository, CreditRepository>();

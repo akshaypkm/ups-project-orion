@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using EcoRoute.Data;
+using EcoRoute.Models;
 using EcoRoute.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,9 @@ namespace EcoRoute.Repositories
 
         // CONTRACTS FOR ADMIN
         Task<int> GetAdminDashTotalOrdersForReview();
+        Task ChangeOrderStatus(int orderId, string status);
+
+        Task InsertShipmentIdInOrder(int orderDto, int shipId);
 
     }
     public class OrderRepository(EcoRouteDbContext dbContext) : IOrderRepository
@@ -50,6 +54,18 @@ namespace EcoRoute.Repositories
         public async Task<int>  GetAdminDashTotalOrdersForReview()
         {
             return await dbContext.Orders.Where(o => o.OrderStatus == "processing").CountAsync();
+        }
+
+        public async Task ChangeOrderStatus(int orderId, string status)
+        {
+            await dbContext.Orders.Where(o => o.Id == orderId).
+                                        ExecuteUpdateAsync(o => o.SetProperty(o => o.OrderStatus, status));
+        }
+
+        public async Task InsertShipmentIdInOrder(int orderId, int shipId)
+        {
+            await dbContext.Orders.Where(o => o.Id == orderId).
+                                    ExecuteUpdateAsync(o => o.SetProperty(o => o.ShipmentId, shipId));
         }
     }
 }

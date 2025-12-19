@@ -5,7 +5,7 @@ namespace EcoRoute.Services
 
         const double G = 9.80665;
         const double LHV_DIESEL_J_PER_L = 36e6;
-        const double CO2_PER_L = 2.68;
+        const double CO2_PER_L = 2.7;
 
         const double Crr = 0.01;
 

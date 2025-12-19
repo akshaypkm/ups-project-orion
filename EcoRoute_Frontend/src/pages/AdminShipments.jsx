@@ -170,7 +170,7 @@ export default function AdminShipments() {
                   <td>{s.shipmentOrigin}</td>
                   <td>{s.shipmentDestination}</td>
                   <td>{s.shipmentTotalItems}</td>
-                  <td>{s.shipmentCO2Emission}</td>
+                  <td>{s.shipmentCO2Emission.toFixed(2)}</td>
                   <td>{s.shipmentStatus}</td>
                 </tr>
               ))}

@@ -47,7 +47,7 @@ namespace EcoRoute.Repositories
 
         public async Task<IEnumerable<MonthlyEmissionStatDto>> GetEmissionsDataForGraph(int companyId, DateTime GraphYearStart, DateTime GraphNowDate)
         {
-            return await dbContext.Orders.Where(o => o.CompanyId == companyId 
+            return await dbContext.Orders.Where(o => o.CompanyId == companyId && o.OrderStatus == "placed"
                                                 && o.OrderDate>= GraphYearStart && o.OrderDate <= GraphNowDate)
                                                     .GroupBy(o => o.OrderDate.Month)
                                                         .Select(s => new MonthlyEmissionStatDto

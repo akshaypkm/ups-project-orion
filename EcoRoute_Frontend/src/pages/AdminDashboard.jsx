@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                 <span className="material-symbols-outlined text-[#4A90E2]">co2</span>
                 <p className="text-gray-600 text-sm font-medium">Total CO2e tracked</p>
               </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions} kg CO₂e</p>
+              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions.toFixed(2)} kg CO₂e</p>
               {/* <p className="text-[#50E3C2] text-sm font-medium">+5.2% vs last month</p> */}
               
               {/* Filter Toggle */}
@@ -178,21 +178,33 @@ export default function AdminDashboard() {
             </div>
 
             {/* Card 4: Emissions saved */}
-            <div className="flex flex-col gap-2 rounded-xl p-6 bg-white border border-gray-200 shadow-sm">
+            <div className="flex flex-col gap-2 rounded-xl p-7 bg-white border border-gray-200 shadow-sm relative">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#4A90E2]">eco</span>
                 <p className="text-gray-600 text-sm font-medium">Total Emissions Saved</p>
               </div>
 
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalEmissionsSaved.toFixed(2)} {"kg CO₂e"}</p>
-              {/* <p className="text-[#50E3C2] text-sm font-medium">+1.3% vs last month</p>  */}
+              <p className="text-gray-900 text-3xl font-bold leading-tight">
+                {stats.totalEmissionsSaved.toFixed(2)} kg CO₂e
+              </p>
+              
+              {/* Filter Toggle */}
               <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
                  {['today', 'month', 'year'].map(p => (
-                   <button key={p} onClick={() => setEmissionSavedPeriod(p)} className={`text-[10px] px-2 py-0.5 rounded uppercase ${emissionSavedPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'}`}>{p}</button>
+                   <button 
+                     key={p} 
+                     onClick={() => setEmissionSavedPeriod(p)} 
+                     className={`text-[10px] px-2 py-0.5 rounded uppercase ${
+                       emissionSavedPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'
+                     }`}
+                   >
+                     {p}
+                   </button>
                 ))}
               </div>
-              </div>
-          </div>
+            </div>
+            </div>
++
 
           {/* Chart Section */}
           <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

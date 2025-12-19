@@ -61,18 +61,7 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Logout */}
-      <div className="mt-auto">
-        <button 
-          className="flex items-center gap-3 text-gray-500 hover:text-red-500 transition w-full text-left px-4 py-3 text-sm font-medium" 
-          onClick={handleLogout}
-        >
-          <span className="material-symbols-outlined" style={{ transform: 'rotate(180deg)' }}>
-            logout
-          </span>
-          Log Out
-        </button>
-      </div>
+      
 
     </aside>
   );

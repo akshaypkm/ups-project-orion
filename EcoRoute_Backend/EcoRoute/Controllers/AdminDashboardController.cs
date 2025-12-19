@@ -8,6 +8,7 @@ namespace EcoRoute.Controllers
 {
     [Route("api/admin-dashboard")]
     [ApiController]
+    [Authorize(Roles = "admin")]
     public class AdminDashboardController : ControllerBase
     {
         private readonly IAdminDashboardService _adminDashboardService;
