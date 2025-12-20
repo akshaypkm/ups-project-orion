@@ -112,11 +112,20 @@ namespace EcoRoute.Services
 
             var processedOrderIds = new HashSet<int>();
 
-            var sharedRoutes = orderDtos.Where(o => o.OrderMode.ToLower() == "shared");
-            var routeGroups = sharedRoutes.GroupBy(o => o.SelectedRouteSummary);
+           var routeGroups = orderDtos.Where(o => o.OrderMode.ToLower() == "shared")
+                                        .GroupBy( o=> new
+                                        {
+                                            o.IsRefrigerated,
+                                            o.SelectedRouteSummary
+                                        });
 
+            Console.WriteLine($"ROUTE GRoups LENGTH ----------------- {routeGroups.Count()}");
+            
             foreach(var rG in routeGroups)
             {
+                bool isRefrigerated = rG.Key.IsRefrigerated;
+                string routeSummary = rG.Key.SelectedRouteSummary;
+
                 var ordersInRoute = rG.ToList();
 
                 for(int i = 0; i< ordersInRoute.Count; i++)
@@ -162,7 +171,7 @@ namespace EcoRoute.Services
                         }).ToList()
                     };
 
-                    var candidateTrucks = await _truckRepo.GetTruckTypeAsync(packingInput.TotalWeightKg);
+                    var candidateTrucks = await _truckRepo.GetTruckTypeAsync(packingInput.TotalWeightKg, isRefrigerated);
 
                     TruckType truck = null;
 
