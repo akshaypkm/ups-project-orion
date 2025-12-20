@@ -149,7 +149,7 @@ export default function AdminShipments() {
                 <th>Origin</th>
                 <th>Destination</th>
                 <th>Total Units</th>
-                <th>CO₂ (kg)</th>
+                <th>CO₂e (kg)</th>
                 <th>Status</th>
               </tr>
             </thead>
