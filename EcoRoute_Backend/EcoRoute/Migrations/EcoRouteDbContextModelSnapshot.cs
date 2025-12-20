@@ -295,6 +295,9 @@ namespace EcoRoute.Migrations
                     b.Property<double>("GVWKg")
                         .HasColumnType("float");
 
+                    b.Property<bool>("IsRefrigerated")
+                        .HasColumnType("bit");
+
                     b.Property<double>("KerbWeight")
                         .HasColumnType("float");
 
