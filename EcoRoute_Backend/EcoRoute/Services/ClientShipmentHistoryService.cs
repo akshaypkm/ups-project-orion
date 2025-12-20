@@ -75,7 +75,7 @@ namespace EcoRoute.Services
                     break;
             }
 
-            var orders = await query.ToListAsync();
+            var orders = await query.OrderByDescending(c=> c.Id).ToListAsync();
 
             List<OrderHistoryDto> orderHistoryDtos = new List<OrderHistoryDto>();
             
