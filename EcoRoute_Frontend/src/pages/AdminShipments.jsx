@@ -15,7 +15,7 @@ export default function AdminShipments() {
 
   // 🔹 SINGLE BACKEND CALL
   useEffect(() => {
-    api.get("api/admin/shipments")
+    api.get("/admin/shipments")
       .then((res) => {
         setShipments(res.data);
         setLoading(false);

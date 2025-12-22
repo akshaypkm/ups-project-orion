@@ -25,7 +25,7 @@ export default function AdminShipmentsReview() {
   useEffect(() => {
     const fetchShipments = async () => {
       try {
-        const res = await api.get("/api/admin-shipments-review/get-review-shipments");
+        const res = await api.get("/admin-shipments-review/get-review-shipments");
         setShipments(res.data);
       } catch (err) {
         console.error("Failed to fetch review shipments:", err);
@@ -46,7 +46,7 @@ const handleApprove = (shipment) => {
     message: `Are you sure you want to approve shipment #${shipment.orderId}?`,
     onConfirm: async () => {
       try {
-        await api.post("/api/admin-shipments-review/approve", shipment);
+        await api.post("/admin-shipments-review/approve", shipment);
         setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
         alert(`Shipment #${shipment.orderId} approved`);
       } catch (err) {
@@ -66,7 +66,7 @@ const handleCancel = (shipment) => {
     message: `Cancel shipment #${shipment.orderId}? This action cannot be undone.`,
     onConfirm: async () => {
       try {
-        await api.post("/api/admin-shipments-review/cancel", shipment);
+        await api.post("/admin-shipments-review/cancel", shipment);
         setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
         alert(`Shipment #${shipment.orderId} cancelled`);
       } catch (err) {
@@ -87,7 +87,7 @@ const handleCancel = (shipment) => {
     setLoading(true);
 
     const res = await api.post(
-      "/api/admin-shipments-review/improvise-shipment",
+      "/admin-shipments-review/improvise-shipment",
       sharedShipments // send ALL currently loaded orders
     );
 
@@ -104,7 +104,7 @@ const handleCancel = (shipment) => {
 
 const approveGroup = async (group) => {
   await api.post(
-    "/api/admin-shipments-review/improvise-shipment-approve",
+    "/admin-shipments-review/improvise-shipment-approve",
     group
   );
 

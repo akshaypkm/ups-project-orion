@@ -75,7 +75,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   // --- API Logic ---
   const fetchStats = async () => {
     try {
-      const res = await api.get("/api/client-dashboard/stats", {
+      const res = await api.get("/client-dashboard/stats", {
         params: { 
           EmissionPeriod: emissionPeriod, 
           ShipmentPeriod: shipmentPeriod, 
@@ -92,7 +92,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const handleNotifications = async () => {
     try{
-        const res = await api.get("/api/client-dashboard/notifications");
+        const res = await api.get("/client-dashboard/notifications");
         setNotifications(res.data);
     }
     catch(err){
@@ -102,7 +102,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const fetchListings = async () => {
     try {
-      const res = await api.get("/api/client-dashboard/emissionscreditsystem/listings");
+      const res = await api.get("/client-dashboard/emissionscreditsystem/listings");
       setListings(res.data);
     } catch (err) { console.error(err); }
   };
@@ -114,7 +114,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const res = await api.get("/api/client-dashboard/emissionscreditsystem");
+        const res = await api.get("/client-dashboard/emissionscreditsystem");
         setStats(p => ({ ...p, creditMarketPrice: res.data }));
       } catch (err) { console.error(err); }
     };
@@ -128,7 +128,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   const handleSell = async () => {
     if (!sellAmount || parseFloat(sellAmount) <= 0) return alert("Enter valid amount");
     try {
-      await api.post("/api/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
+      await api.post("/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
         headers: { "Content-Type": "application/json" }
       });
       setSellAmount("");
@@ -139,7 +139,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const handleBuy = async (id, amount) => {
     try {
-      await api.put("/api/client-dashboard/emissionscreditsystem/buy", {
+      await api.put("/client-dashboard/emissionscreditsystem/buy", {
         saleUnitId: id,
         unitsBought: amount
       });

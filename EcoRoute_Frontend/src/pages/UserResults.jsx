@@ -64,7 +64,7 @@ export default function UserResults() {
     };
 
     try {
-      await api.post("/api/calculate-carbon-quote/place-order", orderPayload);
+      await api.post("/calculate-carbon-quote/place-order", orderPayload);
       alert("Order placed successfully!");
       navigate("/client-shipments");
     } catch (err) {

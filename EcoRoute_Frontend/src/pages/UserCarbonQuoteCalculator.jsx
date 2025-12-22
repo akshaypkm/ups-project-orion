@@ -66,7 +66,7 @@ export default function UserCarbonQuoteCalculator() {
     };
 
     try {
-      const res = await api.post("/api/calculate-carbon-quote/calc", payload);
+      const res = await api.post("/calculate-carbon-quote/calc", payload);
       
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data

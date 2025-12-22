@@ -21,7 +21,7 @@ export default function UserShipments() {
       setLoading(true);
       try {
         // Calls: public async Task<IActionResult> GetShipmentHistory([FromQuery] string OrderPeriod = "month", string Filter = "bySavings")
-        const res = await api.get("/api/client-shipment-history", {
+        const res = await api.get("/client-shipment-history", {
           params: {
             OrderPeriod: orderPeriod,
             Filter: "bySavings" // Keeping default filter as per controller
