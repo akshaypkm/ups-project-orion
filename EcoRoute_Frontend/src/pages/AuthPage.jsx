@@ -8,6 +8,21 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  //password regex: at least 6 characters, one uppercase, one lowercase, one number, one special character
+  const validatePassword = (password) => {
+    return (
+      password.length >= 6 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    );
+  };
+
 
   const [form, setForm] = useState({
     userid: "",
@@ -46,6 +61,13 @@ export default function AuthPage() {
         const payload = jwtDecode(token);
         redirectByRole(payload.role);
       } else {
+        if (!validatePassword(form.password)) {
+          setError(
+            "Password must be at least 6 characters and include uppercase, lowercase, number, and special character"
+          );
+          setLoading(false);
+          return;
+        }
         await api.post("api/auth/signup", {
           userid: form.userid,
           password: form.password,
@@ -69,6 +91,40 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
+  const sendOtp = async () => {
+    if (!form.email) {
+      setError("Please enter email first");
+      return;
+    }
+    try {
+      setOtpLoading(true);
+      await api.post("api/auth/send-otp", {
+        email: form.email,
+      });
+      setOtpSent(true);
+      setError("OTP sent to your email");
+    } catch (err) {
+      setError(err?.response?.data || "Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+const verifyOtp = async () => {
+  try {
+    setOtpLoading(true);
+    await api.post("api/auth/verify-otp", {
+      email: form.email,
+      otp: otp,
+    });
+    setEmailVerified(true);
+    setError("Email verified successfully");
+  } catch (err) {
+    setError(err?.response?.data || "Invalid OTP");
+  } finally {
+    setOtpLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-[2.5fr_1.5fr] font-sans">
@@ -212,11 +268,45 @@ export default function AuthPage() {
                   type="email"
                   name="email"
                   value={form.email}
-                  onChange={onChange}
+                  onChange={(e) => {
+                    onChange(e);
+                    setOtpSent(false);
+                    setEmailVerified(false);
+                    setOtp("");
+                  }}
                   required
                   className="w-full border rounded-xl px-5 py-3"
                 />
               </div>
+            )}
+            {!emailVerified && form.email && (
+              <button
+              type="button"
+              onClick={sendOtp}
+              disabled={otpLoading}
+              className="mt-2 text-sm text-green-600 font-semibold hover:underline">
+                {otpSent ? "Resend OTP" : "Verify Email"}
+                </button>
+            )}
+            {otpSent && !emailVerified && (
+              <div className="mt-3 space-y-2">
+                <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full border rounded-xl px-5 py-3"/>
+              <button
+              type="button"
+              onClick={verifyOtp}
+              disabled={otpLoading}
+              className="w-full bg-green-600 text-white py-2 rounded-xl font-semibold">Verify OTP</button>
+              </div>
+            )}
+            {emailVerified && (
+              <p className="text-green-600 text-sm font-semibold mt-2">
+                ✅ Email verified
+                </p>
             )}
 
             <div>
@@ -230,6 +320,10 @@ export default function AuthPage() {
                 className="w-full border rounded-xl px-5 py-3"
               />
             </div>
+            {!isLogin && form.password && !validatePassword(form.password) && (
+              <p className="text-sm text-red-500 mt-1">
+                Password must contain 6+ characters, uppercase, lowercase, number & special character</p>
+              )}
 
             {!isLogin && (
               <div>
@@ -308,10 +402,13 @@ export default function AuthPage() {
 
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600
-              text-white py-3 rounded-xl text-xl font-bold"
+            type="submit"
+            disabled={loading || (!isLogin && !emailVerified)}
+            className={`w-full py-3 rounded-xl text-xl font-bold ${
+              !isLogin && !emailVerified
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 text-white"
+              }`}
             >
               {loading ? "Please wait..." : isLogin ? "Login" : "Create Account"}
             </button>
