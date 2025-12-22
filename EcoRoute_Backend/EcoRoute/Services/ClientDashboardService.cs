@@ -241,14 +241,14 @@ namespace EcoRoute.Services
 
             double creditMarketPrice = basePrice * marketPressure;
 
-            if(creditMarketPrice > maxPrice)
-            {
-                creditMarketPrice = maxPrice;
-            }
-            else if(creditMarketPrice < minPrice)
-            {
-                creditMarketPrice = minPrice;
-            }
+            // if(creditMarketPrice > maxPrice)
+            // {
+            //     creditMarketPrice = maxPrice;
+            // }
+            // else if(creditMarketPrice < minPrice)
+            // {
+            //     creditMarketPrice = minPrice;
+            // }
 
             return Math.Round(creditMarketPrice, 2);
         }

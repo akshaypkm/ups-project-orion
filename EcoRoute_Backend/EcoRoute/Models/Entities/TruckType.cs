@@ -18,5 +18,7 @@ namespace EcoRoute.Models.Entities
         public double EngineEfficiency{get; set;} = 0.40;
         public double DragCoefficient{get; set;} = 0.6;
 
+        public bool IsRefrigerated{get; set;}
+
     }
 }

@@ -68,7 +68,7 @@ namespace EcoRoute.Repositories
         public async Task<List<Order>> GetShipmentsForReview()
         {
             return await dbContext.Orders.Where(o => o.OrderStatus == "processing" 
-                                        || o.OrderStatus == "planned").ToListAsync();
+                                        || o.OrderStatus == "planned").OrderByDescending(c => c.Id).ToListAsync();
         }
 
         public async Task<int> CreateShipment(OrderDto orderDto)
@@ -101,7 +101,7 @@ namespace EcoRoute.Repositories
             // Eager load OrderList and Company for each order
             return await dbContext.Shipments
                 .Include(s => s.OrderList)
-                    .ThenInclude(o => o.Company)
+                    .ThenInclude(o => o.Company).OrderByDescending(c => c.Id)
                 .ToListAsync();
         }
 
