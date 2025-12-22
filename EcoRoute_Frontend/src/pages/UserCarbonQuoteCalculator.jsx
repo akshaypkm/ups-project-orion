@@ -10,6 +10,12 @@ export default function UserCarbonQuoteCalculator() {
   // Toggle state for the methodology section
   const [showMethodology, setShowMethodology] = useState(false);
 
+  const [infoBox, setInfoBox] = useState({
+  open: false,
+  title: "",
+  message: ""
+});
+
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
@@ -70,6 +76,14 @@ export default function UserCarbonQuoteCalculator() {
             request: payload    // The input data to display summary
           } 
         });
+      }else{
+        setInfoBox({
+          open: true,
+          title: "No Truck Available",
+          message:
+            "No suitable truck could be assigned for the given order configuration. " +
+            "Correctly enter dimensions, weight, check proper route info."
+        });
       }
     } catch (err) {
       console.error("Calculation error:", err);
@@ -90,7 +104,12 @@ export default function UserCarbonQuoteCalculator() {
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
       <main className="flex-1 p-8 ml-0 md:ml-[250px]"> 
         
-        
+        <InfoDialog
+  open={infoBox.open}
+  title={infoBox.title}
+  message={infoBox.message}
+  onClose={() => setInfoBox({ open: false })}
+/>  
         {/* Top Header */}
         <header className="top-bar">
           <h2 className="page-title">Carbon Quote Calculator</h2>
@@ -478,3 +497,33 @@ export default function UserCarbonQuoteCalculator() {
     </div>
   );
 }
+
+
+
+const InfoDialog = ({ open, title, message, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          {title}
+        </h3>
+
+        <p className="text-sm text-gray-600 mb-6">
+          {message}
+        </p>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+

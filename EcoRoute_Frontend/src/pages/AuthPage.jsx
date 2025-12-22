@@ -37,7 +37,7 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         // LOGIN
-        const res = await api.post("api/auth/login", {
+        const res = await api.post("/auth/login", {
           userid: form.userid,
           password: form.password,
         });
@@ -52,7 +52,7 @@ export default function AuthPage() {
         redirectByRole(payload.role);
       } else {
         // SIGNUP
-        await api.post("api/auth/signup", {
+        await api.post("/auth/signup", {
           userid: form.userid,
           password: form.password,
           email: form.email,
