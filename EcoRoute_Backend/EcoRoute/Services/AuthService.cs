@@ -1,6 +1,17 @@
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Sockets;
+using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Channels;
+using System.Threading.Tasks.Sources;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
@@ -8,6 +19,9 @@ using EcoRoute.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
+using EcoRoute.Models.DTOs;
+using System.Collections.Specialized;
 
 namespace EcoRoute.Services;
     public interface IAuthService
@@ -17,6 +31,9 @@ namespace EcoRoute.Services;
         Task<(bool Success, string Message, string? Token, string? Role, string? CompanyName)> Login(UserLoginDto userLoginDto);
         Task<(bool Success, string Message)> SendOtpAsync(string email);
         Task<(bool Success, string Message)> VerifyOtpAsync(string email, string otp);
+        Task<(bool Success,string Message)> ForgotSendOtpAsync(string email);
+        Task<(bool Success,string Message)> ForgotVerifyOtpAsync(string email, string otp);
+        Task<(bool Success,string Message)> ResetPasswordAsync(string email, string newPassword);   
 
     }
     public class AuthService : IAuthService
@@ -54,6 +71,10 @@ namespace EcoRoute.Services;
 
         public async Task<(bool Success, string Message)> RegisterUserAsync(UserSignUpDto userSignUpDto)
         {
+            if (await _userRepo.UserExistsUsingEmailAsync(userSignUpDto.Email))
+            {
+                return (false, "User email already taken!");
+            }
             var otp = await _otpRepo.GetOtpByEmailAsync(userSignUpDto.Email);
             if (otp == null || !otp.IsVerified)
             {
@@ -211,19 +232,33 @@ namespace EcoRoute.Services;
         }
         public async Task<(bool Success, string Message)> SendOtpAsync(string email)
         {
+            if (string.IsNullOrWhiteSpace(email))
+            return (false, "Email cannot be empty");
+            try
+            {
+                var mailAddress = new System.Net.Mail.MailAddress(email.Trim());
+            }
+            catch (FormatException)
+            {
+                return (false, "Invalid email format");
+            }
             string otp = new Random().Next(100000, 999999).ToString();
             var otpEntity = new EmailOtp
             {
-                Email = email,
+                Email = email.Trim(),
                 OtpHash = BCrypt.Net.BCrypt.HashPassword(otp),
                 ExpiryTime = DateTime.UtcNow.AddMinutes(5),
                 IsVerified = false
             };
+            if (await _userRepo.UserExistsUsingEmailAsync(email.Trim()))
+            {
+                return (false, "User email already taken!");
+            }
             await _otpRepo.AddOtpAsync(otpEntity);
-            await _emailService.SendOtpEmailAsync(email, otp);
+            await _emailService.SendOtpEmailAsync(email.Trim(), otp);
             return (true, "OTP sent to email");
         }
-        public async Task<(bool Success, string Message)> VerifyOtpAsync(string email, string otp){
+        public async Task<(bool Success, string Message)> VerifyOtpAsync(string email, string otp)
         {
             var record = await _otpRepo.GetOtpByEmailAsync(email);
             if (record == null || record.ExpiryTime < DateTime.UtcNow)
@@ -238,5 +273,76 @@ namespace EcoRoute.Services;
             await _otpRepo.UpdateOtpAsync();
             return (true, "Email verified");
         }
-    }
+        public async Task<(bool Success,string Message)> ForgotSendOtpAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            return (false, "Email cannot be empty");
+            try
+            {
+                var mailAddress = new System.Net.Mail.MailAddress(email.Trim());
+            }
+            catch (FormatException)
+            {
+                return (false, "Invalid email format");
+            }
+            var user = await _userRepo.GetUserByEmailAsync(email.Trim());
+            if(user == null)
+            {
+                return (false, "Email not registered");
+            }
+            string otp = new Random().Next(100000, 999999).ToString();
+            var otpEntity = new EmailOtp
+            {
+                Email = email.Trim(),
+                OtpHash = BCrypt.Net.BCrypt.HashPassword(otp),
+                ExpiryTime = DateTime.UtcNow.AddMinutes(5),
+                IsVerified = false
+            };
+            await _otpRepo.AddOtpAsync(otpEntity);
+            await _emailService.ForgotSendOtpEmailAsync(email.Trim(), otp, user.UserId, user.CompanyName);
+            return (true, "OTP sent to email");
+            }
+
+        public async Task<(bool Success,string Message)> ForgotVerifyOtpAsync(string email, string otp)
+        {
+            var record = await _otpRepo.GetOtpByEmailAsync(email);
+            if (record == null || record.ExpiryTime < DateTime.UtcNow)
+            {
+                return (false, "OTP expired");
+            }
+            if (!BCrypt.Net.BCrypt.Verify(otp, record.OtpHash))
+            {
+                return (false, "Invalid OTP");
+            }
+            record.IsVerified = true;
+            await _otpRepo.UpdateOtpAsync();
+            return (true, "OTP verified");
+        }
+        public async Task<(bool Success,string Message)> ResetPasswordAsync(String email, string newPassword)
+        {
+            var record = await _otpRepo.GetOtpByEmailAsync(email);
+            if (record == null || !record.IsVerified)
+            {
+                return (false, "Email not verified");
+            }
+
+            if (!IsStrongPassword(newPassword))
+            {
+                 return (false,"Password must be at least 6 characters and include uppercase, lowercase, number, and special character");
+            }
+
+            var user = await _userRepo.GetUserByEmailAsync(email);
+            if(user == null)
+            {
+                return (false, "User not found");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepo.UpdateUserAsync(user);
+            await _otpRepo.DeleteOtpsByEmailAsync(email);
+            return (true, "Password reset successfully");
+        }
+    
+
 }
+

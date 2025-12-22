@@ -12,6 +12,29 @@ export default function AuthPage() {
   const [otp, setOtp] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [fpStep, setFpStep] = useState(1);
+  const [fpEmail, setFpEmail] = useState("");
+  const [fpOtp, setFpOtp] = useState("");
+  const [fpPassword, setFpPassword] = useState("");
+  const [fpLoading, setFpLoading] = useState(false);
+  const [fpError, setFpError] = useState("");
+  const resetForgotPasswordState = () => {
+    setFpStep(1);
+    setFpEmail("");
+    setFpOtp("");
+    setFpPassword("");
+    setFpError("");
+    setFpLoading(false);
+  };
+  const resetSignupOtpState = () => {
+    setOtpSent(false);
+    setOtp("");
+    setEmailVerified(false);
+  };
+  
+
+
   //password regex: at least 6 characters, one uppercase, one lowercase, one number, one special character
   const validatePassword = (password) => {
     return (
@@ -213,7 +236,10 @@ const verifyOtp = async () => {
                   ? "border-b-2 border-green-600 text-green-600"
                   : "text-gray-400"
               }`}
-              onClick={() => setIsLogin(true)}
+              onClick={() => {
+                setIsLogin(true);
+                resetSignupOtpState();
+              }}
             >
               Login
             </button>
@@ -308,6 +334,11 @@ const verifyOtp = async () => {
                 ✅ Email verified
                 </p>
             )}
+            {error && (
+              <div className="text-red-600 bg-red-50 p-3 rounded-xl">
+                {error}
+              </div>
+            )}
 
             <div>
               <label className="block font-semibold mb-1">Password</label>
@@ -382,18 +413,17 @@ const verifyOtp = async () => {
               </div>
             )}
 
-            {error && (
-              <div className="text-red-600 bg-red-50 p-3 rounded-xl">
-                {error}
-              </div>
-            )}
+            
              {/* ✅ FORGOT PASSWORD (LOGIN ONLY) */}
             {isLogin && (
               <div className="text-right text-sm">
                 <button
                   type="button"
                   className="text-green-600 hover:underline"
-                  onClick={() => navigate("/forgot-password")}
+                  onClick={() => {
+                    setShowForgot(true);
+                    setFpStep(1);
+                  }}
                 >
                   Forgot password?
                 </button>
@@ -439,6 +469,204 @@ const verifyOtp = async () => {
           </form>
         </div>
       </div>
+      {showForgot && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+
+      {/* HEADER */}
+      <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-500 via-green-500 to-lime-600 bg-clip-text text-transparent mb-4">
+        Forgot Password
+      </h3>
+
+      {/* ERROR (INSIDE MODAL ONLY) */}
+      {fpError && (
+        <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+          {fpError}
+        </div>
+      )}
+
+      {/* STEP 1 — EMAIL */}
+      {fpStep === 1 && (
+        <>
+          <label className="block font-semibold mb-1">Registered Email</label>
+          <input
+            type="email"
+            value={fpEmail}
+            onChange={(e) => {
+              setFpEmail(e.target.value);
+              setFpError("");
+            }}
+            className="w-full border rounded-xl px-4 py-2 mb-4"
+          />
+
+          <button
+            disabled={fpLoading}
+            onClick={async () => {
+              if (!fpEmail) {
+                setFpError("Please enter your registered email");
+                return;
+              }
+              try {
+                setFpLoading(true);
+                setFpError("");
+                await api.post("api/auth/forgot-password/send-otp", {
+                  email: fpEmail,
+                });
+                setFpStep(2);
+              } catch (err) {
+                setFpError(err?.response?.data || "Email not registered");
+              } finally {
+                setFpLoading(false);
+              }
+            }}
+            className="w-full bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 hover:bg-emerald-700 text-white py-2 rounded-xl disabled:opacity-60"
+          >
+            {fpLoading ? "Sending OTP..." : "Send OTP"}
+          </button>
+        </>
+      )}
+
+      {/* STEP 2 — OTP */}
+      {fpStep === 2 && (
+        <>
+          <label className="block font-semibold mb-1">Enter OTP</label>
+          <input
+            value={fpOtp}
+            onChange={(e) => {
+              setFpOtp(e.target.value);
+              setFpError("");
+            }}
+            className="w-full border rounded-xl px-4 py-2 mb-3"
+          />
+
+          <button
+            disabled={fpLoading}
+            onClick={async () => {
+              if (!fpOtp) {
+                setFpError("Please enter OTP");
+                return;
+              }
+              try {
+                setFpLoading(true);
+                setFpError("");
+                await api.post("api/auth/forgot-password/verify-otp", {
+                  email: fpEmail,
+                  otp: fpOtp,
+                });
+                setFpStep(3);
+              } catch (err) {
+                setFpError(err?.response?.data || "Invalid OTP");
+              } finally {
+                setFpLoading(false);
+              }
+            }}
+            className="w-full bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 hover:bg-emerald-700 text-white py-2 rounded-xl mb-2 disabled:opacity-60"
+          >
+            Verify OTP
+          </button>
+
+          {/* RESEND OTP (GREEN / EMERALD) */}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                setFpError("");
+                setFpLoading(true);
+                await api.post("api/auth/forgot-password/send-otp", {
+                  email: fpEmail,
+                });
+                setFpError("OTP resent to your email");
+              } catch (err) {
+                setFpError(err?.response?.data || "Failed to resend OTP");
+              } finally {
+                setFpLoading(false);
+              }
+            }}
+            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition"
+          >
+            Resend OTP
+          </button>
+        </>
+      )}
+
+      {/* STEP 3 — RESET PASSWORD */}
+      {fpStep === 3 && (
+        <>
+          <label className="block font-semibold mb-1">New Password</label>
+          <input
+            type="password"
+            value={fpPassword}
+            onChange={(e) => {
+              setFpPassword(e.target.value);
+              setFpError("");
+            }}
+            className="w-full border rounded-xl px-4 py-2 mb-2"
+          />
+
+          {fpPassword && !validatePassword(fpPassword) && (
+            <p className="text-sm text-red-500 mb-2">
+              Password must contain 6+ characters, uppercase, lowercase, number & special character
+            </p>
+          )}
+
+          <button
+            disabled={fpLoading}
+            onClick={async () => {
+              if (!validatePassword(fpPassword)) {
+                setFpError("Password does not meet security requirements");
+                return;
+              }
+              try {
+                setFpLoading(true);
+                setFpError("");
+                await api.post("api/auth/forgot-password/reset", {
+                  email: fpEmail,
+                  newPassword: fpPassword,
+                });
+
+                // RESET STATES
+                setShowForgot(false);
+                setFpStep(1);
+                setFpEmail("");
+                setFpOtp("");
+                setFpPassword("");
+
+                // SUCCESS MESSAGE ON LOGIN PAGE
+                setError("Password reset successful. Please login.");
+                setIsLogin(true);
+              } catch (err) {
+                setFpError(err?.response?.data || "Reset failed");
+              } finally {
+                setFpLoading(false);
+              }
+            }}
+            className="w-full bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 hover:bg-emerald-700 text-white py-2 rounded-xl disabled:opacity-60"
+          >
+            Reset Password
+          </button>
+        </>
+      )}
+
+      {/* CANCEL */}
+      <div className="text-right mt-4">
+        <button
+          onClick={() => {
+            setShowForgot(false);
+            setFpError("");
+            setFpStep(1);
+            resetForgotPasswordState();
+          }}
+          className="text-sm text-red-500 hover:underline"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }
