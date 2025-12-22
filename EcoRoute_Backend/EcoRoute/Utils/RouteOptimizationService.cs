@@ -20,82 +20,82 @@ namespace EcoRoute.Utils
         }
 
         public async Task<OptimizedRouteResultDto> GenerateOptimizedRoute(List<OrderDto> orders)
-{
-    if (orders == null || !orders.Any()) return null;
+        {
+            if (orders == null || !orders.Any()) return null;
 
-    // -----------------------------
-    // STEP 1: Build PICKUP stops
-    // -----------------------------
-    var pickupStops = orders.Select(o => new RouteStopDto
-    {
-        OrderId = o.OrderId,
-        OrderCode = o.OrderCode,
-        StopType = "PICKUP",
-        Lat = o.OriginRP.Lat,
-        Lng = o.OriginRP.Lng
-    }).ToList();
+            // -----------------------------
+            // STEP 1: Build PICKUP stops
+            // -----------------------------
+            var pickupStops = orders.Select(o => new RouteStopDto
+            {
+                OrderId = o.OrderId,
+                OrderCode = o.OrderCode,
+                StopType = "PICKUP",
+                Lat = o.OriginRP.Lat,
+                Lng = o.OriginRP.Lng
+            }).ToList();
 
-    // -----------------------------
-    // STEP 2: Optimize PICKUPS only (TSP is VALID here)
-    // -----------------------------
-    var pickupPoints = pickupStops
-        .Select(p => new RoutePoint { Lat = p.Lat, Lng = p.Lng })
-        .ToList();
+            // -----------------------------
+            // STEP 2: Optimize PICKUPS only (TSP is VALID here)
+            // -----------------------------
+            var pickupPoints = pickupStops
+                .Select(p => new RoutePoint { Lat = p.Lat, Lng = p.Lng })
+                .ToList();
 
-    var pickupMatrix = await GetDistanceMatrixAsync(pickupPoints);
-    var pickupOrder = TspSolver.Solve(pickupMatrix);
+            var pickupMatrix = await GetDistanceMatrixAsync(pickupPoints);
+            var pickupOrder = TspSolver.Solve(pickupMatrix);
 
-    var orderedPickups = pickupOrder
-        .Select(i => pickupStops[i])
-        .ToList();
+            var orderedPickups = pickupOrder
+                .Select(i => pickupStops[i])
+                .ToList();
 
-    // -----------------------------
-    // STEP 3: Build DROPS
-    // -----------------------------
-    var dropStops = orders.Select(o => new RouteStopDto
-    {
-        OrderId = o.OrderId,
-        OrderCode = o.OrderCode,
-        StopType = "DROP",
-        Lat = o.DestinationRP.Lat,
-        Lng = o.DestinationRP.Lng
-    }).ToList();
+            // -----------------------------
+            // STEP 3: Build DROPS
+            // -----------------------------
+            var dropStops = orders.Select(o => new RouteStopDto
+            {
+                OrderId = o.OrderId,
+                OrderCode = o.OrderCode,
+                StopType = "DROP",
+                Lat = o.DestinationRP.Lat,
+                Lng = o.DestinationRP.Lng
+            }).ToList();
 
-    // -----------------------------
-    // STEP 4: Order DROPS from last pickup (NO BACKTRACKING)
-    // -----------------------------
-    var lastPickup = orderedPickups.Last();
+            // -----------------------------
+            // STEP 4: Order DROPS from last pickup (NO BACKTRACKING)
+            // -----------------------------
+            var lastPickup = orderedPickups.Last();
 
-    var orderedDrops = dropStops
-        .OrderBy(d => Geometry.HaversineMeters(
-            lastPickup.Lat, lastPickup.Lng,
-            d.Lat, d.Lng))
-        .ToList();
+            var orderedDrops = dropStops
+                .OrderBy(d => Geometry.HaversineMeters(
+                    lastPickup.Lat, lastPickup.Lng,
+                    d.Lat, d.Lng))
+                .ToList();
 
-    // -----------------------------
-    // STEP 5: Assign SEQUENCE
-    // -----------------------------
-    int seq = 1;
-    foreach (var p in orderedPickups) p.Sequence = seq++;
-    foreach (var d in orderedDrops) d.Sequence = seq++;
+            // -----------------------------
+            // STEP 5: Assign SEQUENCE
+            // -----------------------------
+            int seq = 1;
+            foreach (var p in orderedPickups) p.Sequence = seq++;
+            foreach (var d in orderedDrops) d.Sequence = seq++;
 
-    var finalStops = orderedPickups.Concat(orderedDrops).ToList();
+            var finalStops = orderedPickups.Concat(orderedDrops).ToList();
 
-    // -----------------------------
-    // STEP 6: Generate POLYLINE
-    // -----------------------------
-    var routePoints = finalStops
-        .Select(s => new RoutePoint { Lat = s.Lat, Lng = s.Lng })
-        .ToList();
+            // -----------------------------
+            // STEP 6: Generate POLYLINE
+            // -----------------------------
+            var routePoints = finalStops
+                .Select(s => new RoutePoint { Lat = s.Lat, Lng = s.Lng })
+                .ToList();
 
-    var result = await GetDirectionsAsync(routePoints);
-    return new OptimizedRouteResultDto
-    {
-        Polyline = result.polyline,
-        Stops = finalStops,
-        TotalDistanceMeters = result.distanceMeters / 1000
-    };
-}
+            var result = await GetDirectionsAsync(routePoints);
+            return new OptimizedRouteResultDto
+            {
+                Polyline = result.polyline,
+                Stops = finalStops,
+                TotalDistanceMeters = result.distanceMeters / 1000
+            };
+        }
 
 
 

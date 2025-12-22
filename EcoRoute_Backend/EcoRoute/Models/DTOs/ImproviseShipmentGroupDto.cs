@@ -18,5 +18,7 @@ namespace EcoRoute.Models.DTOs
 
         public List<RouteStopDto> RouteStops { get; set; }
 
+        public double TotalShipmentCO2Emissions{get; set;}
+
     }
 }
