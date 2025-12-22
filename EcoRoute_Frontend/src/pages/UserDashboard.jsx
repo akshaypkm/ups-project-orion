@@ -187,16 +187,15 @@ if (usagePercent > 50 && usagePercent <= 75) {
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Dashboard...</div>;
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100 overflow-hidden">
       
       {/* 1. Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* 2. Main Content Area */}
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
-      <main className="flex-1 p-10 ml-0 md:ml-[250px]"> 
+      <main className="flex-1 ml-0 md:ml-[250px] px-6 py-6 overflow-y-auto"> 
+        <div className="space-y-6 max-w-7xl mx-auto max-w-7xl mx-auto max-w-7xl mx-auto">
         
         {/* Top Header (Preserved Functionality + New Style) */}
         <header className="flex justify-between items-center mb-8">
@@ -263,7 +262,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
         </header>
 
         {/* Content Grid */}
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-7xl mx-auto max-w-7xl mx-auto">
           
           {/* ---- TOP CARDS ---- */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -448,7 +447,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
             </div>
 
             {/* RIGHT SIDE CARDS */}
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-7xl mx-auto max-w-7xl mx-auto">
               
               {/* Budget Card */}
               <div className="bg-white/60 backdrop-blur-2xl relative overflow-hidden border border-white/30 p-6 rounded-3xl shadow-2xl">
@@ -510,84 +509,63 @@ if (usagePercent > 50 && usagePercent <= 75) {
           </div>
 
         </div>
-        {confirmAction && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-    <div className="bg-white/80 backdrop-blur-xl relative overflow-hidden w-full max-w-md p-6 border border-white/30 animate-in fade-in zoom-in-95">
-
-      {/* HEADER */}
-      <h3 className="text-lg font-bold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent mb-2">
-        Confirm {confirmAction.type === "buy" ? "Purchase" : "Sale"}
-      </h3>
-
-      {/* BODY */}
-      <p className="text-sm text-gray-600 mb-4">
-        {confirmAction.type === "buy" && (
-          <>
-            You are about to <b>buy {confirmAction.payload.creditsListed}</b> credits
-            from <b>{confirmAction.payload.sellerCompanyName}</b>.
-          </>
-        )}
-
-        {confirmAction.type === "sell" && (
-          <>
-            You are about to <b>sell {confirmAction.payload.amount}</b> credits.
-          </>
-        )}
-
-        {confirmAction.type === "logout" && (
-          <>
-            You are about to <b>log out</b> of your account.
-            <br />
-            <span className="text-xs text-gray-500">
-              You will need to log in again to access the dashboard.
-            </span>
-          </>
-        )}
-      </p>
-
-
-      {/* ACTIONS */}
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <button
-          onClick={() => setConfirmAction(null)}
-          className="px-4 py-2 text-sm rounded-xl border border-green-600 text-green-700 hover:bg-emerald-50 hover:scale-[1.03] transition-transform"
-        >
-          Cancel
-        </button>
-
-       <button
-          onClick={async () => {
-            if (confirmAction.type === "buy") {
-              const l = confirmAction.payload;
-              await handleBuy(l.saleUnitId, l.creditsListed);
-            }
-
-            if (confirmAction.type === "sell") {
-              await handleSell();
-            }
-
-            if (confirmAction.type === "logout") {
-              handleLogout();
-            }
-
-            setConfirmAction(null);
-          }}
-          className={`px-4 py-2 text-sm rounded-xl text-white ${
-            confirmAction.type === "buy"
-              ? "bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 hover:scale-105 transition-transform"
-              : confirmAction.type === "sell"
-              ? "bg-gradient-to-r from-lime-500 via-green-500 to-emerald-600 hover:scale-105 transition-transform"
-              : "bg-red-500 hover:bg-red-600 hover:bg-red-700"
-          }`}
-        >
-          Confirm
-        </button>
-
       </div>
-    </div>
-  </div>
-)}
-      </main>
-    </div>
+        {confirmAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+              {/* HEADER */}
+              <h3 className="text-lg font-bold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent mb-3">
+                {confirmAction.type === "logout"
+                ? "Confirm Logout"
+                : confirmAction.type === "buy"
+                ? "Confirm Purchase"
+                : confirmAction.type === "sell"
+                ? "Confirm Sale"
+                : "Confirm Action"}
+              </h3>
+              {/* BODY */}
+              <p className="text-sm text-gray-600 mb-4">
+                {confirmAction.type === "buy" && (
+                  <>You are about to <b>buy {confirmAction.payload.creditsListed}</b> creditsfrom <b>{confirmAction.payload.sellerCompanyName}</b>.</>
+                  )}
+                  {confirmAction.type === "sell" && (
+                    <>You are about to <b>sell {confirmAction.payload.amount}</b> credits.</>
+                    )}
+                    {confirmAction.type === "logout" && (
+                      <>You are about to <b>log out</b> of your account.<br />
+                      <span className="text-xs text-gray-500">You will need to log in again to access the dashboard.</span></>)}
+                      </p>
+              {/* ACTIONS */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 text-sm rounded-xl border border-green-600 text-green-700 hover:bg-emerald-50 hover:scale-[1.03] transition-transform">
+                  Cancel
+                  </button>
+                  <button
+                  onClick={async () => {
+                    if (confirmAction.type === "buy") {
+                      const l = confirmAction.payload;
+                      await handleBuy(l.saleUnitId, l.creditsListed);
+                    }
+                    if (confirmAction.type === "sell") {
+                      await handleSell();
+                    }
+                    if (confirmAction.type === "logout") {
+                      handleLogout();
+                    }
+                    setConfirmAction(null);
+                  }}
+                  className={`px-4 py-2 text-sm rounded-xl text-white transition-transform hover:scale-105 ${
+                    confirmAction.type === "logout"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "px-4 py-2 text-sm rounded-xl text-white bg-red-500 hover:bg-red-600 transition-transform hover:scale-105 active:scale-95"
+                  }`}>Confirm</button>
+                  </div>
+                </div>
+              </div>
+          )}
+          </main>
+      </div>
   );
 }

@@ -16,9 +16,9 @@ export default function Sidebar() {
 
   // Helper for dynamic classes based on active state
   const getNavItemClasses = (path) => {
-    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition w-full text-left hover:scale-[1.02] hover:text-emerald-600";
-    const activeClasses = "bg-emerald-100 text-emerald-600";
-    const inactiveClasses = "text-gray-600 hover:bg-gray-50";
+    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition w-full text-left hover:scale-[1.02]";
+    const activeClasses = "bg-gradient-to-r from-lime-100 via-green-100 to-emerald-100 text-emerald-700";
+    const inactiveClasses = "text-gray-600 hover:bg-emerald-50 hover:text-emerald-600";
 
     return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
 };

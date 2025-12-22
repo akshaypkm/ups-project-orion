@@ -137,5 +137,38 @@ namespace EcoRoute.Services
                 // await Task.Delay(100);
             }
         }
+
+
+
+
+
+        // THIS METHOD IS FOR ADMIN SIDE
+        public async Task<List<RoutePoint> > GetRoutePointsForGroupedOrdersAsync(string polyline)
+        {
+            var singleRoutePoints = new List<RoutePoint>();
+
+            var decoded = PolyLineDecoder.Decode(polyline);
+
+            foreach(var p in decoded)
+            {
+                singleRoutePoints.Add(new RoutePoint
+                {
+                    Lat = p.Lat,
+                    Lng = p.Lng
+                });
+            }
+
+            var compact = new List<RoutePoint>();
+            for(int i =0; i< singleRoutePoints.Count; i++)
+            {
+                if(i == 0 || singleRoutePoints[i].Lat != singleRoutePoints[i - 1].Lat 
+                            || singleRoutePoints[i].Lng != singleRoutePoints[i - 1].Lng)
+                {
+                    compact.Add(singleRoutePoints[i]);
+                }
+            }
+
+            return compact;
+        }
     }
 }

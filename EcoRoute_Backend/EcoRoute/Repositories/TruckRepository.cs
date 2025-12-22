@@ -8,7 +8,7 @@ namespace EcoRoute.Repositories
 {
     public interface ITruckRepository
     {
-        Task<List<TruckType>> GetTruckTypeAsync(double OrderWeightKg);
+        Task<List<TruckType>> GetTruckTypeAsync(double OrderWeightKg, bool IsRefrigerated);
 
         Task<TruckType> GetOpenTrailerTruckAsync();
     }
@@ -16,11 +16,15 @@ namespace EcoRoute.Repositories
     {
         public readonly EcoRouteDbContext dbContext = dbContext;
 
-        public async Task<List<TruckType>> GetTruckTypeAsync(double OrderWeightKg)
-        {   
-            return await dbContext.TruckTypes.Where(t => t.MaxPayloadKg >= OrderWeightKg)
+        public async Task<List<TruckType>> GetTruckTypeAsync(double OrderWeightKg, bool IsRefrigerated)
+        {
+           
+            
+                return await dbContext.TruckTypes.Where(t => t.IsRefrigerated == IsRefrigerated && t.MaxPayloadKg >= OrderWeightKg)
                                                 .OrderBy(t => t.MaxPayloadKg)
                                                     .ToListAsync();
+            
+            
         }
 
         public async Task<TruckType> GetOpenTrailerTruckAsync()

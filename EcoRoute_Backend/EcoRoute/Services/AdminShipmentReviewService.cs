@@ -36,11 +36,13 @@ namespace EcoRoute.Services
         private readonly RouteOptimizationService _ROS;
 
         private readonly EcoRouteDbContext _dbcontext;
+        private readonly IConfiguration _config;
 
         public AdminShipmentReviewService(IShipmentRepository _shipmentRepo, IMapper _mapper
                                         , IOrderRepository _orderRepo, INotificationRepository _notifRepo,
                                         ITruckRepository _truckRepo, RouteOptimizationService _ROS
-                                        ,EcoRouteDbContext _dbcontext, ICompanyRepository _companyRepo)
+                                        ,EcoRouteDbContext _dbcontext, ICompanyRepository _companyRepo,
+                                        IConfiguration _config)
         {
             this._shipmentRepo = _shipmentRepo;
             this._mapper = _mapper;
@@ -50,6 +52,7 @@ namespace EcoRoute.Services
             this._truckRepo = _truckRepo;
             this._ROS = _ROS;
             this._dbcontext = _dbcontext;
+            this._config = _config;
         }
         
         public async Task<List<OrderDto>> GetShipmentsForReview()
@@ -108,15 +111,27 @@ namespace EcoRoute.Services
 
         public async Task<List<ImproviseShipmentGroupDto>> ImproviseShipments(List<OrderDto> orderDtos)
         {
+            var API_KEY = _config.GetConnectionString("GoogleAPIKey");
+            var gms = new GoogleMapsService(API_KEY);
+
             var optimizedGroups = new List<ImproviseShipmentGroupDto>();
 
             var processedOrderIds = new HashSet<int>();
 
-            var sharedRoutes = orderDtos.Where(o => o.OrderMode.ToLower() == "shared");
-            var routeGroups = sharedRoutes.GroupBy(o => o.SelectedRouteSummary);
+           var routeGroups = orderDtos.Where(o => o.OrderMode.ToLower() == "shared")
+                                        .GroupBy( o=> new
+                                        {
+                                            o.IsRefrigerated,
+                                            o.SelectedRouteSummary
+                                        });
 
+            Console.WriteLine($"ROUTE GRoups LENGTH ----------------- {routeGroups.Count()}");
+            
             foreach(var rG in routeGroups)
             {
+                bool isRefrigerated = rG.Key.IsRefrigerated;
+                string routeSummary = rG.Key.SelectedRouteSummary;
+
                 var ordersInRoute = rG.ToList();
 
                 for(int i = 0; i< ordersInRoute.Count; i++)
@@ -147,7 +162,7 @@ namespace EcoRoute.Services
                         {
                         Console.WriteLine("INSIDE THE IF CHECK");
                             currentCluster.Add(candidate);
-                            processedOrderIds.Add(candidate.OrderId);
+                            // processedOrderIds.Add(candidate.OrderId);
                         }
                     }
                     var packingInput = new ClusterPackingInputDto
@@ -162,7 +177,7 @@ namespace EcoRoute.Services
                         }).ToList()
                     };
 
-                    var candidateTrucks = await _truckRepo.GetTruckTypeAsync(packingInput.TotalWeightKg);
+                    var candidateTrucks = await _truckRepo.GetTruckTypeAsync(packingInput.TotalWeightKg, isRefrigerated);
 
                     TruckType truck = null;
 
@@ -177,9 +192,133 @@ namespace EcoRoute.Services
 
                     Console.WriteLine($"TRUCK FOR COMBINED ORDER ::::::::::::::{truck.TruckName}");
 
-                    if (truck == null) continue;
-                    
+                    if (truck != null)
+                    {
+                        foreach (var o in currentCluster)
+                            processedOrderIds.Add(o.OrderId);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                                       
                     var optimizedRouteData = await _ROS.GenerateOptimizedRoute(currentCluster);
+                    
+                    var route = await gms.GetRoutePointsForGroupedOrdersAsync(optimizedRouteData.Polyline);
+                    var densePointsWithCoors = Geometry.Densify(route, 50.0);
+                    var densePoints = densePointsWithCoors.densePoints;
+
+                    await gms.FillElevationAsync(densePoints);
+
+                    var routeSegments = BuildRouteSegments(densePoints);
+
+                    double massPerTonne_ = Physics.EffectiveMassPerTonne(truck.KerbWeight, packingInput.TotalWeightKg);
+
+                    Console.WriteLine($"mass per tonne of grouped order : {massPerTonne_}");
+                    var segmentEmissions = ComputeSegmentEmissions(
+                        routeSegments,
+                        massPerTonne_,
+                        truck.EngineEfficiency
+                    );
+
+                    double totalCO2_from_segments = segmentEmissions.Sum(s => s.KgCO2);
+
+                    Console.WriteLine($"CO2 via segments: {totalCO2_from_segments:F2}");
+
+                    Console.WriteLine($"Segments built: {routeSegments.Count}");
+                    Console.WriteLine($"Total distance (km): {routeSegments.Sum(s => s.DistanceMeters) / 1000}");
+                    Console.WriteLine($"Total uphill (m): {routeSegments.Sum(s => s.ElevationGainMeters)}");
+
+                    var orderWindows = new Dictionary<int, (int start, int end)>();
+
+                    foreach (var order in currentCluster)
+                    {
+                        var pickup = optimizedRouteData.Stops
+                                                .Where(s => s.OrderId == order.OrderId && s.StopType == "PICKUP")
+                                                .OrderBy(s => s.Sequence)
+                                                .FirstOrDefault();
+
+                        var drop = optimizedRouteData.Stops
+                                                .Where(s => s.OrderId == order.OrderId && s.StopType == "DROP")
+                                                .OrderByDescending(s => s.Sequence)
+                                                .FirstOrDefault();
+
+                        if (pickup == null || drop == null)
+                            throw new InvalidOperationException($"Missing pickup/drop for order {order.OrderId}");
+
+                        int startSeg = FindNearestSegmentIndex(routeSegments, pickup.Lat, pickup.Lng);
+                        int endSeg   = FindNearestSegmentIndex(routeSegments, drop.Lat, drop.Lng);
+
+                        if (endSeg <= startSeg)
+                            throw new InvalidOperationException("Drop occurs before pickup");
+
+                        orderWindows[order.OrderId] = (startSeg, endSeg);
+                    }
+
+                    Console.WriteLine($"im not failing at the foreach loop!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+
+
+                    double[] payloadPerSegment = new double[routeSegments.Count];
+
+                    for (int m = 0; m < routeSegments.Count; m++)
+                    {
+                        double payload = 0.0;
+
+                        foreach (var order in currentCluster)
+                        {
+                            var (start, end) = orderWindows[order.OrderId];
+
+                            if (m >= start && m < end)
+                            {
+                                payload += order.OrderWeightKg;
+                            }
+                        }
+
+                        payloadPerSegment[m] = payload;
+                    }
+
+                    Console.WriteLine($"im not failing while calculating per segment payload!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+
+                    var orderCO2 = new Dictionary<int, double>();
+
+                    foreach (var order in currentCluster)
+                    {
+                        orderCO2[order.OrderId] = 0.0;
+
+                        var (start, end) = orderWindows[order.OrderId];
+
+                        for (int n = start; n < end; n++)
+                        {
+                            double segmentCO2 = segmentEmissions[n].KgCO2; // already absolute
+                            double totalPayloadKg = payloadPerSegment[n];
+
+                            if (totalPayloadKg <= 0) continue;
+
+                            double share = order.OrderWeightKg / totalPayloadKg;
+
+                            orderCO2[order.OrderId] += segmentCO2 * share;
+
+                            
+                        }
+                    }
+
+                    Console.WriteLine($"im not failing while assiging segment wise emission for order!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+
+                    foreach (var order in currentCluster)
+                    {
+                        double orderKgCO2 = orderCO2[order.OrderId] * (order.OrderWeightKg / 1000.0);
+
+                        order.OrderCO2Emission = Math.Round(orderKgCO2, 3);   // OrderCO2Emission NOW BECOMES ABSOLUTE!!!!!!!!!!!!!!!!
+                        order.TransportVehicle = truck.TruckName;
+                    }
+
+                    double sumOrders = orderCO2.Values.Sum();
+                    double totalRouteCO2 = segmentEmissions.Sum(s => s.KgCO2);
+
+                    Console.WriteLine($"Orders CO2 Sum: {sumOrders:F3}");
+                    Console.WriteLine($"Route CO2 Total: {totalRouteCO2:F3}");
+                    
 
                     Console.WriteLine($"ROUTE STOPS LENGTH _____----------____________{optimizedRouteData.Stops.Count()}");
                     optimizedGroups.Add(new ImproviseShipmentGroupDto
@@ -197,13 +336,17 @@ namespace EcoRoute.Services
 
                         ApproxCombinedVolume =
                             currentCluster.Sum(o =>
-                                o.OrderLength * o.OrderWidth * o.OrderHeight * o.OrderTotalItems)
+                                o.OrderLength * o.OrderWidth * o.OrderHeight * o.OrderTotalItems),
+
+                        TotalShipmentCO2Emissions = currentCluster.Sum(o => o.OrderCO2Emission) 
                     });
+
+                    Console.WriteLine($"total shipment co2 emissions -> :::::{currentCluster.Sum(o => o.OrderCO2Emission)}");
 
                     foreach(var order in currentCluster)
                     {
-                        order.TransportMode = truck.TruckName;
-                    }
+                        order.TransportVehicle = truck.TruckName;
+                    }   
                 }
             }
             return optimizedGroups;
@@ -229,26 +372,32 @@ namespace EcoRoute.Services
                 throw new InvalidOperationException("no DROP found for grouped shipment");
             }
 
+            var firstPickup = groupDto.RouteStops
+                                            .Where(s => s.StopType == "PICKUP")
+                                            .OrderBy(s => s.Sequence)
+                                            .First();
+
+                var originOrder = groupDto.Orders
+                    .First(o => o.OrderId == firstPickup.OrderId);
+
             var destinationOrder = groupDto.Orders.First( o=> o.OrderId == lastDrop.OrderId);
             var shipment =  new Shipment
             {
                 ShipmentDate = earliestDate,
-                ShipmentOrgin = groupDto.RouteStops.OrderBy(s => s.Sequence)
-                                                        .First().StopType == "PICKUP"
-                                                            ? groupDto.Orders.First().OrderOrigin
-                                                            : groupDto.RouteStops.First().Lat + "," + groupDto.RouteStops.First().Lng,
+                
+                ShipmentOrgin = originOrder.OrderOrigin,
                 
                 ShipmentDestination = destinationOrder.OrderDestination,
 
                 ShipmentTotalItems = groupDto.Orders.Sum(o => o.OrderTotalItems),
-                ShipmentWeightKg = groupDto.Orders.Sum(o => o.OrderWeightKg),
+                ShipmentWeightKg = groupDto.CombinedOrderWeightKg,
 
                 ShipmentLength = groupDto.Orders.Max(o => o.OrderLength),
                 ShipmentWidth  = groupDto.Orders.Max(o => o.OrderWidth),
                 ShipmentHeight = groupDto.Orders.Max(o => o.OrderHeight), 
                 ShipmentDistance =  groupDto.OptimizedDistance,
                 Vehicle = groupDto.TransportVehicle,
-                ShipmentCO2Emission = groupDto.Orders.Sum(o => o.OrderCO2Emission),
+                ShipmentCO2Emission = groupDto.TotalShipmentCO2Emissions,
 
                 OrderList = new List<Order>()
             };
@@ -257,8 +406,10 @@ namespace EcoRoute.Services
             {
                 var order = await _orderRepo.GetOrderByOrderId(orderDto.OrderId);
 
+                order.OrderCO2Emission = orderDto.OrderCO2Emission;
                 order.OrderStatus = "placed";
                 order.TransportVehicle = groupDto.TransportVehicle;
+                order.OrderDate = earliestDate;
                 shipment.OrderList.Add(order);
             }
 
@@ -331,5 +482,97 @@ namespace EcoRoute.Services
         }
 
 
+        //THIS FUNCTION USED IN IMPROVISE TO CALCULATE EACH SEGMENT'S PROPS, RETURNS LIST OF RS DTO
+        private List<RouteSegment> BuildRouteSegments(List<DensePoint> densePoints)
+        {
+            var segments = new List<RouteSegment>();
+
+            for (int i = 0; i < densePoints.Count - 1; i++)
+            {
+                var start = densePoints[i];
+                var end   = densePoints[i + 1];
+
+                double dh = end.Elevation - start.Elevation;
+                double positiveGain = dh > 0 ? dh : 0;
+
+                segments.Add(new RouteSegment
+                {
+                    Index = i,
+                    DistanceMeters = end.SegmentMeters,
+                    ElevationGainMeters = positiveGain,
+
+                    StartLat = start.Lat,
+                    StartLng = start.Lng,
+                    EndLat   = end.Lat,
+                    EndLng   = end.Lng
+                });
+            }
+
+            return segments;
+        }
+
+        private List<SegmentEmission> ComputeSegmentEmissions(
+            List<RouteSegment> segments,
+            double massPerTonne,
+            double engineEfficiency,
+            double elevationNoiseThresholdMeters = 0.5
+        )
+        {
+            var result = new List<SegmentEmission>();
+
+            foreach (var s in segments)
+            {
+                double baseJ = massPerTonne * Physics.G * s.DistanceMeters * Physics.Crr;
+
+                double uphillJ = 0.0;
+                if (s.ElevationGainMeters > elevationNoiseThresholdMeters)
+                {
+                    uphillJ = massPerTonne * Physics.G * s.ElevationGainMeters;
+                }
+
+                double totalJ = baseJ + uphillJ;
+
+                double liters = totalJ / (Physics.LHV_DIESEL_J_PER_L * engineEfficiency);
+                double kgCO2  = liters * Physics.CO2_PER_L;
+
+                result.Add(new SegmentEmission
+                {
+                    SegmentIndex = s.Index,
+                    DistanceMeters = s.DistanceMeters,
+                    ElevationGainMeters = s.ElevationGainMeters,
+                    EnergyJoules = totalJ,
+                    LitersUsed = liters,
+                    KgCO2 = kgCO2
+                });
+            }
+
+            return result;
+        }
+
+        private int FindNearestSegmentIndex(
+            List<RouteSegment> segments,
+            double lat,
+            double lng
+        )
+        {
+            double minDist = double.MaxValue;
+            int nearestIndex = 0;
+
+            foreach (var s in segments)
+            {
+                double d = Geometry.HaversineMeters(
+                    lat, lng,
+                    s.StartLat, s.StartLng
+                );
+
+                if (d < minDist)
+                {
+                    minDist = d;
+                    nearestIndex = s.Index;
+                }
+            }
+
+            return nearestIndex;
+        }
     }
 }

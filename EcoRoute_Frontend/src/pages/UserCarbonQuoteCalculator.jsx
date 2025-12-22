@@ -9,6 +9,8 @@ export default function UserCarbonQuoteCalculator() {
   const [loading, setLoading] = useState(false);
   // Toggle state for the methodology section
   const [showMethodology, setShowMethodology] = useState(false);
+  
+
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
@@ -30,6 +32,22 @@ export default function UserCarbonQuoteCalculator() {
   // Placeholder UI state
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [confirmAction, setConfirmAction] = useState(null);
+
+  const handleNotifications = async () => {
+    try{
+        const res = await api.get("/api/client-dashboard/notifications");
+        setNotifications(res.data);
+    }
+    catch(err){
+        console.error("notifications loading failed");
+    }
+  };
+   const handleLogout = () => {
+    localStorage.removeItem("ecoroute_token");
+    navigate("/");
+  };
 
   const handleCalculate = async () => {
     // Basic validation
@@ -82,34 +100,77 @@ export default function UserCarbonQuoteCalculator() {
 
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100 overflow-hidden">
       {/* 1. Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* 2. Main Content Area */}
       {/* Added ml-64 (or typical sidebar width margin) if Sidebar is fixed, assuming Sidebar handles its own width or is 64/250px */}
-      <main className="flex-1 p-10 ml-0 md:ml-[250px]"> 
+      <main className="flex-1 ml-0 md:ml-[250px] px-6 py-6 overflow-y-auto"> 
 
         {/* Scrollable Content Area */}
         <div>
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-7xl mx-auto">
             {/* Top Header */}
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-4xl font-extrabold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent">Carbon Quote Calculator</h2>
           
-          <div className="header-actions">
-            <div style={{ position: 'relative' }}>
-              <button className="p-2 rounded-full hover:bg-gray-200 transition" onClick={() => setIsNotifOpen(!isNotifOpen)}>
-                <span className="material-symbols-outlined text-gray-600 text-3xl">notifications</span>
+          <div className="flex items-center gap-4">
+            
+            {/* Notification Button */}
+            <div className="relative">
+              <button 
+                className="p-2 rounded-full hover:bg-gray-200 transition relative" 
+                onClick={() => {
+                    if(!isNotifOpen) handleNotifications(); // Fetch data when opening
+                    setIsNotifOpen(!isNotifOpen);
+                }}
+              >
+                <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* Optional red dot for new notifs */}
+                {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>
+
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase px-2 py-1 mb-1">Notifications</h4>
+                  {notifications.length > 0 ? (
+                    <div className="space-y-1">
+                      {notifications.map((n, i) => (
+                        <div key={i} className="p-3 text-sm text-green-700 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                          {n.message}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">No new notifications</p>
+                  )}
+                </div>
+              )}
             </div>
             
-            <div style={{ position: 'relative' }}>
+            {/* Profile Button */}
+            <div className="relative">
               <button className="p-2 rounded-full hover:bg-gray-200 transition" onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <span className="material-symbols-outlined text-gray-600 text-3xl" style={{ fontSize: '28px' }}>account_circle</span>
+                <span className="material-symbols-outlined text-gray-600 text-3xl">account_circle</span>
               </button>
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
+                  <div className="px-4 py-2 border-b">
+                    <p className="text-sm font-bold text-green-800">User Profile</p>
+                  </div>
+                  <button 
+                    onClick={() =>
+                      setConfirmAction({
+                        type: "logout"
+                      })
+                    }
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span> Log Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -117,7 +178,7 @@ export default function UserCarbonQuoteCalculator() {
             <div className="bg-white/70 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-2xl overflow-hidden w-full">
               <button
                 onClick={() => setShowMethodology(!showMethodology)}
-                className="w-full px-8 py-5 flex justify-between items-center bg-white/70 hover:bg-gray-100 transition-transform hover:scale-[1.02] text-left"
+                className="w-full px-8 py-5 flex justify-between items-center bg-white/70 hover:bg-white/70 transition-transform hover:scale-[1.02] text-left"
               >
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600  bg-clip-text text-transparent">verified</span>
@@ -476,7 +537,64 @@ export default function UserCarbonQuoteCalculator() {
                 </button>
               </div>
             </div>
+            
           </div>
+          {/* 🔽 ADD CONFIRM MODAL HERE */}
+          {confirmAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+              {/* HEADER */}
+              <h3 className="text-lg font-bold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent mb-3">
+                {confirmAction.type === "logout"
+                ? "Confirm Logout"
+                : confirmAction.type === "buy"
+                ? "Confirm Purchase"
+                : confirmAction.type === "sell"
+                ? "Confirm Sale"
+                : "Confirm Action"}
+              </h3>
+              {/* BODY */}
+              <p className="text-sm text-gray-600 mb-4">
+                {confirmAction.type === "buy" && (
+                  <>You are about to <b>buy {confirmAction.payload.creditsListed}</b> creditsfrom <b>{confirmAction.payload.sellerCompanyName}</b>.</>
+                  )}
+                  {confirmAction.type === "sell" && (
+                    <>You are about to <b>sell {confirmAction.payload.amount}</b> credits.</>
+                    )}
+                    {confirmAction.type === "logout" && (
+                      <>You are about to <b>log out</b> of your account.<br />
+                      <span className="text-xs text-gray-500">You will need to log in again to access the dashboard.</span></>)}
+                      </p>
+              {/* ACTIONS */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 text-sm rounded-xl border border-green-600 text-green-700 hover:bg-emerald-50 hover:scale-[1.03] transition-transform">
+                  Cancel
+                  </button>
+                  <button
+                  onClick={async () => {
+                    if (confirmAction.type === "buy") {
+                      const l = confirmAction.payload;
+                      await handleBuy(l.saleUnitId, l.creditsListed);
+                    }
+                    if (confirmAction.type === "sell") {
+                      await handleSell();
+                    }
+                    if (confirmAction.type === "logout") {
+                      handleLogout();
+                    }
+                    setConfirmAction(null);
+                  }}
+                  className={`px-4 py-2 text-sm rounded-xl text-white transition-transform hover:scale-105 ${
+                    confirmAction.type === "logout"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "px-4 py-2 text-sm rounded-xl text-white bg-red-500 hover:bg-red-600 transition-transform hover:scale-105 active:scale-95"
+                  }`}>Confirm</button>
+                  </div>
+                </div>
+              </div>
+          )}
         </div>
       </main>
     </div>

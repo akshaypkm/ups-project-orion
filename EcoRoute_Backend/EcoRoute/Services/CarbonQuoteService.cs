@@ -216,7 +216,7 @@ namespace EcoRoute.Services
 
         public async Task<TruckType> GetTruckType(OrderRequestDto orderRequestDto)
         {
-            var trucks = await _truckRepo.GetTruckTypeAsync(orderRequestDto.OrderWeightKg);
+            var trucks = await _truckRepo.GetTruckTypeAsync(orderRequestDto.OrderWeightKg, orderRequestDto.IsRefrigerated);
             
             foreach (var truck in trucks)
             {

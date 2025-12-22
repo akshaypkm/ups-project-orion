@@ -3,11 +3,11 @@ namespace EcoRoute.Services
     public class Physics
     {
 
-        const double G = 9.80665;
-        const double LHV_DIESEL_J_PER_L = 36e6;
-        const double CO2_PER_L = 2.7;
+        public const double G = 9.80665;
+        public const double LHV_DIESEL_J_PER_L = 36e6;
+        public const double CO2_PER_L = 2.7;
 
-        const double Crr = 0.01;
+        public const double Crr = 0.01;
 
         
         internal static double EffectiveMassPerTonne(double kerbWeight, double orderWeightKg)

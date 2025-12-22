@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api/api";
 import AdminSidebar from "../Components/AdminSidebar"; // Import your new sidebar
 import { Bar } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,6 +22,26 @@ export default function AdminDashboard() {
   const [emissionsPeriod, setEmissionsPeriod] = useState("month");
   const [shipmentsPeriod, setShipmentsPeriod] = useState("month");
   const [emissionSavedPeriod, setEmissionSavedPeriod] = useState("year");
+  //notification and log out 
+  const navigate = useNavigate();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const handleNotifications = async () => {
+  try {
+    const res = await api.get("/api/admin-dashboard/notifications");
+    setNotifications(res.data);
+  } catch (err) {
+    console.error("Admin notifications failed");
+  }
+};
+  const handleLogout = () => {
+  localStorage.removeItem("ecoroute_token");
+  navigate("/");
+};
+
+
 
   // The controller asks for EmissionsSavedPeriod, but HTML shows "API Calls/Clients".
   // We'll keep this state in case we need to filter the 3rd/4th cards.
@@ -107,118 +128,200 @@ export default function AdminDashboard() {
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Admin Dashboard...</div>;
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA]">
+    <div className="flex min-h-screen bg-gradient-to-br from-emerald-100 via-teal-100 to-blue-200 overflow-hidden">
       
       {/* 1. Admin Sidebar */}
       <AdminSidebar />
 
       {/* 2. Main Content */}
-      <main className="flex-1 p-8 ml-64">
+      <main className="flex-1 ml-0 md:ml-[250px] px-6 py-6 overflow-y-auto">
         
-        <div className="flex flex-col gap-6">
+        <div className="space-y-6">
           
           {/* Page Heading */}
-          <div className="flex flex-wrap justify-between gap-4 items-end">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-3xl font-black leading-tight text-gray-800">Admin Dashboard</h1>
+          <header className="flex justify-between items-center mb-8">
+            <h2 className="text-4xl font-extrabold bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">
+              Admin Dashboard</h2>
+              <div className="flex items-center gap-4">
+                 {/* Notifications */}
+                 <div className="relative">
+                  <button
+                  className="p-2 rounded-full hover:bg-blue-100 transition"
+                  onClick={() => {
+                    if (!isNotifOpen) handleNotifications();
+                    setIsNotifOpen(!isNotifOpen);}}>
+                      <span className="material-symbols-outlined text-gray-600">notifications</span>
+                  </button>
+                {isNotifOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 max-h-64 overflow-y-auto">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase px-2 py-1 mb-1">Notifications</h4>
+                    {notifications.length > 0 ? (
+                      notifications.map((n, i) => (
+                      <div key={i} className="p-3 text-sm text-blue-700 bg-gray-50 rounded-xl hover:bg-gray-100">
+                        {n.message}
+                      </div>)) ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">No new notifications</p>
+                        )}
+                        </div>
+                      )}
+                      </div>
+                {/* Profile */}
+                <div className="relative">
+                  <button
+                  className="p-2 rounded-full hover:bg-blue-100 transition"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}>
+                    <span className="material-symbols-outlined text-gray-600 text-3xl">account_circle</span>
+                    </button>
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
+                      <div className="px-4 py-2 border-b">
+                        <p className="text-sm font-bold text-blue-800">Admin Profile</p>
+                      </div>
+                    <button
+                    onClick={() => setConfirmAction({ type: "logout" })}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg">logout</span>Log Out
+                      </button>
+                      </div>
+                    )}
+                    </div>
+                  </div>
+                </header>
               <p className="text-gray-500 text-base font-normal">Overview of platform metrics and carbon footprint.</p>
-            </div>
-            
-            
-          </div>
-
           {/* Stats Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             
-            {/* Card 1: Total CO2e */}
-            <div className="flex flex-col gap-2 rounded-xl p-7 bg-white border border-gray-200 shadow-sm relative">
-              <div className="flex items-center gap-2 ">
-                <span className="material-symbols-outlined text-[#4A90E2]">co2</span>
-                <p className="text-gray-600 text-sm font-medium">Total CO2e tracked</p>
-              </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalCO2Emissions.toFixed(2)} kg CO₂e</p>
-              {/* <p className="text-[#50E3C2] text-sm font-medium">+5.2% vs last month</p> */}
-              
-              {/* Filter Toggle */}
-              <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
+           {/* Card: Total CO2e Tracked */}
+           <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+           {/* Header */}
+           <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-700">
+            <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">
+              co2</span>Total CO2e tracked</h2>
+              {/* Value */}
+              <p className="text-4xl font-bold mt-3 text-gray-900">
+                {stats.totalCO2Emissions.toFixed(2)} kg CO₂e</p>
+          {/* Period Filter */}
+          <div className="mt-4 flex gap-2">
+            {['today', 'month', 'year'].map(p => (
+              <button
+              key={p}
+              onClick={() => setEmissionsPeriod(p)}
+              className={`px-3 py-1 text-sm rounded-xl transition font-medium ${
+                emissionsPeriod === p
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-white/70 text-blue-700 border border-blue-200 hover:bg-blue-50'}`}>
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </button>))}
+                </div>
+            </div>
+
+
+            {/* Card: Total Shipments */}
+           <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+           {/* Header */}
+           <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-700">
+            <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">
+              local_shipping
+              </span>
+              Total Shipments
+              </h2>
+            {/* Value */}
+            <p className="text-4xl font-bold mt-3 text-gray-900">
+              {stats.totalShipments}
+              </p>
+              {/* Period Filter */}
+              <div className="mt-4 flex gap-2">
                 {['today', 'month', 'year'].map(p => (
-                   <button key={p} onClick={() => setEmissionsPeriod(p)} className={`text-[10px] px-2 py-0.5 rounded uppercase ${emissionsPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'}`}>{p}</button>
-                ))}
-              </div>
+                  <button
+                  key={p}
+                  onClick={() => setShipmentsPeriod(p)}
+                  className={`px-3 py-1 text-sm rounded-xl transition font-medium ${
+                    shipmentsPeriod === p
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-white/70 text-blue-700 border border-blue-200 hover:bg-blue-50'}`}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                      </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Card 2: Total Shipments */}
-              <div className="flex flex-col gap-2 rounded-xl p-7 bg-white border border-gray-200 shadow-sm relative">
-              <div className="flex items-center gap-2 ">
-                <span className="material-symbols-outlined text-[#4A90E2]">local_shipping</span>
-                <p className="text-gray-600 text-sm font-medium">Total Shipments</p>
-              </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">{stats.totalShipments}</p>
-              {/* <p className="text-[#50E3C2] text-sm font-medium">+10.1% vs last month</p> */}
-              
-              {/* Filter Toggle */}
-              <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
-                 {['today', 'month', 'year'].map(p => (
-                   <button key={p} onClick={() => setShipmentsPeriod(p)} className={`text-[10px] px-2 py-0.5 rounded uppercase ${shipmentsPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'}`}>{p}</button>
-                ))}
-              </div>
+            {/* Card: Total Orders for Review */}
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+            {/* Header */}
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-700">
+              <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">
+                api</span>Total Orders for Review</h2>
+              {/* Main Value */}
+              <p className="text-4xl font-bold mt-3 text-gray-900">
+              {stats.totalOrdersForReview ?? 0}</p>
+            {/* Subtext */}
+            <p className="mt-2 text-sm text-blue-600 font-medium">
+              {stats.soFarReviewedCount ?? 0} shipment(s) reviewed so far</p>
             </div>
 
-            {/* Card 3: Total reviews */}
-            <div className="flex flex-col gap-2 rounded-xl p-6 bg-white border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#4A90E2]">api</span>
-                <p className="text-gray-600 text-sm font-medium">Total Orders for Review</p>
-              </div>
-              <p className="text-gray-900 text-3xl font-bold leading-tight">
-                {stats.totalOrdersForReview ? (stats.totalOrdersForReview) : '0'}
-              </p>
-              <p className="text-[#50E3C2] text-sm font-medium">{stats.soFarReviewedCount ? (stats.soFarReviewedCount) : '0'} shipment(s) reviewed so far </p>
-            
-            </div>
-
-            {/* Card 4: Emissions saved */}
-            <div className="flex flex-col gap-2 rounded-xl p-7 bg-white border border-gray-200 shadow-sm relative">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#4A90E2]">eco</span>
-                <p className="text-gray-600 text-sm font-medium">Total Emissions Saved</p>
-              </div>
-
-              <p className="text-gray-900 text-3xl font-bold leading-tight">
+            {/* Card: Total Emissions Saved */}
+            <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+            {/* Header */}
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-700">
+              <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">eco</span>
+              Total Emissions Saved</h2>
+              {/* Main Value */}
+              <p className="text-4xl font-bold mt-3 text-gray-900">
                 {stats.totalEmissionsSaved.toFixed(2)} kg CO₂e
-              </p>
-              
-              {/* Filter Toggle */}
-              <div className="absolute ml-3 bottom-1 left-4 flex gap-1">
-                 {['today', 'month', 'year'].map(p => (
-                   <button 
-                     key={p} 
-                     onClick={() => setEmissionSavedPeriod(p)} 
-                     className={`text-[10px] px-2 py-0.5 rounded uppercase ${
-                       emissionSavedPeriod === p ? 'bg-[#4A90E2] text-white' : 'bg-gray-100 text-gray-500'
-                     }`}
-                   >
-                     {p}
-                   </button>
-                ))}
-              </div>
-            </div>
-            </div>
-+
-
-          {/* Chart Section */}
-          <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col">
-              <p className="text-gray-800 text-lg font-bold">CO2e Emissions by Month</p>
-              <p className="text-gray-500 text-sm">Last 12 Months Trend</p>
-            </div>
-            
-            <div className="h-[300px] w-full">
-              <Bar data={chartData} options={chartOptions} />
-            </div>
+                </p>
+            {/* Filter Toggle (same logic, new style) */}
+            <div className="mt-4 flex gap-2">
+              {['today', 'month', 'year'].map(p => (
+                <button
+                key={p}
+                onClick={() => setEmissionSavedPeriod(p)}
+                className={`px-3 py-1 text-sm rounded-xl transition ${
+                  emissionSavedPeriod === p
+                  ? 'bg-blue-100 text-blue-700 font-semibold': 'bg-white/70 text-blue-700 border border-blue-200 hover:bg-blue-50'}`}>
+                    {p}
+                    </button>
+                  ))}
+                  </div>
+                </div>
           </div>
 
+          {/* Chart Section */}
+          <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6">
+          {/* Header */}
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-blue-700">
+            <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">
+              bar_chart
+              </span>CO2e Emissions by Month</h2>
+              <p className="text-gray-500 text-sm mt-1">Last 12 months emission trend</p>
+              {/* Chart */}
+              <div className="mt-4 h-[300px] w-full">
+                <Bar data={chartData} options={chartOptions} />
+                </div>
+          </div>
+          
+
         </div>
+        {confirmAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95">
+              <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent mb-3">Confirm Logout</h3>
+              <p className="text-sm text-gray-600 mb-4">You are about to <b>log out</b> of your admin account.<br />
+              <span className="text-xs text-gray-500">You will need to log in again to access the admin panel.</span></p>
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <button
+              onClick={() => setConfirmAction(null)}
+              className="px-4 py-2 text-sm rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 transition-transform hover:scale-105 active:scale-95">Cancel
+              </button>
+              <button
+              onClick={() => {
+                handleLogout();
+                setConfirmAction(null);
+              }}
+              className="px-4 py-2 text-sm rounded-xl text-white bg-red-500 hover:bg-red-600 transition-transform hover:scale-105 active:scale-95">
+                Confirm</button>
+                </div>
+              </div>
+            </div>)}
       </main>
     </div>
   );
