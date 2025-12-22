@@ -61,5 +61,6 @@ namespace EcoRoute.Data
         public DbSet<TruckType> TruckTypes{get; set;}
 
         public DbSet<Notification> Notifications{get; set;}
+        public DbSet<EmailOtp> EmailOtps{get; set;}
     }
 }

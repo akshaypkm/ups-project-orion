@@ -9,13 +9,15 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
-namespace EcoRoute.Services
-{
+namespace EcoRoute.Services;
     public interface IAuthService
     {
         Task<(bool Success, string Message)> RegisterUserAsync(UserSignUpDto userSignUpDto);
 
         Task<(bool Success, string Message, string? Token, string? Role, string? CompanyName)> Login(UserLoginDto userLoginDto);
+        Task<(bool Success, string Message)> SendOtpAsync(string email);
+        Task<(bool Success, string Message)> VerifyOtpAsync(string email, string otp);
+
     }
     public class AuthService : IAuthService
     {
@@ -25,18 +27,43 @@ namespace EcoRoute.Services
         private readonly ICompanyRepository _companyRepo;
 
         private readonly IConfiguration _configuration;
+        private readonly IEmailOtpRepository _otpRepo;
+        private readonly IEmailService _emailService;
+
         
         public AuthService(EcoRouteDbContext _dbContext, IUserRepository _userRepo, 
-                            ICompanyRepository _companyRepo, IConfiguration _configuration)
+                            ICompanyRepository _companyRepo, IConfiguration _configuration, IEmailOtpRepository _otpRepo, IEmailService _emailService)
         {
             this._dbContext = _dbContext;
             this._userRepo = _userRepo;
             this._companyRepo = _companyRepo;
             this._configuration = _configuration;
+            this._otpRepo = _otpRepo;
+            this._emailService = _emailService;
             
         }
+        private bool IsStrongPassword(string password)
+        {
+            return !string.IsNullOrWhiteSpace(password) &&
+            password.Length >= 6 &&
+            password.Any(char.IsUpper) &&
+            password.Any(char.IsLower) &&
+            password.Any(char.IsDigit) &&
+            password.Any(ch => !char.IsLetterOrDigit(ch));
+            }
+
         public async Task<(bool Success, string Message)> RegisterUserAsync(UserSignUpDto userSignUpDto)
         {
+            var otp = await _otpRepo.GetOtpByEmailAsync(userSignUpDto.Email);
+            if (otp == null || !otp.IsVerified)
+            {
+                return (false, "Email not verified");
+            }
+
+            if (!IsStrongPassword(userSignUpDto.Password))
+            {
+                 return (false,"Password must be at least 6 characters and include uppercase, lowercase, number, and special character");
+                 }
             if(await _userRepo.UserExistsAsync(userSignUpDto.UserId))
             {
                 return (false, "User ID already taken!");
@@ -181,6 +208,35 @@ namespace EcoRoute.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public async Task<(bool Success, string Message)> SendOtpAsync(string email)
+        {
+            string otp = new Random().Next(100000, 999999).ToString();
+            var otpEntity = new EmailOtp
+            {
+                Email = email,
+                OtpHash = BCrypt.Net.BCrypt.HashPassword(otp),
+                ExpiryTime = DateTime.UtcNow.AddMinutes(5),
+                IsVerified = false
+            };
+            await _otpRepo.AddOtpAsync(otpEntity);
+            await _emailService.SendOtpEmailAsync(email, otp);
+            return (true, "OTP sent to email");
+        }
+        public async Task<(bool Success, string Message)> VerifyOtpAsync(string email, string otp){
+        {
+            var record = await _otpRepo.GetOtpByEmailAsync(email);
+            if (record == null || record.ExpiryTime < DateTime.UtcNow)
+            {
+                return (false, "OTP expired");
+            }
+            if (!BCrypt.Net.BCrypt.Verify(otp, record.OtpHash))
+            {
+                return (false, "Invalid OTP");
+            }
+            record.IsVerified = true;
+            await _otpRepo.UpdateOtpAsync();
+            return (true, "Email verified");
         }
     }
 }
