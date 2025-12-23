@@ -63,15 +63,16 @@ namespace EcoRoute.Services
 
             var truckType = await GetTruckType(orderRequestDto);
 
-            Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
-            if(truckType == null && orderRequestDto.OrderMode.ToLower() == "dedicated"){
-                truckType = await _truckRepo.GetOpenTrailerTruckAsync();
-            }
+            // if(truckType == null && orderRequestDto.OrderMode.ToLower() == "dedicated"){
+            //     truckType = await _truckRepo.GetOpenTrailerTruckAsync();
+            // }
 
             if(truckType == null)
             {
                 return (false, "no trucks were assigned as per your requirements, recheck the order specifications", null);
             }
+
+            Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
 
             double kerbWeight = truckType.KerbWeight;
             double engineEff = truckType.EngineEfficiency;
