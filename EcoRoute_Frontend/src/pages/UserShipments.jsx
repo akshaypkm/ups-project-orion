@@ -47,7 +47,7 @@ export default function UserShipments() {
         const res = await api.get("/client-shipment-history", {
           params: {
             OrderPeriod: orderPeriod,
-            Filter: "bySavings" // Keeping default filter as per controller
+             // Keeping default filter as per controller
           }
         });
         setShipments(res.data);
