@@ -4,6 +4,7 @@ using EcoRoute.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRoute.Migrations
 {
     [DbContext(typeof(EcoRouteDbContext))]
-    partial class EcoRouteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215170611_AddTransportVehicleToOrder")]
+    partial class AddTransportVehicleToOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,33 +120,6 @@ namespace EcoRoute.Migrations
                     b.ToTable("CreditListings");
                 });
 
-            modelBuilder.Entity("EcoRoute.Models.Entities.EmailOtp", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ExpiryTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("OtpHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EmailOtps");
-                });
-
             modelBuilder.Entity("EcoRoute.Models.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -154,10 +130,6 @@ namespace EcoRoute.Migrations
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsRefrigerated")
                         .HasColumnType("bit");
@@ -322,9 +294,6 @@ namespace EcoRoute.Migrations
                     b.Property<double>("GVWKg")
                         .HasColumnType("float");
 
-                    b.Property<bool>("IsRefrigerated")
-                        .HasColumnType("bit");
-
                     b.Property<double>("KerbWeight")
                         .HasColumnType("float");
 
@@ -416,55 +385,7 @@ namespace EcoRoute.Migrations
                         .WithMany("OrderList")
                         .HasForeignKey("ShipmentId");
 
-                    b.OwnsOne("EcoRoute.Models.RoutePoint", "DestinationRP", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<double>("Lat")
-                                .HasColumnType("float")
-                                .HasColumnName("DestinationLat");
-
-                            b1.Property<double>("Lng")
-                                .HasColumnType("float")
-                                .HasColumnName("DestinationLng");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.OwnsOne("EcoRoute.Models.RoutePoint", "OriginRP", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<double>("Lat")
-                                .HasColumnType("float")
-                                .HasColumnName("OriginLat");
-
-                            b1.Property<double>("Lng")
-                                .HasColumnType("float")
-                                .HasColumnName("OriginLng");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
                     b.Navigation("Company");
-
-                    b.Navigation("DestinationRP")
-                        .IsRequired();
-
-                    b.Navigation("OriginRP")
-                        .IsRequired();
 
                     b.Navigation("Shipment");
                 });

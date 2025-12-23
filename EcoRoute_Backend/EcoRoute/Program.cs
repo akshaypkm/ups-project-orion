@@ -93,10 +93,12 @@ builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 builder.Services.AddScoped<ICarbonQuoteService, CarbonQuoteService>();
 builder.Services.AddScoped<IClientShipmentHistoryService, ClientShipmentHistoryService>();
 builder.Services.AddScoped<IForeCastService,ForeCastService>();
+builder.Services.AddScoped<IAdminShipmentService, AdminShipmentService>();
 builder.Services.AddScoped<IAdminShipmentReviewService, AdminShipmentReviewService>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IAdminShipmentService, AdminShipmentService>();
 builder.Services.AddScoped<RouteOptimizationService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICreditRepository, CreditRepository>();
@@ -107,6 +109,7 @@ builder.Services.AddScoped<ITruckRepository, TruckRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IForeCastRepository,ForeCastRepository>();
+builder.Services.AddScoped<IEmailOtpRepository, EmailOtpRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
