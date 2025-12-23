@@ -9,6 +9,7 @@ namespace EcoRoute.Services;
 public interface IEmailService
 {
     Task SendOtpEmailAsync(string email, string otp);
+    Task ForgotSendOtpEmailAsync(string email,string otp,string userId,string companyName);
 
 }
 public class EmailService : IEmailService
@@ -52,9 +53,42 @@ public class EmailService : IEmailService
               <p style='font-size: 12px; color: #999;'>If you did not request this, please ignore this email.</p>
             </div>"
         };
-
-message.To.Add(email);
-await smtp.SendMailAsync(message);
-
+        message.To.Add(email);
+        await smtp.SendMailAsync(message);
     }
+    public async Task ForgotSendOtpEmailAsync(string email,string otp,string userId,string companyName)
+    {
+        var smtp = new SmtpClient("smtp.gmail.com")
+        {
+            Port = 587,
+            Credentials = new NetworkCredential(
+                _config["EmailSettings:Email"],
+                _config["EmailSettings:Password"]
+            ),
+            EnableSsl = true
+        };
+
+        var message = new MailMessage
+        {
+            From = new MailAddress(_config["EmailSettings:Email"], "EcoRoute Team"),
+            Subject = "EcoRoute - Verify Your Email Address",
+            IsBodyHtml = true,
+            Body = $@"
+            <div style='font-family: Arial;'>
+              <h2>Password Reset Request</h2>
+              <p><strong>Company:</strong> {companyName}</p>
+              <p><strong>User ID:</strong> {userId}</p>
+              <p>Your OTP is:</p>
+              <h3 style='color:#2d6a4f'>{otp}</h3>
+              <p>This OTP expires in 5 minutes.</p>
+              <br/>
+              <p>If you didn’t request this, please ignore this email.</p>
+              <br/>
+              <strong>EcoRoute Team</strong>
+            </div>"
+        };
+        message.To.Add(email);
+        await smtp.SendMailAsync(message);
+    }
+    
 }

@@ -7,6 +7,7 @@ public interface IEmailOtpRepository
     Task<EmailOtp> GetOtpByEmailAsync(string email);
     Task AddOtpAsync(EmailOtp emailOtp);
     Task UpdateOtpAsync();
+    Task DeleteOtpsByEmailAsync(string email);
 }
 public class EmailOtpRepository : IEmailOtpRepository
 {
@@ -30,6 +31,12 @@ public class EmailOtpRepository : IEmailOtpRepository
 
     public async Task UpdateOtpAsync()
     {
+        await _context.SaveChangesAsync();
+    }
+    public async Task DeleteOtpsByEmailAsync(string email)
+    {
+        var otps = _context.EmailOtps.Where(e => e.Email == email);
+        _context.EmailOtps.RemoveRange(otps);
         await _context.SaveChangesAsync();
     }
 }   

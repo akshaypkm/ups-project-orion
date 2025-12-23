@@ -12,6 +12,12 @@ export default function UserCarbonQuoteCalculator() {
   
 
 
+  const [infoBox, setInfoBox] = useState({
+  open: false,
+  title: "",
+  message: ""
+});
+
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
@@ -78,7 +84,7 @@ export default function UserCarbonQuoteCalculator() {
     };
 
     try {
-      const res = await api.post("/api/calculate-carbon-quote/calc", payload);
+      const res = await api.post("/calculate-carbon-quote/calc", payload);
       
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data
@@ -87,6 +93,14 @@ export default function UserCarbonQuoteCalculator() {
             quotes: res.data,   // The list of OrderDto returned by backend
             request: payload    // The input data to display summary
           } 
+        });
+      }else{
+        setInfoBox({
+          open: true,
+          title: "No Truck Available",
+          message:
+            "No suitable truck could be assigned for the given order configuration. " +
+            "Correctly enter dimensions, weight, check proper route info."
         });
       }
     } catch (err) {
@@ -111,6 +125,12 @@ export default function UserCarbonQuoteCalculator() {
         {/* Scrollable Content Area */}
         <div>
           <div className="space-y-6 max-w-7xl mx-auto">
+          <InfoDialog
+          open={infoBox.open}
+          title={infoBox.title}
+          message={infoBox.message}
+          onClose={() => setInfoBox({ open: false })}
+          />
             {/* Top Header */}
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-4xl font-extrabold bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700 bg-clip-text text-transparent">Carbon Quote Calculator</h2>
@@ -600,3 +620,33 @@ export default function UserCarbonQuoteCalculator() {
     </div>
   );
 }
+
+
+
+const InfoDialog = ({ open, title, message, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          {title}
+        </h3>
+
+        <p className="text-sm text-gray-600 mb-6">
+          {message}
+        </p>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+

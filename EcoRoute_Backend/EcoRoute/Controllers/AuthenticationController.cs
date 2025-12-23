@@ -72,5 +72,23 @@ namespace EcoRoute.Controllers
             var res = await _authService.VerifyOtpAsync(dto.Email, dto.Otp);
             return res.Success ? Ok(res.Message) : BadRequest(res.Message);
         }
+        [HttpPost("forgot-password/send-otp")]
+        public async Task<IActionResult> ForgotSendOtp([FromBody] SendOtpDto dto)
+        {
+            var res = await _authService.ForgotSendOtpAsync(dto.Email);
+            return res.Success ? Ok(res.Message) : BadRequest(res.Message);
+        }
+        [HttpPost("forgot-password/verify-otp")]
+        public async Task<IActionResult> ForgotVerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            var res = await _authService.ForgotVerifyOtpAsync(dto.Email, dto.Otp);
+            return res.Success ? Ok(res.Message) : BadRequest(res.Message);
+        }
+        [HttpPost("forgot-password/reset")]
+        public async Task<IActionResult> ResetPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var res = await _authService.ResetPasswordAsync(dto.Email, dto.NewPassword);
+            return res.Success ? Ok(res.Message) : BadRequest(res.Message);
+        }
     }
 }
