@@ -121,8 +121,7 @@ namespace EcoRoute.Services
            var routeGroups = orderDtos.Where(o => o.OrderMode.ToLower() == "shared")
                                         .GroupBy( o=> new
                                         {
-                                            o.IsRefrigerated,
-                                            o.SelectedRouteSummary
+                                            o.IsRefrigerated
                                         });
 
             Console.WriteLine($"ROUTE GRoups LENGTH ----------------- {routeGroups.Count()}");
@@ -130,7 +129,6 @@ namespace EcoRoute.Services
             foreach(var rG in routeGroups)
             {
                 bool isRefrigerated = rG.Key.IsRefrigerated;
-                string routeSummary = rG.Key.SelectedRouteSummary;
 
                 var ordersInRoute = rG.ToList();
 
@@ -426,7 +424,7 @@ namespace EcoRoute.Services
             double distDestination = Geometry.HaversineMeters(a.DestinationRP.Lat, a.DestinationRP.Lng, b.DestinationRP.Lat, b.DestinationRP.Lng);
             Console.WriteLine($"DISTANCE BTW TWO DESTINATIONS _________: {distDestination}");
 
-            return distOrigin <= 50000 && distDestination <= 50000;
+            return distOrigin <= 7500 && distDestination <= 7500;
         }
 
         private async  Task<bool> IsTemporallyCompatible(OrderDto a, OrderDto b)
