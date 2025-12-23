@@ -17,28 +17,26 @@ export default function AdminSidebar() {
   // Styles matching admin_home_page.html
   // Primary Color: #4A90E2 (Blue)
   const getNavItemClasses = (path) => {
-    const baseClasses = "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium leading-normal transition-colors w-full text-left";
-    // Active: Blue background tint + Blue text
-    const activeClasses = "bg-[#4A90E2]/20 text-[#4A90E2]"; 
-    // Inactive: Gray text + Hover blue tint
-    const inactiveClasses = "text-gray-600 hover:bg-[#4A90E2]/10";
+  const base =
+    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition w-full text-left hover:scale-[1.02]";
+  
+  const active =
+    "bg-gradient-to-r from-emerald-100 via-teal-100 to-blue-100 text-blue-700";
 
-    return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
-  };
+  const inactive =
+    "text-gray-600 hover:bg-blue-50 hover:text-blue-600";
+
+  return `${base} ${isActive(path) ? active : inactive}`;
+};
 
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col justify-between p-4 fixed left-0 top-0 z-50">
-      <div className="flex flex-col gap-8">
+    <aside className="w-64 h-screen bg-white/70 backdrop-blur-2xl border-r border-white/30 shadow-md flex flex-col px-4 py-6 fixed left-0 top-0 z-50 overflow-y-auto">
         
         {/* Brand Logo */}
-        <div className="flex items-center gap-3 px-2">
-          <div className="bg-[#4A90E2]/20 rounded-lg p-2 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[#4A90E2] text-2xl">eco</span>
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-gray-800 text-base font-bold leading-normal">EcoRoute</h1>
-            <p className="text-gray-400 text-xs font-normal">Admin</p>
-          </div>
+        <div className="flex items-center gap-2 mb-10">
+            <span className="material-symbols-outlined bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent" style={{ fontSize: '28px' }}>eco</span>
+            <h1 className="text-2xl font-semibold bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 bg-clip-text text-transparent">EcoRoute</h1>
+            <p className="text-gray-500 text-xs font-normal">Admin</p>
         </div>
 
         {/* Navigation Menu */}
@@ -69,18 +67,6 @@ export default function AdminSidebar() {
             Review Requests
           </button>
         </nav>
-      </div>
-
-      {/* Logout */}
-      <div className="flex flex-col gap-1 border-t border-gray-200 pt-4">
-        <button 
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
-          onClick={handleLogout}
-        >
-          <span className="material-symbols-outlined">logout</span>
-          <span className="text-sm font-medium leading-normal">Logout</span>
-        </button>
-      </div>
     </aside>
   );
 }
