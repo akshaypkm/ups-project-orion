@@ -51,12 +51,21 @@ export default function AdminShipments() {
     }));
   };
 
+    const uniqueUsers = [
+      ...new Set(
+        shipments
+          .map(s => s.companyName)
+          .filter(Boolean)
+      )
+    ];
+
   // 🔹 FILTER LOGIC (Company + Status + Time Period)
   const filteredShipments = shipments.filter((s) => {
     const matchUser =
-      filters.user === "All Users" || s.companyName === filters.user;
-
-  const uniqueUsers = [...new Set(shipments.map(s => s.companyName))];
+  filters.user === "All Users" ||
+  (Array.isArray(s.companyName)
+    ? s.companyName.includes(filters.user)
+    : s.companyName === filters.user);
 
     const matchStatus =
       filters.status === "All Status" || s.shipmentStatus === filters.status;
@@ -245,7 +254,9 @@ export default function AdminShipments() {
               {new Date(s.shipmentDate).toLocaleDateString()}
             </td>
             <td className="px-4 py-3">
-              {s.companyName?.join(", ").toUpperCase()}
+              {Array.isArray(s.companyName)
+  ? s.companyName.join(", ").toUpperCase()
+  : s.companyName?.toUpperCase()}
             </td>
             <td className="px-4 py-3">{s.shipmentOrigin.toUpperCase()}</td>
             <td className="px-4 py-3">{s.shipmentDestination.toUpperCase()}</td>
