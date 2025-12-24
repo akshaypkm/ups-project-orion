@@ -26,7 +26,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("https://gentle-river-078dc2800.2.azurestaticapps.net")
+            policy.WithOrigins("https://gentle-river-078dc2800.2.azurestaticapps.net", "http://localhost:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
