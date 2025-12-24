@@ -85,7 +85,8 @@ namespace EcoRoute.Repositories
                 ShipmentOrgin = orderDto.OrderOrigin,
                 ShipmentDestination = orderDto.OrderDestination,
                 ShipmentDistance = orderDto.OrderDistance,
-                Vehicle = orderDto.TransportVehicle
+                Vehicle = orderDto.TransportVehicle,
+                ShipmentMode = "dedicated"
             };
 
             await dbContext.AddAsync(shipmentToAdd);
