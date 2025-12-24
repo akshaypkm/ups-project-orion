@@ -36,7 +36,8 @@ namespace EcoRoute.Services
                         ShipmentDestination = s.ShipmentDestination,
                         ShipmentTotalItems = s.OrderList.Sum(o => o.OrderTotalItems),
                         ShipmentCO2Emission = s.ShipmentCO2Emission,
-                        ShipmentStatus = s.OrderList.FirstOrDefault()?.OrderStatus ?? string.Empty
+                        ShipmentStatus = s.OrderList.FirstOrDefault()?.OrderStatus ?? string.Empty,
+                        ShipmentMode = s.ShipmentMode
                     }).ToList()
                 );
 
