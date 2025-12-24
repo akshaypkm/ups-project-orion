@@ -56,6 +56,8 @@ export default function AdminShipments() {
     const matchUser =
       filters.user === "All Users" || s.companyName === filters.user;
 
+  const uniqueUsers = [...new Set(shipments.map(s => s.companyName))];
+
     const matchStatus =
       filters.status === "All Status" || s.shipmentStatus === filters.status;
 
@@ -154,13 +156,17 @@ export default function AdminShipments() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* COMPANY FILTER */}
               <select
-              className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              name="user"
-              value={filters.user}
-              onChange={handleFilterChange}>
-                <option>All Users</option>
-              {[...new Set(shipments.map(s => s.companyName))].map(name => (
-                <option key={name}>{name}</option>))}
+                className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                name="user"
+                value={filters.user}
+                onChange={handleFilterChange}
+              >
+                <option value="All Users">All Users</option>
+                {uniqueUsers.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
             {/* STATUS FILTER */}
             <select
