@@ -396,6 +396,7 @@ namespace EcoRoute.Services
                 ShipmentDistance =  groupDto.OptimizedDistance,
                 Vehicle = groupDto.TransportVehicle,
                 ShipmentCO2Emission = groupDto.TotalShipmentCO2Emissions,
+                ShipmentMode = "shared",
 
                 OrderList = new List<Order>()
             };
