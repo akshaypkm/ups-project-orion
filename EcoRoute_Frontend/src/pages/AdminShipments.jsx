@@ -227,6 +227,7 @@ export default function AdminShipments() {
           <th className="px-4 py-3">Company Name</th>
           <th className="px-4 py-3">Origin</th>
           <th className="px-4 py-3">Destination</th>
+          <th className="px-4 py-3">Order Mode</th>
           <th className="px-4 py-3">Total Units</th>
           <th className="px-4 py-3">CO₂ (kg)</th>
           <th className="px-4 py-3">Status</th>
@@ -260,6 +261,7 @@ export default function AdminShipments() {
             </td>
             <td className="px-4 py-3">{s.shipmentOrigin.toUpperCase()}</td>
             <td className="px-4 py-3">{s.shipmentDestination.toUpperCase()}</td>
+            <td className="px-4 py-3">{s.ShipmentMode.toUpperCase()}</td>
             <td className="px-4 py-3">{s.shipmentTotalItems}</td>
             <td className="px-4 py-3">
               {s.shipmentCO2Emission.toFixed(2)}
