@@ -61,13 +61,12 @@ export default function UserCarbonQuoteCalculator() {
     const payload = {
       orderNature: nature,
       transportMode: mode, // Maps to backend enum/string
-      orderTotalItems: parseInt(units) || 1,
-      orderWeightKg: parseFloat(mass),
-      
-      // Dimensions required by controller validation
-      orderLength: parseFloat(length) || 0, 
-      orderWidth: parseFloat(width) || 0,
-      orderHeight: parseFloat(height) || 0,
+      orderTotalItems: Math.max(1, parseInt(units) || 1),
+      orderWeightKg: Math.max(0, parseFloat(mass) || 0),
+
+      orderLength: Math.max(0, parseFloat(length) || 0),
+      orderWidth: Math.max(0, parseFloat(width) || 0),
+      orderHeight: Math.max(0, parseFloat(height) || 0),
 
       orderMode : orderMode,
       isRefrigerated: refrigerated === "Yes",
@@ -80,6 +79,12 @@ export default function UserCarbonQuoteCalculator() {
     try {
       const res = await api.post("/calculate-carbon-quote/calc", payload);
       
+      if (date && new Date(date) < new Date("2025-01-01")) {
+  alert("Shipment date cannot be before January 1, 2025.");
+  setLoading(false);
+  return;
+}
+
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data
         navigate("/quote-results", { 
@@ -387,10 +392,12 @@ export default function UserCarbonQuoteCalculator() {
                     <label className="text-sm font-medium text-gray-700">Total units:</label>
                     <input
                       type="number"
+                      min="1"
+                      step="1"
                       value={units}
                       onChange={(e) => setUnits(e.target.value)}
                       className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                      placeholder="e.g., 50"
+                      placeholder="e.g., 10"
                     />
                   </div>
 
@@ -399,6 +406,8 @@ export default function UserCarbonQuoteCalculator() {
                     <label className="text-sm font-medium text-gray-700">Total mass (kg):</label>
                     <input
                       type="number"
+                      min="0"
+                      step="1"
                       value={mass}
                       onChange={(e) => setMass(e.target.value)}
                       className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -438,15 +447,15 @@ export default function UserCarbonQuoteCalculator() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                    <div>
                     <label className="text-sm font-medium text-gray-700">Length (m):</label>
-                    <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 18.75" />
+                    <input type="number" min="0" step = "0.01" value={length} onChange={e => setLength(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 18.75" />
                    </div>
                    <div>
                     <label className="text-sm font-medium text-gray-700">Width (m):</label>
-                    <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 5.0" />
+                    <input type="number" min="0" step = "0.01" value={width} onChange={e => setWidth(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 5.0" />
                    </div>
                    <div>
                     <label className="text-sm font-medium text-gray-700">Height (m):</label>
-                    <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 4.0" />
+                    <input type="number" min="0" step = "0.01"  value={height} onChange={e => setHeight(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 4.0" />
                    </div>
                 </div>
               </div>
@@ -519,7 +528,7 @@ export default function UserCarbonQuoteCalculator() {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Date of shipment:</label>
                     <div className="relative mt-1">
-                      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
+                      <input type="date" min = "2025-01-01" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
                     </div>
                   </div>
                 </div>
