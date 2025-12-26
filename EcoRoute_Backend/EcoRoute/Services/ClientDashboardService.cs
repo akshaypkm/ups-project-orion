@@ -140,7 +140,7 @@ namespace EcoRoute.Services
             var returnDto = new ClientDashboardDto{
                 CompanyCode = company.CompanyCode,
                 Shipments = totalShipments,
-                CompanyCredits = company.CompanyCredits,
+                CompanyCredits = await ThisMonthCompanyCredits(company),
                 CreditMarketPrice = creditMarketPrice, 
                 TotalEmissions = totalEmissions,
                 ForecastedEmissions = totalForecastedEmissionsMonth,
@@ -151,6 +151,15 @@ namespace EcoRoute.Services
             };
 
             return (true, "stats retrieved successfully", returnDto);
+        }
+
+        private async Task<double> ThisMonthCompanyCredits(Company company)
+        {
+            double creditsUsedThisMonth = await _emissionRepo.GetCurrentMonthEmissionsByCompanyId(company.Id) / 1000;
+
+            double monthlyPlanned = company.CompanyCredits / 12;
+
+            return monthlyPlanned - creditsUsedThisMonth;
         }
 
         public async Task<ForecastDto> GetCompanyEmissionForecastAsync(int id,DateTime asOfDate)
@@ -241,14 +250,14 @@ namespace EcoRoute.Services
 
             double creditMarketPrice = basePrice * marketPressure;
 
-            // if(creditMarketPrice > maxPrice)
-            // {
-            //     creditMarketPrice = maxPrice;
-            // }
-            // else if(creditMarketPrice < minPrice)
-            // {
-            //     creditMarketPrice = minPrice;
-            // }
+            if(creditMarketPrice > maxPrice)
+            {
+                creditMarketPrice = maxPrice;
+            }
+            else if(creditMarketPrice < minPrice)
+            {
+                creditMarketPrice = minPrice;
+            }
 
             return Math.Round(creditMarketPrice, 2);
         }

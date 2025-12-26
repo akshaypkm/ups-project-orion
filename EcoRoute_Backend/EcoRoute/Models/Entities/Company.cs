@@ -15,11 +15,12 @@ namespace EcoRoute.Models.Entities
         public double CompanyEmissionBudget{get; set;}
 
         public double CompanyCredits{get; set;}
-        public double MonthlyEmissionsCap{get; set;}
+
+        public double RemainingCredits{get; set;}
 
         public DateTime CompanyCreatedAt{get; set;} = DateTime.Now;
 
-        public string CompanySector{get; set;} = string.Empty;
+        public string? CompanySector{get; set;}
 
         public List<Order> OrderList{get; set;} = new List<Order>();
     }

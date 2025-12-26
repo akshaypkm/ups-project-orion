@@ -9,6 +9,8 @@ namespace EcoRoute.Models
 
         public double OrderCO2Emission{get;set;}
 
+        public double OldCO2Emission{get; set;}
+
         public string SelectedRouteSummary{get; set;}
 
         public string SelectedPolyline{get; set;}
@@ -55,5 +57,9 @@ namespace EcoRoute.Models
         public double RouteDuration{get; set;}
 
         public DateTime OrderDate{get; set;}
+
+        public int TransportCompanyId{get; set;}
+
+        public string TransportCompanyName{get; set;}
     }
 }

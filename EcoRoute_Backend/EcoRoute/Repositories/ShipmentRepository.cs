@@ -17,15 +17,15 @@ namespace EcoRoute.Repositories
         
         // CONTRACTS FOR ADMIN
 
-        Task<int> GetAdminDashTotalShipments(DateTime ShipmentStartDate, DateTime ShipmentEndDate);
+        Task<int> GetAdminDashTotalShipments(int TransportCompanyId, DateTime ShipmentStartDate, DateTime ShipmentEndDate);
 
-        Task<int> GetSoFarReviewedShipmentCount();
+        Task<int> GetSoFarReviewedShipmentCount(int TransportCompanyId);
 
-        Task<List<Order>> GetShipmentsForReview();
+        Task<List<Order>> GetShipmentsForReview(int TransportCompanyId);
 
         Task<int> CreateShipment(OrderDto orderDto);
 
-        Task<List<Shipment>> GetAllAdminShipmentsAsync();
+        Task<List<Shipment>> GetAllAdminShipmentsAsync(int TransportCompanyId);
 
         Task AddShipmentAsync(Shipment shipment);
 
@@ -55,19 +55,19 @@ namespace EcoRoute.Repositories
 
         // METHODS FOR ADMIN
 
-        public async Task<int> GetAdminDashTotalShipments(DateTime ShipmentStartDate, DateTime ShipmentEndDate)
+        public async Task<int> GetAdminDashTotalShipments(int TransportCompanyId, DateTime ShipmentStartDate, DateTime ShipmentEndDate)
         {
-            return await dbContext.Shipments.Where(s => s.ShipmentDate >= ShipmentStartDate && s.ShipmentDate <= ShipmentEndDate).CountAsync();
+            return await dbContext.Shipments.Where(s => s.TransportCompanyId == TransportCompanyId && s.ShipmentDate >= ShipmentStartDate && s.ShipmentDate <= ShipmentEndDate).CountAsync();
         }
 
-        public async Task<int> GetSoFarReviewedShipmentCount()
+        public async Task<int> GetSoFarReviewedShipmentCount(int TransportCompanyId)
         {
-            return await dbContext.Shipments.CountAsync();
+            return await dbContext.Shipments.Where(s => s.TransportCompanyId == TransportCompanyId).CountAsync();
         }
 
-        public async Task<List<Order>> GetShipmentsForReview()
+        public async Task<List<Order>> GetShipmentsForReview(int TransportCompanyId)
         {
-            return await dbContext.Orders.Where(o => o.OrderStatus == "processing" 
+            return await dbContext.Orders.Where(o => o.TransportCompanyId == TransportCompanyId && o.OrderStatus == "processing" 
                                         || o.OrderStatus == "planned").OrderByDescending(c => c.Id).ToListAsync();
         }
 
@@ -86,7 +86,8 @@ namespace EcoRoute.Repositories
                 ShipmentDestination = orderDto.OrderDestination,
                 ShipmentDistance = orderDto.OrderDistance,
                 Vehicle = orderDto.TransportVehicle,
-                ShipmentMode = "dedicated"
+                ShipmentMode = "dedicated",
+                TransportCompanyId = orderDto.TransportCompanyId
             };
 
             await dbContext.AddAsync(shipmentToAdd);
@@ -97,10 +98,10 @@ namespace EcoRoute.Repositories
             return shipId;
         }
 
-        public async Task<List<Shipment>> GetAllAdminShipmentsAsync()
+        public async Task<List<Shipment>> GetAllAdminShipmentsAsync(int TransportCompanyId)
         {
             // Eager load OrderList and Company for each order
-            return await dbContext.Shipments
+            return await dbContext.Shipments.Where(s => s.TransportCompanyId == TransportCompanyId)
                 .Include(s => s.OrderList)
                     .ThenInclude(o => o.Company).OrderByDescending(c => c.Id)
                 .ToListAsync();

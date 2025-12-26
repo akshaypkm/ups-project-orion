@@ -34,5 +34,7 @@ namespace EcoRoute.Models.Entities
 
         public string Vehicle{get; set;} = string.Empty;
         public List<Order> OrderList{get; set;} = new List<Order>();
+
+        public int TransportCompanyId{get; set;}
     }
 }

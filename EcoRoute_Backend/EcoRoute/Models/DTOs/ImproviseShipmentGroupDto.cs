@@ -20,5 +20,7 @@ namespace EcoRoute.Models.DTOs
 
         public double TotalShipmentCO2Emissions{get; set;}
 
+        public int TransportCompanyId{get; set;}
+
     }
 }
