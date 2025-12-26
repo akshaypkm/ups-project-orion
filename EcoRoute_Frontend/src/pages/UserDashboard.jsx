@@ -48,7 +48,8 @@ export default function ClientDashboard() {
     totalForecastedEmissions: 0,
     emissionsSaved: 0,
     graphData: [],
-    companyEmissionBudget : 0
+    companyEmissionBudget : 0,
+    remainingCredits:0
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -332,7 +333,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
                 <div className="flex justify-between items-center">
                   <p className={`text-gray-500 text-sm`}>Credits Left (for this month)</p>
                   <p className={`text-xl font-semibold`}>
-                    {(stats.companyCredits).toFixed(2)}  |  {((stats.companyCredits) * 1000).toFixed(2) } kg CO₂e
+                    {(stats.remainingCredits).toFixed(2)}  |  {((stats.remainingCredits) * 1000).toFixed(2) } kg CO₂e
                   </p>
                 </div>
                 <div className="flex justify-between items-center">
