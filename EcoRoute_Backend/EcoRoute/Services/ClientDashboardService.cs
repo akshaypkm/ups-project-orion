@@ -147,7 +147,8 @@ namespace EcoRoute.Services
                 TotalForecastedEmissions = totalForecastedEmissionsYear, 
                 EmissionsSaved = totalEmissionsSaved, 
                 GraphData = finalGraphData,
-                CompanyEmissionBudget = company.CompanyEmissionBudget
+                CompanyEmissionBudget = company.CompanyEmissionBudget,
+                RemainingCredits = company.RemainingCredits
             };
 
             return (true, "stats retrieved successfully", returnDto);

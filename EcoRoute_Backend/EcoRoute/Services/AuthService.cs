@@ -115,6 +115,7 @@ namespace EcoRoute.Services;
                         CompanyName = userSignUpDto.CompanyName,
                         CompanySector = userSignUpDto.CompanySector,
                         CompanyCredits = companyCredits,
+                        RemainingCredits = companyCredits / 12,
                         
                         CompanyEmissionBudget = companyCredits * 1000
                     };
@@ -130,7 +131,7 @@ namespace EcoRoute.Services;
                         CompanyName = userSignUpDto.CompanyName,
                         CompanySector = null,
                         CompanyCredits = 0,
-                        CompanyEmissionBudget = 0
+                        CompanyEmissionBudget = 0,
                     };
 
                     await _companyRepo.AddCompanyAsync(company);
