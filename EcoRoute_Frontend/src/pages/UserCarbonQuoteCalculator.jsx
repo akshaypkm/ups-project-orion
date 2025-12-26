@@ -102,9 +102,12 @@ useEffect(() => {
     };
 
     try {
+      if(selectedProvider == ""){
+
+        alert("choose a transport provider!");
+        return;
+      }
       const res = await api.post("/calculate-carbon-quote/calc", payload);
-      
-            
 
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data
