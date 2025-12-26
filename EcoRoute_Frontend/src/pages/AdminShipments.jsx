@@ -27,7 +27,7 @@ export default function AdminShipments() {
 
   const [filters, setFilters] = useState({
     user: "All Users",
-    status: "All Status",
+    shipmentMode: "Shipment Mode",
     period: "All Time",
   });
 
@@ -51,24 +51,33 @@ export default function AdminShipments() {
     }));
   };
 
-    const uniqueUsers = [
-      ...new Set(
-        shipments
-          .map(s => s.companyName)
-          .filter(Boolean)
-      )
-    ];
+  const normalizedCompanies = shipments.flatMap(s => {
+  if (!s.companyName) return [];
+
+  // Convert to string, split by comma, trim spaces
+  return s.companyName
+    .toString()
+    .split(",")
+    .map(name => name.trim().toUpperCase());
+});
+
+const uniqueUsers = [...new Set(normalizedCompanies)];
 
   // 🔹 FILTER LOGIC (Company + Status + Time Period)
   const filteredShipments = shipments.filter((s) => {
     const matchUser =
-  filters.user === "All Users" ||
-  (Array.isArray(s.companyName)
-    ? s.companyName.includes(filters.user)
-    : s.companyName === filters.user);
+      filters.user === "All Users" ||
+      (s.companyName &&
+        s.companyName
+          .toString()
+          .toUpperCase()
+          .split(",")
+          .map(name => name.trim())
+          .includes(filters.user));
 
-    const matchStatus =
-      filters.status === "All Status" || s.shipmentStatus === filters.status;
+    const matchShipmentMode =
+  filters.shipmentMode === "Shipment Mode" ||
+  s.shipmentMode.toLowerCase() === filters.shipmentMode.toLowerCase();
 
     const shipmentDate = new Date(s.shipmentDate);
     const now = new Date();
@@ -91,7 +100,8 @@ export default function AdminShipments() {
         shipmentDate.getFullYear() === now.getFullYear();
     }
 
-    return matchUser && matchStatus && matchPeriod;
+   return matchUser && matchShipmentMode && matchPeriod;
+
   });
 
   // 🔹 LOADING STATE
@@ -180,13 +190,12 @@ export default function AdminShipments() {
             {/* STATUS FILTER */}
             <select
             className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            name="status"
-            value={filters.status}
+            name="shipmentMode"
+            value={filters.shipmentMode}
             onChange={handleFilterChange}>
-              <option>All Status</option>
-              <option>Placed</option>
-              <option>Processing</option>
-              <option>Planed</option>
+              <option>Shipment Mode</option>
+              <option>Dedicated</option>
+              <option>Shared</option>
               </select>
             {/* TIME PERIOD FILTER */}
             <select
@@ -227,7 +236,7 @@ export default function AdminShipments() {
           <th className="px-4 py-3">Company Name</th>
           <th className="px-4 py-3">Origin</th>
           <th className="px-4 py-3">Destination</th>
-          <th className="px-4 py-3">Order Mode</th>
+          <th className="px-4 py-3">Shipment Mode</th>
           <th className="px-4 py-3">Total Units</th>
           <th className="px-4 py-3">CO₂ (kg)</th>
           <th className="px-4 py-3">Status</th>
@@ -245,11 +254,8 @@ export default function AdminShipments() {
           </tr>
         )}
 
-        {filteredShipments.map((s) => (
-          <tr
-            key={s.shipmentId}
-            className="hover:bg-blue-50/60 transition"
-          >
+        {filteredShipments.map((s, index) => (
+            <tr key={`${s.shipmentId}-${index}`}>
             <td className="px-4 py-3 font-medium">{s.shipmentCode}</td>
             <td className="px-4 py-3">
               {new Date(s.shipmentDate).toLocaleDateString()}

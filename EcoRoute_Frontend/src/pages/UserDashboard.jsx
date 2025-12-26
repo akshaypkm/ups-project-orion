@@ -332,7 +332,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
                 <div className="flex justify-between items-center">
                   <p className={`text-gray-500 text-sm`}>Credits Left (for this month)</p>
                   <p className={`text-xl font-semibold`}>
-                    {(stats.companyCredits / 12).toFixed(2)}  |  {((stats.companyCredits / 12) * 1000).toFixed(2) } kg CO₂e
+                    {(stats.companyCredits).toFixed(2)}  |  {((stats.companyCredits) * 1000).toFixed(2) } kg CO₂e
                   </p>
                 </div>
                 <div className="flex justify-between items-center">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../Components/UserSideBar"; // Importing your new common Sidebar
 import "../styles/UserDashboard.css";
@@ -9,8 +9,9 @@ export default function UserCarbonQuoteCalculator() {
   const [loading, setLoading] = useState(false);
   // Toggle state for the methodology section
   const [showMethodology, setShowMethodology] = useState(false);
-  
 
+  const [transportProviders, setTransportProviders] = useState([]);
+  const [selectedProvider, setSelectedProvider] = useState("");
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
@@ -35,6 +36,23 @@ export default function UserCarbonQuoteCalculator() {
   const [notifications, setNotifications] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
 
+useEffect(() => {
+  const fetchTransportProviders = async () => {
+    try {
+      const res = await api.get("/calculate-carbon-quote/transport-providers");
+
+      const uniqueProviders = [...new Set(res.data)];
+
+      setTransportProviders(uniqueProviders);
+    } catch (err) {
+      console.error("Failed to load transport providers", err);
+    }
+  };
+
+  fetchTransportProviders();
+}, []);
+
+
   const handleNotifications = async () => {
     try{
         const res = await api.get("/client-dashboard/notifications");
@@ -56,6 +74,11 @@ export default function UserCarbonQuoteCalculator() {
       return;
     }
 
+    if (date && new Date(date) < new Date("2025-01-01")) {
+    alert("Shipment date cannot be before January 1, 2025.");
+    return;
+  }
+
     setLoading(true);
     
     const payload = {
@@ -72,18 +95,16 @@ export default function UserCarbonQuoteCalculator() {
       isRefrigerated: refrigerated === "Yes",
       orderOrigin: origin,
       orderDestination: destination,
-      orderDate : date
+      orderDate : date,
+
+      transportCompanyName: selectedProvider,
       
     };
 
     try {
       const res = await api.post("/calculate-carbon-quote/calc", payload);
       
-      if (date && new Date(date) < new Date("2025-01-01")) {
-  alert("Shipment date cannot be before January 1, 2025.");
-  setLoading(false);
-  return;
-}
+            
 
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data
@@ -468,23 +489,27 @@ export default function UserCarbonQuoteCalculator() {
                   <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600  bg-clip-text text-transparent">route</span>
                   Product and route information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                  {/* Equal mass */}
+                  {/* trans provider */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Equal mass:</label>
-                    <div className="flex gap-2 mt-1">
-                      <button
-                        onClick={() => setEqualMass("Yes")}
-                        className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-transform hover:scale-[1.03] ${equalMass === "Yes" ? "bg-gradient-to-r from-lime-500 to-emerald-600 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 "}`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={() => setEqualMass("No")}
-                        className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-transform hover:scale-[1.03] ${equalMass === "No" ? "bg-gradient-to-r from-lime-500 to-emerald-600 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 "}`}
-                      >
-                        No
-                      </button>
-                    </div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Transport Provider
+                    </label>
+
+                    <select
+                      value={selectedProvider}
+                      onChange={(e) => setSelectedProvider(e.target.value)}
+                      className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+
+                    >
+                      <option value="">Select Transport Provider</option>
+
+                      {transportProviders.map(name => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+
                   </div>
 
                   {/* Refrigerated */}

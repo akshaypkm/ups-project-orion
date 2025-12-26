@@ -369,6 +369,10 @@ const verifyOtp = async () => {
                   >
                     <option value="">Select Company</option>
                     <option value="EcoRoute Admin Corp">EcoRoute Admin</option>
+                    <option value="FedEx">FedEx</option>
+                    <option value="Delhivery">Delhivery</option>
+
+
                   </select>
                 ) : (
                   <input
