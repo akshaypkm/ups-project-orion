@@ -31,6 +31,7 @@ export default function ClientDashboard() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
+  const [unreadCountState, setUnreadCountState] = useState(0);
 // shape: { type: "buy" | "sell", payload: any }
 
 
@@ -183,6 +184,35 @@ if (usagePercent > 50 && usagePercent <= 75) {
       x: { ticks: { color: "#6b7280" }, grid: { display: false } },
     },
   };
+  useEffect(() => {
+  handleNotifications(); // fetch on page load
+}, []);
+useEffect(() => {
+  if (isNotifOpen && unreadCountState > 0) {
+    api.post("/api/client-dashboard/notifications/mark-seen").then(() => {
+      setUnreadCountState(0);
+      handleNotifications(); // refresh list
+    });
+  }
+}, [isNotifOpen]);
+
+useEffect(() => {
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get(
+        "/api/client-dashboard/notifications/unread-count"
+      );
+      setUnreadCountState(res.data);
+    } catch (e) {
+      console.error("Failed to fetch unread count");
+    }
+  };
+
+  fetchUnreadCount(); // initial
+  const interval = setInterval(fetchUnreadCount, 5000); // every 5s
+
+  return () => clearInterval(interval);
+}, []);
 
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Dashboard...</div>;
 
@@ -213,6 +243,12 @@ if (usagePercent > 50 && usagePercent <= 75) {
                 }}
               >
                 <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* 🔴 RED DOT / COUNT */}
+                {unreadCountState > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {unreadCountState}
+                  </span>
+                )}
                 {/* Optional red dot for new notifs */}
                 {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>

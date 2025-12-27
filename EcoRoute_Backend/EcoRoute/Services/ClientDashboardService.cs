@@ -23,6 +23,10 @@ namespace EcoRoute.Services
 
         public Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto);
         public Task<List<Notification>> ShowNotifications(string companyName);
+        public Task MarkNotificationsAsRead(string companyName);
+        public Task<int> GetUnreadNotificationCount(string companyName);
+
+
     }
 
     public class ClientDashboardService : IClientDashboardService
@@ -295,57 +299,55 @@ namespace EcoRoute.Services
             return (true, "credits listed");
         }
 
-        public async Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto)
-        {
-            var company = await _companyRepo.GetCompanyByNameAsync(companyName);
-
-            var tradedCredit = await _creditRepo.GetCreditListingByIdAsync(buyCreditDto.SaleUnitId);
-
-            if(tradedCredit == null)
-            {
-                return (false, "The credits are not available to trade");
-            }
-
-            if(tradedCredit.Status == "sold" || tradedCredit.Status == "not available")
-            {
-                return (false, "This listing is already sold");
-            }
-
-            if(buyCreditDto.UnitsBought != tradedCredit.CreditsListed)
-            {
-                return (false, "You must buy the exact number of credits listed");
-            }
-
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
-
-            tradedCredit.Status = "sold";
-
-            tradedCredit.BuyerCompanyId = company.Id;
-
-            company.CompanyCredits += buyCreditDto.UnitsBought;
-
-            var notification = new Notification(){
-                Message = $"Your listed credits of Id: {buyCreditDto.SaleUnitId} - {buyCreditDto.UnitsBought} units are bought by company - {company.CompanyName}",
-                IsRead = false,
-                TargetCompanyId = await _creditRepo.GetCompanyIdByCreditListingId(buyCreditDto.SaleUnitId)
-            };
-
-            try
-            {
-                await _notificationRepo.AddNotificationAsync(notification);
-                await _notificationRepo.SaveChangesAsync();
-                await _companyRepo.SaveChangesAsync();
-                await _creditRepo.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return (false,"Someone else bought this listing just now");
-            }
-            
-            return (true, "successfully bought credits");
+       public async Task<(bool Success, string Message)> BuyCredits(string companyName, BuyCreditDto buyCreditDto)
+       {
+        var company = await _companyRepo.GetCompanyByNameAsync(companyName);
+        var tradedCredit = await _creditRepo.GetCreditListingByIdAsync(buyCreditDto.SaleUnitId);
+        if (tradedCredit == null){
+            return (false, "The credits are not available to trade");
         }
+        if (tradedCredit.Status == "sold" || tradedCredit.Status == "not available"){
+            return (false, "This listing is already sold");
+        }
+        if (buyCreditDto.UnitsBought != tradedCredit.CreditsListed){
+            return (false, "You must buy the exact number of credits listed");
+        }
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            tradedCredit.Status = "sold";
+            tradedCredit.BuyerCompanyId = company.Id;
+            company.CompanyCredits += buyCreditDto.UnitsBought;
+            var message =$"Your listed credits of Id: {buyCreditDto.SaleUnitId} - {buyCreditDto.UnitsBought} units are bought by company - {company.CompanyName}";
+            var sellerCompanyId =await _creditRepo.GetCompanyIdByCreditListingId(buyCreditDto.SaleUnitId);
+            var exists = await _dbContext.Notifications.AnyAsync(n =>
+            n.TargetCompanyId == sellerCompanyId &&
+            n.Message == message &&
+            n.CreatedAt > DateTime.UtcNow.AddMinutes(-2)
+            );
+            if (!exists)
+            {
+                var notification = new Notification
+                {
+                    Message = message,
+                    IsRead = false,
+                    TargetCompanyId = sellerCompanyId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _notificationRepo.AddNotificationAsync(notification);
+            }
+            await _companyRepo.SaveChangesAsync();
+            await _creditRepo.SaveChangesAsync();
+            await _notificationRepo.SaveChangesAsync();
+            await transaction.CommitAsync();
+            }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "Someone else bought this listing just now");
+        }
+        return (true, "successfully bought credits");
+        }
+
 
         public async Task<List<Notification>> ShowNotifications(string companyName)
         {
@@ -353,5 +355,23 @@ namespace EcoRoute.Services
 
             return await _notificationRepo.GetNotificationsByCompanyIdAsync(companyId);
         }
+        public async Task MarkNotificationsAsRead(string companyName)
+        {
+            int companyId = await _companyRepo.GetCompanyIdByName(companyName);
+            var unreadNotifications = await _notificationRepo
+            .GetUnreadNotificationsByCompanyIdAsync(companyId);
+            foreach (var notif in unreadNotifications)
+            {
+                notif.IsRead = true;
+            }
+            await _notificationRepo.SaveChangesAsync();
+        }
+        public async Task<int> GetUnreadNotificationCount(string companyName)
+        {
+            int companyId = await _companyRepo.GetCompanyIdByName(companyName);
+            return await _notificationRepo.GetUnreadCountByCompanyIdAsync(companyId);
+        }
+
+
     }
 }

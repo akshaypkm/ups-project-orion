@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../Components/UserSideBar"; // Importing your new common Sidebar
 import "../styles/UserDashboard.css";
@@ -34,16 +34,21 @@ export default function UserCarbonQuoteCalculator() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [unreadCountState, setUnreadCountState] = useState(0);
+
+  
 
   const handleNotifications = async () => {
-    try{
-        const res = await api.get("/api/client-dashboard/notifications");
-        setNotifications(res.data);
-    }
-    catch(err){
-        console.error("notifications loading failed");
-    }
-  };
+  try {
+    const res = await api.get("/api/client-dashboard/notifications");
+    setNotifications(res.data);
+  } 
+  catch (err) {
+    console.error("notifications loading failed");
+  }
+};
+
+
    const handleLogout = () => {
     localStorage.removeItem("ecoroute_token");
     navigate("/");
@@ -97,6 +102,38 @@ export default function UserCarbonQuoteCalculator() {
       setLoading(false);
     }
   };
+useEffect(() => {
+  handleNotifications(); // fetch on page load
+}, []);
+useEffect(() => {
+  if (isNotifOpen && unreadCountState > 0) {
+    api.post("/api/client-dashboard/notifications/mark-seen").then(() => {
+      setUnreadCountState(0);
+      handleNotifications(); // refresh list
+    });
+  }
+}, [isNotifOpen]);
+
+useEffect(() => {
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get(
+        "/api/client-dashboard/notifications/unread-count"
+      );
+      setUnreadCountState(res.data);
+    } catch (e) {
+      console.error("Failed to fetch unread count");
+    }
+  };
+
+  fetchUnreadCount(); // initial
+  const interval = setInterval(fetchUnreadCount, 5000); // every 5s
+
+  return () => clearInterval(interval);
+}, []);
+
+
+
 
 
   return (
@@ -127,6 +164,12 @@ export default function UserCarbonQuoteCalculator() {
                 }}
               >
                 <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* 🔴 RED DOT / COUNT */}
+                {unreadCountState > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {unreadCountState}
+                  </span>
+                )}
                 {/* Optional red dot for new notifs */}
                 {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>
