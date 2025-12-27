@@ -29,7 +29,8 @@ namespace EcoRoute.Controllers
                 return BadRequest("User does not exist");
             }
 
-            var adminDashDto = await _adminDashboardService.GetDashboardStat(EmissionsPeriod, ShipmentsPeriod, EmissionsSavedPeriod);
+            Console.WriteLine($"transport company Id --------------{userIdFromToken}");
+            var adminDashDto = await _adminDashboardService.GetDashboardStat(userIdFromToken, EmissionsPeriod, ShipmentsPeriod, EmissionsSavedPeriod);
 
             return Ok(adminDashDto);
         } 

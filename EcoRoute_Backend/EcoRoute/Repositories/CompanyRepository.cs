@@ -26,6 +26,12 @@ namespace EcoRoute.Repositories
         Task<string> GetCompanyNameById(int CompanyId);
 
         Task RefundCompanyCredits(int companyId, double refundCredits);
+
+        Task<int> GetTransportCompanyIdByCompanyName(string transportCompanyName);
+
+        Task<int> GetCompanyIdByUserId(string userIdFromToken);
+
+        Task<List<string>> GetTransportProviders();
         
     }
     public class CompanyRepository : ICompanyRepository
@@ -82,12 +88,11 @@ namespace EcoRoute.Repositories
         {
             var company = await dbContext.Companies.Where(c => c.Id == CompanyId).FirstOrDefaultAsync();
 
-            double emissionTonnes = OrderCO2Emission / 1000;
-            
-            company.CompanyCredits -= emissionTonnes;
+            double creditsSpent = OrderCO2Emission / 1000;
 
-            
+            company.RemainingCredits -= creditsSpent;
 
+            await dbContext.SaveChangesAsync();
         }
 
         public async Task<string> GetCompanyNameById(int CompanyId)
@@ -97,10 +102,37 @@ namespace EcoRoute.Repositories
 
         public async Task RefundCompanyCredits(int companyId, double refundCredits)
         {
-            await dbContext.Companies.Where(c => c.Id == companyId).ExecuteUpdateAsync(setter => setter.SetProperty(
-                                                                                            c => c.CompanyCredits,
-                                                                                            c => c.CompanyCredits + refundCredits
-            ));
+            var company = await dbContext.Companies.Where(c => c.Id == companyId).FirstOrDefaultAsync();
+
+            company.RemainingCredits += refundCredits;
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> GetTransportCompanyIdByCompanyName(string transportCompanyName)
+        {
+            return await dbContext.Companies.Where(c => c.CompanyName == transportCompanyName)
+                                                .Select(c => c.Id).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> GetCompanyIdByUserId(string userIdFromToken)
+        {
+            string companyName = await dbContext.Users.Where(c => c.UserId == userIdFromToken).Select(c => c.CompanyName).FirstOrDefaultAsync();
+
+            Console.WriteLine($"company name that is associated with the user id: ---------->->->->->->->->->->->->->-> {companyName}");
+            int id = await GetCompanyIdByName(companyName);
+
+            Console.WriteLine($"company id: ---------->->->->->->->->->->->->->-> {id}");
+
+            return id;
+        }
+
+        public async Task<List<string>> GetTransportProviders()
+        {
+            return await dbContext.Companies.Where(c => c.CompanySector == null)
+                                                .Select(c => c.CompanyName.Trim())
+                                                    .Distinct()
+                                                        .OrderBy(name => name)
+                                                            .ToListAsync();
         }
     }
 }

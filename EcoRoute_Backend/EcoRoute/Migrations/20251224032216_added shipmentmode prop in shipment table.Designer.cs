@@ -4,6 +4,7 @@ using EcoRoute.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRoute.Migrations
 {
     [DbContext(typeof(EcoRouteDbContext))]
-    partial class EcoRouteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251224032216_added shipmentmode prop in shipment table")]
+    partial class addedshipmentmodepropinshipmenttable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,9 +53,10 @@ namespace EcoRoute.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanySector")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("RemainingCredits")
+                    b.Property<double>("MonthlyEmissionsCap")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
@@ -224,13 +228,6 @@ namespace EcoRoute.Migrations
                     b.Property<int?>("ShipmentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TransportCompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TransportCompanyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("TransportMode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -296,9 +293,6 @@ namespace EcoRoute.Migrations
 
                     b.Property<double>("ShipmentWidth")
                         .HasColumnType("float");
-
-                    b.Property<int>("TransportCompanyId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Vehicle")
                         .IsRequired()

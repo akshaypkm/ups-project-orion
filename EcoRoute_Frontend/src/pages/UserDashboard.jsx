@@ -49,7 +49,8 @@ export default function ClientDashboard() {
     totalForecastedEmissions: 0,
     emissionsSaved: 0,
     graphData: [],
-    companyEmissionBudget : 0
+    companyEmissionBudget : 0,
+    remainingCredits:0
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -76,7 +77,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   // --- API Logic ---
   const fetchStats = async () => {
     try {
-      const res = await api.get("/api/client-dashboard/stats", {
+      const res = await api.get("/client-dashboard/stats", {
         params: { 
           EmissionPeriod: emissionPeriod, 
           ShipmentPeriod: shipmentPeriod, 
@@ -93,7 +94,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const handleNotifications = async () => {
     try{
-        const res = await api.get("/api/client-dashboard/notifications");
+        const res = await api.get("/client-dashboard/notifications");
         setNotifications(res.data);
     }
     catch(err){
@@ -103,7 +104,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const fetchListings = async () => {
     try {
-      const res = await api.get("/api/client-dashboard/emissionscreditsystem/listings");
+      const res = await api.get("/client-dashboard/emissionscreditsystem/listings");
       setListings(res.data);
     } catch (err) { console.error(err); }
   };
@@ -115,7 +116,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const res = await api.get("/api/client-dashboard/emissionscreditsystem");
+        const res = await api.get("/client-dashboard/emissionscreditsystem");
         setStats(p => ({ ...p, creditMarketPrice: res.data }));
       } catch (err) { console.error(err); }
     };
@@ -129,7 +130,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
   const handleSell = async () => {
     if (!sellAmount || parseFloat(sellAmount) <= 0) return alert("Enter valid amount");
     try {
-      await api.post("/api/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
+      await api.post("/client-dashboard/emissionscreditsystem/sale", parseFloat(sellAmount), {
         headers: { "Content-Type": "application/json" }
       });
       setSellAmount("");
@@ -140,7 +141,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
 
   const handleBuy = async (id, amount) => {
     try {
-      await api.put("/api/client-dashboard/emissionscreditsystem/buy", {
+      await api.put("/client-dashboard/emissionscreditsystem/buy", {
         saleUnitId: id,
         unitsBought: amount
       });
@@ -368,7 +369,7 @@ useEffect(() => {
                 <div className="flex justify-between items-center">
                   <p className={`text-gray-500 text-sm`}>Credits Left (for this month)</p>
                   <p className={`text-xl font-semibold`}>
-                    {(stats.companyCredits / 12).toFixed(2)}  |  {((stats.companyCredits / 12) * 1000).toFixed(2) } kg CO₂e
+                    {(stats.remainingCredits).toFixed(2)}  |  {((stats.remainingCredits) * 1000).toFixed(2) } kg CO₂e
                   </p>
                 </div>
                 <div className="flex justify-between items-center">

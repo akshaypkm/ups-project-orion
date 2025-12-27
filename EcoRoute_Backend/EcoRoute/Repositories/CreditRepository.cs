@@ -30,13 +30,15 @@ namespace EcoRoute.Repositories
             var startOfMonth = new DateTime(now.Year, now.Month, 1);
             var startofNextMonth = startOfMonth.AddMonths(1);
 
+            int monthNumber = now.Month;
             var companyStandings = await dbContext.Companies.Select(c => new
             {
-                Cap = c.MonthlyEmissionsCap,
+                RemainingCredits = c.RemainingCredits,
+                MonthlyPlanned = c.CompanyCredits,
                 ActualEmissions = dbContext.Orders.Where(o => o.CompanyId == c.Id
                                         && o.OrderStatus == "placed" 
                                         && o.OrderDate >= startOfMonth
-                                        && o.OrderDate <= startofNextMonth)
+                                        && o.OrderDate < startofNextMonth)
                                         .Sum(o => o.OrderCO2Emission)
             }).ToListAsync();
 
@@ -45,7 +47,7 @@ namespace EcoRoute.Repositories
 
             foreach(var item in companyStandings)
             {
-                double balance = item.Cap - item.ActualEmissions;
+                double balance = item.MonthlyPlanned - item.ActualEmissions;
 
                 if(balance > 0)
                 {

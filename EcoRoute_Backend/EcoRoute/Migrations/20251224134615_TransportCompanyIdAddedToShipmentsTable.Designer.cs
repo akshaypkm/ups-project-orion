@@ -4,6 +4,7 @@ using EcoRoute.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRoute.Migrations
 {
     [DbContext(typeof(EcoRouteDbContext))]
-    partial class EcoRouteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251224134615_TransportCompanyIdAddedToShipmentsTable")]
+    partial class TransportCompanyIdAddedToShipmentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,7 +55,7 @@ namespace EcoRoute.Migrations
                     b.Property<string>("CompanySector")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("RemainingCredits")
+                    b.Property<double>("MonthlyEmissionsCap")
                         .HasColumnType("float");
 
                     b.HasKey("Id");

@@ -30,7 +30,11 @@ namespace EcoRoute.Models.Entities
 
         public double ShipmentDistance{get; set;}
 
+        public string ShipmentMode{get; set;}
+
         public string Vehicle{get; set;} = string.Empty;
         public List<Order> OrderList{get; set;} = new List<Order>();
+
+        public int TransportCompanyId{get; set;}
     }
 }

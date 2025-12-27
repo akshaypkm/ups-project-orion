@@ -10,5 +10,6 @@ namespace EcoRoute.Models
         public int ShipmentTotalItems{get; set;}
         public double ShipmentCO2Emission{get; set;}
         public string ShipmentStatus{get; set;} =string.Empty;
+        public string ShipmentMode{get; set;}
     }
 }

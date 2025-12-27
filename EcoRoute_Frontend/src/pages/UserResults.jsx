@@ -17,7 +17,7 @@ export default function UserResults() {
   const [unreadCountState, setUnreadCountState] = useState(0);
   const handleNotifications = async () => {
     try{
-        const res = await api.get("/api/client-dashboard/notifications");
+        const res = await api.get("/client-dashboard/notifications");
         setNotifications(res.data);
     }
     catch(err){
@@ -85,7 +85,7 @@ export default function UserResults() {
     };
 
     try {
-      await api.post("/api/calculate-carbon-quote/place-order", orderPayload);
+      await api.post("/calculate-carbon-quote/place-order", orderPayload);
       alert("Order placed successfully!");
       navigate("/client-shipments");
     } catch (err) {

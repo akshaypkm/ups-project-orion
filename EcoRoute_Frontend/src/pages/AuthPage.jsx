@@ -72,7 +72,7 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        const res = await api.post("api/auth/login", {
+        const res = await api.post("/auth/login", {
           userid: form.userid,
           password: form.password,
         });
@@ -91,7 +91,7 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        await api.post("api/auth/signup", {
+        await api.post("/auth/signup", {
           userid: form.userid,
           password: form.password,
           email: form.email,
@@ -121,7 +121,7 @@ export default function AuthPage() {
     }
     try {
       setOtpLoading(true);
-      await api.post("api/auth/send-otp", {
+      await api.post("/auth/send-otp", {
         email: form.email,
       });
       setOtpSent(true);
@@ -135,7 +135,7 @@ export default function AuthPage() {
 const verifyOtp = async () => {
   try {
     setOtpLoading(true);
-    await api.post("api/auth/verify-otp", {
+    await api.post("/auth/verify-otp", {
       email: form.email,
       otp: otp,
     });
@@ -369,6 +369,10 @@ const verifyOtp = async () => {
                   >
                     <option value="">Select Company</option>
                     <option value="EcoRoute Admin Corp">EcoRoute Admin</option>
+                    <option value="FedEx">FedEx</option>
+                    <option value="Delhivery">Delhivery</option>
+
+
                   </select>
                 ) : (
                   <input
@@ -509,7 +513,7 @@ const verifyOtp = async () => {
               try {
                 setFpLoading(true);
                 setFpError("");
-                await api.post("api/auth/forgot-password/send-otp", {
+                await api.post("/auth/forgot-password/send-otp", {
                   email: fpEmail,
                 });
                 setFpStep(2);
@@ -549,7 +553,7 @@ const verifyOtp = async () => {
               try {
                 setFpLoading(true);
                 setFpError("");
-                await api.post("api/auth/forgot-password/verify-otp", {
+                await api.post("/auth/forgot-password/verify-otp", {
                   email: fpEmail,
                   otp: fpOtp,
                 });
@@ -572,7 +576,7 @@ const verifyOtp = async () => {
               try {
                 setFpError("");
                 setFpLoading(true);
-                await api.post("api/auth/forgot-password/send-otp", {
+                await api.post("/auth/forgot-password/send-otp", {
                   email: fpEmail,
                 });
                 setFpError("OTP resent to your email");
@@ -619,7 +623,7 @@ const verifyOtp = async () => {
               try {
                 setFpLoading(true);
                 setFpError("");
-                await api.post("api/auth/forgot-password/reset", {
+                await api.post("/auth/forgot-password/reset", {
                   email: fpEmail,
                   newPassword: fpPassword,
                 });

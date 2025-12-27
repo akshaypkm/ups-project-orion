@@ -18,7 +18,7 @@ export default function UserShipments() {
 
   const handleNotifications = async () => {
     try{
-        const res = await api.get("/api/client-dashboard/notifications");
+        const res = await api.get("/client-dashboard/notifications");
         setNotifications(res.data);
     }
     catch(err){
@@ -45,10 +45,10 @@ export default function UserShipments() {
       setLoading(true);
       try {
         // Calls: public async Task<IActionResult> GetShipmentHistory([FromQuery] string OrderPeriod = "month", string Filter = "bySavings")
-        const res = await api.get("/api/client-shipment-history", {
+        const res = await api.get("/client-shipment-history", {
           params: {
             OrderPeriod: orderPeriod,
-            Filter: "bySavings" // Keeping default filter as per controller
+             // Keeping default filter as per controller
           }
         });
         setShipments(res.data);

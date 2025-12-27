@@ -9,8 +9,9 @@ export default function UserCarbonQuoteCalculator() {
   const [loading, setLoading] = useState(false);
   // Toggle state for the methodology section
   const [showMethodology, setShowMethodology] = useState(false);
-  
 
+  const [transportProviders, setTransportProviders] = useState([]);
+  const [selectedProvider, setSelectedProvider] = useState("");
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
@@ -38,17 +39,32 @@ export default function UserCarbonQuoteCalculator() {
 
   
 
+useEffect(() => {
+  const fetchTransportProviders = async () => {
+    try {
+      const res = await api.get("/calculate-carbon-quote/transport-providers");
+
+      const uniqueProviders = [...new Set(res.data)];
+
+      setTransportProviders(uniqueProviders);
+    } catch (err) {
+      console.error("Failed to load transport providers", err);
+    }
+  };
+
+  fetchTransportProviders();
+}, []);
+
+
   const handleNotifications = async () => {
-  try {
-    const res = await api.get("/api/client-dashboard/notifications");
-    setNotifications(res.data);
-  } 
-  catch (err) {
-    console.error("notifications loading failed");
-  }
-};
-
-
+    try{
+        const res = await api.get("/client-dashboard/notifications");
+        setNotifications(res.data);
+    }
+    catch(err){
+        console.error("notifications loading failed");
+    }
+  };
    const handleLogout = () => {
     localStorage.removeItem("ecoroute_token");
     navigate("/");
@@ -61,30 +77,41 @@ export default function UserCarbonQuoteCalculator() {
       return;
     }
 
+    if (date && new Date(date) < new Date("2025-01-01")) {
+    alert("Shipment date cannot be before January 1, 2025.");
+    return;
+  }
+
     setLoading(true);
     
     const payload = {
       orderNature: nature,
       transportMode: mode, // Maps to backend enum/string
-      orderTotalItems: parseInt(units) || 1,
-      orderWeightKg: parseFloat(mass),
-      
-      // Dimensions required by controller validation
-      orderLength: parseFloat(length) || 0, 
-      orderWidth: parseFloat(width) || 0,
-      orderHeight: parseFloat(height) || 0,
+      orderTotalItems: Math.max(1, parseInt(units) || 1),
+      orderWeightKg: Math.max(0, parseFloat(mass) || 0),
+
+      orderLength: Math.max(0, parseFloat(length) || 0),
+      orderWidth: Math.max(0, parseFloat(width) || 0),
+      orderHeight: Math.max(0, parseFloat(height) || 0),
 
       orderMode : orderMode,
       isRefrigerated: refrigerated === "Yes",
       orderOrigin: origin,
       orderDestination: destination,
-      orderDate : date
+      orderDate : date,
+
+      transportCompanyName: selectedProvider,
       
     };
 
     try {
-      const res = await api.post("/api/calculate-carbon-quote/calc", payload);
-      
+      if(selectedProvider == ""){
+
+        alert("choose a transport provider!");
+        return;
+      }
+      const res = await api.post("/calculate-carbon-quote/calc", payload);
+
       if (res.status === 200 && res.data) {
         // Redirect to results page and pass the data
         navigate("/quote-results", { 
@@ -430,10 +457,12 @@ useEffect(() => {
                     <label className="text-sm font-medium text-gray-700">Total units:</label>
                     <input
                       type="number"
+                      min="1"
+                      step="1"
                       value={units}
                       onChange={(e) => setUnits(e.target.value)}
                       className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                      placeholder="e.g., 50"
+                      placeholder="e.g., 10"
                     />
                   </div>
 
@@ -442,6 +471,8 @@ useEffect(() => {
                     <label className="text-sm font-medium text-gray-700">Total mass (kg):</label>
                     <input
                       type="number"
+                      min="0"
+                      step="1"
                       value={mass}
                       onChange={(e) => setMass(e.target.value)}
                       className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -481,15 +512,15 @@ useEffect(() => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                    <div>
                     <label className="text-sm font-medium text-gray-700">Length (m):</label>
-                    <input type="number" value={length} onChange={e => setLength(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 18.75" />
+                    <input type="number" min="0" step = "0.01" value={length} onChange={e => setLength(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 18.75" />
                    </div>
                    <div>
                     <label className="text-sm font-medium text-gray-700">Width (m):</label>
-                    <input type="number" value={width} onChange={e => setWidth(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 5.0" />
+                    <input type="number" min="0" step = "0.01" value={width} onChange={e => setWidth(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 5.0" />
                    </div>
                    <div>
                     <label className="text-sm font-medium text-gray-700">Height (m):</label>
-                    <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 4.0" />
+                    <input type="number" min="0" step = "0.01"  value={height} onChange={e => setHeight(e.target.value)} className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Max 4.0" />
                    </div>
                 </div>
               </div>
@@ -502,23 +533,27 @@ useEffect(() => {
                   <span className="material-symbols-outlined bg-gradient-to-r from-lime-500 to-emerald-600  bg-clip-text text-transparent">route</span>
                   Product and route information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                  {/* Equal mass */}
+                  {/* trans provider */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Equal mass:</label>
-                    <div className="flex gap-2 mt-1">
-                      <button
-                        onClick={() => setEqualMass("Yes")}
-                        className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-transform hover:scale-[1.03] ${equalMass === "Yes" ? "bg-gradient-to-r from-lime-500 to-emerald-600 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 "}`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={() => setEqualMass("No")}
-                        className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium transition-transform hover:scale-[1.03] ${equalMass === "No" ? "bg-gradient-to-r from-lime-500 to-emerald-600 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 "}`}
-                      >
-                        No
-                      </button>
-                    </div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Transport Provider
+                    </label>
+
+                    <select
+                      value={selectedProvider}
+                      onChange={(e) => setSelectedProvider(e.target.value)}
+                      className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+
+                    >
+                      <option value="">Select Transport Provider</option>
+
+                      {transportProviders.map(name => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+
                   </div>
 
                   {/* Refrigerated */}
@@ -562,7 +597,7 @@ useEffect(() => {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Date of shipment:</label>
                     <div className="relative mt-1">
-                      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
+                      <input type="date" min = "2025-01-01" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
                     </div>
                   </div>
                 </div>

@@ -7,23 +7,28 @@ namespace EcoRoute.Services
 
     public interface IAdminDashboardService
     {
-        Task<AdminDashboardDto> GetDashboardStat(string EmissionsPeriod, string ShipmentsPeriod, string EmissionsSavedPeriod);
+        Task<AdminDashboardDto> GetDashboardStat(string userIdFromToken, string EmissionsPeriod, string ShipmentsPeriod, string EmissionsSavedPeriod);
     }
     public class AdminDashboardService : IAdminDashboardService
     {
         private readonly IEmissionRepository _emissionRepo;
         private readonly IShipmentRepository _shipmentRepo;
         private readonly IOrderRepository _orderRepo;
+        private readonly ICompanyRepository _companyRepo;
 
         public AdminDashboardService(IEmissionRepository _emissionRepo, IShipmentRepository _shipmentRepo,
-                                    IOrderRepository _orderRepo)
+                                    IOrderRepository _orderRepo, ICompanyRepository _companyRepo)
         {
             this._emissionRepo = _emissionRepo;
             this._shipmentRepo = _shipmentRepo;
             this._orderRepo = _orderRepo;
+            this._companyRepo = _companyRepo;
         }
-        public async Task<AdminDashboardDto> GetDashboardStat(string EmissionsPeriod, string ShipmentsPeriod, string EmissionsSavedPeriod)
+        public async Task<AdminDashboardDto> GetDashboardStat(string userIdFromToken, string EmissionsPeriod, string ShipmentsPeriod, string EmissionsSavedPeriod)
         {
+            int TransportCompanyId = await _companyRepo.GetCompanyIdByUserId(userIdFromToken);
+
+            Console.WriteLine($"$$$$$$$$$::::: TransportCompanyId {TransportCompanyId}");
 
             Console.WriteLine($"SHIPMENT PERIOD TIMELINE ---------------------------{ShipmentsPeriod}");
             DateTime EmissionsStartDate;
@@ -80,7 +85,7 @@ namespace EcoRoute.Services
                     break;
             }
             
-            var rawData = await _emissionRepo.GetAdminDashGraphEmissionsData(GraphYearStart, GraphNowDate);
+            var rawData = await _emissionRepo.GetAdminDashGraphEmissionsData(TransportCompanyId, GraphYearStart, GraphNowDate);
 
             double[] finalGraphData = new double[12];
 
@@ -92,12 +97,12 @@ namespace EcoRoute.Services
 
             var adminDashDto = new AdminDashboardDto
             {
-                TotalCO2Emissions = await _emissionRepo.GetAdminDashTotalEmissions(EmissionsStartDate, EmissionsEndDate),
-                TotalShipments = await _shipmentRepo.GetAdminDashTotalShipments(ShipmentStartDate, ShipmentEndDate),
-                TotalOrdersForReview = await _orderRepo.GetAdminDashTotalOrdersForReview(),
-                TotalEmissionsSaved = await _emissionRepo.GetAdminDashTotalEmissionsSaved(EmissionsSavedStartDate, EmissionsSavedEndDate),
+                TotalCO2Emissions = await _emissionRepo.GetAdminDashTotalEmissions(TransportCompanyId, EmissionsStartDate, EmissionsEndDate),
+                TotalShipments = await _shipmentRepo.GetAdminDashTotalShipments(TransportCompanyId, ShipmentStartDate, ShipmentEndDate),
+                TotalOrdersForReview = await _orderRepo.GetAdminDashTotalOrdersForReview(TransportCompanyId),
+                TotalEmissionsSaved = await _emissionRepo.GetAdminDashTotalEmissionsSaved(TransportCompanyId, EmissionsSavedStartDate, EmissionsSavedEndDate),
                 GraphData = finalGraphData,
-                SoFarReviewedCount = await _shipmentRepo.GetSoFarReviewedShipmentCount()
+                SoFarReviewedCount = await _shipmentRepo.GetSoFarReviewedShipmentCount(TransportCompanyId)
             };
 
             return adminDashDto;

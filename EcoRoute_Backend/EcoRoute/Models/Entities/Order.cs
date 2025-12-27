@@ -55,6 +55,10 @@ namespace EcoRoute.Models.Entities
 
         public double OrderEmissionsSaved => OrderStandardCO2Emissions - OrderCO2Emission;
 
+        public int TransportCompanyId{get; set;}
+
+        public string TransportCompanyName{get; set;} = string.Empty;
+
         //relationships
         public string CompanyName{get; set;}
 

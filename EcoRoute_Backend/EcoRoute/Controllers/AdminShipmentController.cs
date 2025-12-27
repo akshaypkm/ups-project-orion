@@ -26,8 +26,14 @@ namespace EcoRoute.Controllers
         public async Task<ActionResult<List<AdminShipmentDto>>> GetAllCompanyNamesOfShipmentCodes()
         {
             
-            var result = await _AdminShipmentService.GetAllCompanyShipmentsAsync();
+            var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
 
+            if(userIdFromToken == null)
+            {
+                return BadRequest("User does not exist");
+            }
+
+            var result = await _AdminShipmentService.GetAllCompanyShipmentsAsync(userIdFromToken);
 
             return Ok(result);
         }

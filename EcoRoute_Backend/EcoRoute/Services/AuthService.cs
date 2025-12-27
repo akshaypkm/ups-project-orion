@@ -115,14 +115,28 @@ namespace EcoRoute.Services;
                         CompanyName = userSignUpDto.CompanyName,
                         CompanySector = userSignUpDto.CompanySector,
                         CompanyCredits = companyCredits,
-                        MonthlyEmissionsCap = companyCredits / 12,
+                        RemainingCredits = companyCredits / 12,
+                        
                         CompanyEmissionBudget = companyCredits * 1000
                     };
 
                     await _companyRepo.AddCompanyAsync(company);
                     await _companyRepo.SaveChangesAsync();
+    
                 }
-                
+                else if(!await _companyRepo.CompanyExistsByNameAsync(userSignUpDto.CompanyName) && userSignUpDto.Role == "admin")
+                {
+                    var company =  new Company
+                    {
+                        CompanyName = userSignUpDto.CompanyName,
+                        CompanySector = null,
+                        CompanyCredits = 0,
+                        CompanyEmissionBudget = 0,
+                    };
+
+                    await _companyRepo.AddCompanyAsync(company);
+                    await _companyRepo.SaveChangesAsync();
+                }
                 
                 await _userRepo.AddUserAsync(user);
                 await _userRepo.SaveChangesAsync();
@@ -139,7 +153,7 @@ namespace EcoRoute.Services;
             }
         }
 
-       
+        
         private async Task<double> CalculateCompanyCredits(string companySector)
         {   
             if(companySector == null)
@@ -178,6 +192,7 @@ namespace EcoRoute.Services;
                     companyCredits = 0.0;
                     break;
             }
+
             Console.WriteLine($"company credits:============================= ");
             Console.WriteLine($"company credits:============================= {companyCredits}");
             Console.WriteLine($"company credits:============================= ");

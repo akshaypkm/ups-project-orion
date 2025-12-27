@@ -18,7 +18,7 @@ namespace EcoRoute.Repositories
 
 
         // CONTRACTS FOR ADMIN
-        Task<int> GetAdminDashTotalOrdersForReview();
+        Task<int> GetAdminDashTotalOrdersForReview(int TransportCompanyId);
         Task ChangeOrderStatus(int orderId, string status);
 
         Task InsertShipmentIdInOrder(int orderDto, int shipId);
@@ -53,9 +53,9 @@ namespace EcoRoute.Repositories
 
 
         // METHODS FOR ADMIN
-        public async Task<int>  GetAdminDashTotalOrdersForReview()
+        public async Task<int>  GetAdminDashTotalOrdersForReview(int TransportCompanyId)
         {
-            return await dbContext.Orders.Where(o => o.OrderStatus == "processing").CountAsync();
+            return await dbContext.Orders.Where(o => o.TransportCompanyId == TransportCompanyId && o.OrderStatus == "processing").CountAsync();
         }
 
         public async Task ChangeOrderStatus(int orderId, string status)

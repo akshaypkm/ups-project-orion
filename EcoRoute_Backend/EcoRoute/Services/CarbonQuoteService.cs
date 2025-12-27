@@ -11,6 +11,8 @@ namespace EcoRoute.Services
         public Task<(bool Success,string? Message, List<OrderDto>? OrderDto)> PostDataToCalculate(string companyName, OrderRequestDto orderRequestDto);
         
         public Task<(bool Success, string Message)> PlaceOrder(string companyName, OrderDto orderDto);
+
+        public Task<List<string>> GetTranportProviders();
     }
     public class CarbonQuoteService : ICarbonQuoteService
     {
@@ -63,15 +65,16 @@ namespace EcoRoute.Services
 
             var truckType = await GetTruckType(orderRequestDto);
 
-            Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
-            if(truckType == null && orderRequestDto.OrderMode.ToLower() == "dedicated"){
-                truckType = await _truckRepo.GetOpenTrailerTruckAsync();
-            }
+            // if(truckType == null && orderRequestDto.OrderMode.ToLower() == "dedicated"){
+            //     truckType = await _truckRepo.GetOpenTrailerTruckAsync();
+            // }
 
             if(truckType == null)
             {
                 return (false, "no trucks were assigned as per your requirements, recheck the order specifications", null);
             }
+
+            Console.WriteLine($"-------=-=======-=-=-----=-==-Selected truck is: {truckType.TruckName}");
 
             double kerbWeight = truckType.KerbWeight;
             double engineEff = truckType.EngineEfficiency;
@@ -169,6 +172,7 @@ namespace EcoRoute.Services
                     orderDto.OriginRP = densePointsWithCoors.OriginRP;
                     orderDto.DestinationRP = densePointsWithCoors.DestinationRP;
                     orderDto.CompanyName = await _companyRepo.GetCompanyNameById(companyId);
+                    
 
                     routeIndex++;
 
@@ -192,6 +196,7 @@ namespace EcoRoute.Services
 
             var orderToDb = _mapper.Map<Order>(orderDto);
 
+            orderToDb.TransportCompanyId = await _companyRepo.GetTransportCompanyIdByCompanyName(orderDto.TransportCompanyName);
             orderToDb.CompanyId = companyId;
             if(orderDto.OrderDate > DateTime.Now)
             {
@@ -263,6 +268,13 @@ namespace EcoRoute.Services
 
             // 5. Safety margin
             return requiredHeight <= truckH * 0.9;
+        }
+
+        public async Task<List<string>> GetTranportProviders()
+        {
+            var res = await _companyRepo.GetTransportProviders();
+
+            return res;
         }
     }
 }

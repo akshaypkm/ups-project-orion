@@ -7,22 +7,25 @@ namespace EcoRoute.Services
 {
     public interface IAdminShipmentService
     {
-        Task<List<AdminShipmentDto>> GetAllCompanyShipmentsAsync();
+        Task<List<AdminShipmentDto>> GetAllCompanyShipmentsAsync(string userIdFromToken);
     }
 
     public class AdminShipmentService : IAdminShipmentService
     {
-        private readonly IShipmentRepository _shipmentRepository;
+        private readonly IShipmentRepository _shipmentRepo;
+        private readonly ICompanyRepository _companyRepo;
 
-        public AdminShipmentService(IShipmentRepository shipmentRepository)
+        public AdminShipmentService(IShipmentRepository _shipmentRepo, ICompanyRepository _companyRepo)
         {
-            _shipmentRepository = shipmentRepository;
+            this._shipmentRepo = _shipmentRepo;
+            this._companyRepo = _companyRepo;
         }
 
-        public async Task<List<AdminShipmentDto>> GetAllCompanyShipmentsAsync()
+        public async Task<List<AdminShipmentDto>> GetAllCompanyShipmentsAsync(string userIdFromToken)
         {
+            int TransportCompanyId = await _companyRepo.GetCompanyIdByUserId(userIdFromToken);
             // Directly get DTOs from repository
-            var dtoList = await _shipmentRepository.GetAllAdminShipmentsAsync()
+            var dtoList = await _shipmentRepo.GetAllAdminShipmentsAsync(TransportCompanyId)
                 .ContinueWith(task => task.Result
                     .Select(s => new AdminShipmentDto
                     {
@@ -36,7 +39,8 @@ namespace EcoRoute.Services
                         ShipmentDestination = s.ShipmentDestination,
                         ShipmentTotalItems = s.OrderList.Sum(o => o.OrderTotalItems),
                         ShipmentCO2Emission = s.ShipmentCO2Emission,
-                        ShipmentStatus = s.OrderList.FirstOrDefault()?.OrderStatus ?? string.Empty
+                        ShipmentStatus = s.OrderList.FirstOrDefault()?.OrderStatus ?? string.Empty,
+                        ShipmentMode = s.ShipmentMode
                     }).ToList()
                 );
 

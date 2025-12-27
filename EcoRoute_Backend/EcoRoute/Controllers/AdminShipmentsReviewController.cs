@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using EcoRoute.Models;
 using EcoRoute.Models.DTOs;
 using EcoRoute.Repositories;
@@ -27,7 +28,14 @@ namespace EcoRoute.Controllers
         [Authorize]
         public async Task<IActionResult> GetShipmentsForReview()
         {
-            var result = await _adminShipmentReviewService.GetShipmentsForReview();
+            var userIdFromToken = User.FindFirst(ClaimTypes.Name)?.Value;
+
+            if(userIdFromToken == null)
+            {
+                return BadRequest("User does not exist");
+            }
+            
+            var result = await _adminShipmentReviewService.GetShipmentsForReview(userIdFromToken);
 
 
             return Ok(result);
