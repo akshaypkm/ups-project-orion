@@ -11,6 +11,9 @@ namespace EcoRoute.Repositories
         Task SaveChangesAsync();
 
         Task<List<Notification>> GetNotificationsByCompanyIdAsync(int companyId);
+        Task<List<Notification>> GetUnreadNotificationsByCompanyIdAsync(int companyId);
+        Task<int> GetUnreadCountByCompanyIdAsync(int companyId);
+
     }
     public class NotificationRepository(EcoRouteDbContext dbContext) : INotificationRepository
     {
@@ -32,5 +35,17 @@ namespace EcoRoute.Repositories
                                                     .OrderByDescending(n => n.CreatedAt)
                                                         .ToListAsync();
         }
+        public async Task<List<Notification>> GetUnreadNotificationsByCompanyIdAsync(int companyId)
+        {
+            return await dbContext.Notifications
+            .Where(n => n.TargetCompanyId == companyId && !n.IsRead)
+            .ToListAsync();
+        }
+        public async Task<int> GetUnreadCountByCompanyIdAsync(int companyId)
+        {
+            return await dbContext.Notifications.CountAsync(n => n.TargetCompanyId == companyId && !n.IsRead);
+        }
+
+
     }
 }

@@ -13,7 +13,7 @@ namespace EcoRoute.Services
 
     public interface IAdminShipmentReviewService
     {
-        Task<List<OrderDto>> GetShipmentsForReview();
+        Task<List<OrderDto>> GetShipmentsForReview(string userIdFromToken);
 
         Task ApproveShipment(OrderDto orderDto);
 
@@ -55,12 +55,13 @@ namespace EcoRoute.Services
             this._config = _config;
         }
         
-        public async Task<List<OrderDto>> GetShipmentsForReview()
+        public async Task<List<OrderDto>> GetShipmentsForReview(string userIdFromToken)
         {
+            int TransportCompanyId = await _companyRepo.GetCompanyIdByUserId(userIdFromToken);
+            
             var orderDtos = new List<OrderDto>();
 
-
-            var orders = await _shipmentRepo.GetShipmentsForReview();
+            var orders = await _shipmentRepo.GetShipmentsForReview(TransportCompanyId);
 
             foreach(var order in orders)
             {
@@ -121,8 +122,7 @@ namespace EcoRoute.Services
            var routeGroups = orderDtos.Where(o => o.OrderMode.ToLower() == "shared")
                                         .GroupBy( o=> new
                                         {
-                                            o.IsRefrigerated,
-                                            o.SelectedRouteSummary
+                                            o.IsRefrigerated
                                         });
 
             Console.WriteLine($"ROUTE GRoups LENGTH ----------------- {routeGroups.Count()}");
@@ -130,7 +130,6 @@ namespace EcoRoute.Services
             foreach(var rG in routeGroups)
             {
                 bool isRefrigerated = rG.Key.IsRefrigerated;
-                string routeSummary = rG.Key.SelectedRouteSummary;
 
                 var ordersInRoute = rG.ToList();
 
@@ -305,12 +304,13 @@ namespace EcoRoute.Services
 
                     Console.WriteLine($"im not failing while assiging segment wise emission for order!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
 
-                    foreach (var order in currentCluster)
+                    foreach (var orderDto in currentCluster)
                     {
-                        double orderKgCO2 = orderCO2[order.OrderId] * (order.OrderWeightKg / 1000.0);
+                        double orderKgCO2 = orderCO2[orderDto.OrderId] * (orderDto.OrderWeightKg / 1000.0);
 
-                        order.OrderCO2Emission = Math.Round(orderKgCO2, 3);   // OrderCO2Emission NOW BECOMES ABSOLUTE!!!!!!!!!!!!!!!!
-                        order.TransportVehicle = truck.TruckName;
+                        orderDto.OldCO2Emission = orderDto.OrderCO2Emission;
+                        orderDto.OrderCO2Emission = Math.Round(orderKgCO2, 3);   // OrderCO2Emission NOW BECOMES ABSOLUTE!!!!!!!!!!!!!!!!
+                        orderDto.TransportVehicle = truck.TruckName;
                     }
 
                     double sumOrders = orderCO2.Values.Sum();
@@ -338,7 +338,8 @@ namespace EcoRoute.Services
                             currentCluster.Sum(o =>
                                 o.OrderLength * o.OrderWidth * o.OrderHeight * o.OrderTotalItems),
 
-                        TotalShipmentCO2Emissions = currentCluster.Sum(o => o.OrderCO2Emission) 
+                        TotalShipmentCO2Emissions = currentCluster.Sum(o => o.OrderCO2Emission),
+                        TransportCompanyId = currentCluster.Select(o => o.TransportCompanyId).FirstOrDefault()
                     });
 
                     Console.WriteLine($"total shipment co2 emissions -> :::::{currentCluster.Sum(o => o.OrderCO2Emission)}");
@@ -398,6 +399,8 @@ namespace EcoRoute.Services
                 ShipmentDistance =  groupDto.OptimizedDistance,
                 Vehicle = groupDto.TransportVehicle,
                 ShipmentCO2Emission = groupDto.TotalShipmentCO2Emissions,
+                ShipmentMode = "shared",
+                TransportCompanyId = groupDto.TransportCompanyId,
 
                 OrderList = new List<Order>()
             };
@@ -411,6 +414,11 @@ namespace EcoRoute.Services
                 order.TransportVehicle = groupDto.TransportVehicle;
                 order.OrderDate = earliestDate;
                 shipment.OrderList.Add(order);
+
+                double refundCredits = (orderDto.OldCO2Emission - orderDto.OrderCO2Emission) / 1000;
+
+                await _companyRepo.RefundCompanyCredits(orderDto.CompanyId, refundCredits); 
+                
             }
 
             await _shipmentRepo.AddShipmentAsync(shipment);
@@ -426,7 +434,7 @@ namespace EcoRoute.Services
             double distDestination = Geometry.HaversineMeters(a.DestinationRP.Lat, a.DestinationRP.Lng, b.DestinationRP.Lat, b.DestinationRP.Lng);
             Console.WriteLine($"DISTANCE BTW TWO DESTINATIONS _________: {distDestination}");
 
-            return distOrigin <= 50000 && distDestination <= 50000;
+            return distOrigin <= 7500 && distDestination <= 7500;
         }
 
         private async  Task<bool> IsTemporallyCompatible(OrderDto a, OrderDto b)

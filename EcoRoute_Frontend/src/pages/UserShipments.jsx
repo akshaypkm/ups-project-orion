@@ -12,12 +12,13 @@ export default function UserShipments() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [unreadCountState, setUnreadCountState] = useState(0);
   const navigate = useNavigate();
 
 
   const handleNotifications = async () => {
     try{
-        const res = await api.get("/api/client-dashboard/notifications");
+        const res = await api.get("/client-dashboard/notifications");
         setNotifications(res.data);
     }
     catch(err){
@@ -47,7 +48,7 @@ export default function UserShipments() {
         const res = await api.get("/client-shipment-history", {
           params: {
             OrderPeriod: orderPeriod,
-            Filter: "bySavings" // Keeping default filter as per controller
+             // Keeping default filter as per controller
           }
         });
         setShipments(res.data);
@@ -110,6 +111,36 @@ export default function UserShipments() {
     if (value < 5) return "text-orange-500";
     return "text-red-600";
   };
+  useEffect(() => {
+  handleNotifications(); // fetch on page load
+}, []);
+useEffect(() => {
+  if (isNotifOpen && unreadCountState > 0) {
+    api.post("/client-dashboard/notifications/mark-seen").then(() => {
+      setUnreadCountState(0);
+      handleNotifications(); // refresh list
+    });
+  }
+}, [isNotifOpen]);
+
+useEffect(() => {
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get(
+        "/client-dashboard/notifications/unread-count"
+      );
+      setUnreadCountState(res.data);
+    } catch (e) {
+      console.error("Failed to fetch unread count");
+    }
+  };
+
+  fetchUnreadCount(); // initial
+  const interval = setInterval(fetchUnreadCount, 5000); // every 5s
+
+  return () => clearInterval(interval);
+}, []);
+
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-lime-100 via-green-100 to-emerald-100 overflow-hidden">
@@ -132,6 +163,12 @@ export default function UserShipments() {
                 }}
               >
                 <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* 🔴 RED DOT / COUNT */}
+                {unreadCountState > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {unreadCountState}
+                  </span>
+                )}
                 {/* Optional red dot for new notifs */}
                 {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>

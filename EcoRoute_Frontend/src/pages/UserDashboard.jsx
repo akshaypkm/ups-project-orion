@@ -31,6 +31,7 @@ export default function ClientDashboard() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
+  const [unreadCountState, setUnreadCountState] = useState(0);
 // shape: { type: "buy" | "sell", payload: any }
 
 
@@ -48,7 +49,8 @@ export default function ClientDashboard() {
     totalForecastedEmissions: 0,
     emissionsSaved: 0,
     graphData: [],
-    companyEmissionBudget : 0
+    companyEmissionBudget : 0,
+    remainingCredits:0
   });
   const [listings, setListings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -183,6 +185,35 @@ if (usagePercent > 50 && usagePercent <= 75) {
       x: { ticks: { color: "#6b7280" }, grid: { display: false } },
     },
   };
+  useEffect(() => {
+  handleNotifications(); // fetch on page load
+}, []);
+useEffect(() => {
+  if (isNotifOpen && unreadCountState > 0) {
+    api.post("/client-dashboard/notifications/mark-seen").then(() => {
+      setUnreadCountState(0);
+      handleNotifications(); // refresh list
+    });
+  }
+}, [isNotifOpen]);
+
+useEffect(() => {
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get(
+        "/client-dashboard/notifications/unread-count"
+      );
+      setUnreadCountState(res.data);
+    } catch (e) {
+      console.error("Failed to fetch unread count");
+    }
+  };
+
+  fetchUnreadCount(); // initial
+  const interval = setInterval(fetchUnreadCount, 5000); // every 5s
+
+  return () => clearInterval(interval);
+}, []);
 
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading Dashboard...</div>;
 
@@ -213,6 +244,12 @@ if (usagePercent > 50 && usagePercent <= 75) {
                 }}
               >
                 <span className="material-symbols-outlined text-gray-600">notifications</span>
+                {/* 🔴 RED DOT / COUNT */}
+                {unreadCountState > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {unreadCountState}
+                  </span>
+                )}
                 {/* Optional red dot for new notifs */}
                 {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>
@@ -332,7 +369,7 @@ if (usagePercent > 50 && usagePercent <= 75) {
                 <div className="flex justify-between items-center">
                   <p className={`text-gray-500 text-sm`}>Credits Left (for this month)</p>
                   <p className={`text-xl font-semibold`}>
-                    {(stats.companyCredits / 12).toFixed(2)}  |  {((stats.companyCredits / 12) * 1000).toFixed(2) } kg CO₂e
+                    {(stats.remainingCredits).toFixed(2)}  |  {((stats.remainingCredits) * 1000).toFixed(2) } kg CO₂e
                   </p>
                 </div>
                 <div className="flex justify-between items-center">

@@ -25,5 +25,7 @@ namespace EcoRoute.Models
         public string OrderDestination{get; set;}
 
         public DateTime OrderDate{get; set;}
+
+        public string TransportCompanyName{get; set;} = string.Empty;
     }
 }

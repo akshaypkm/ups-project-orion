@@ -82,5 +82,14 @@ namespace EcoRoute.Controllers
 
             return Ok("Order request has been placed");
         }
+
+        [HttpGet("transport-providers")]
+        [Authorize]
+        public async Task<ActionResult<List<string>>> GetTransportProviders()
+        {
+            var list = await _carbonQuoteService.GetTranportProviders();
+
+            return Ok(list);
+        }
     }
 }

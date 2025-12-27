@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const [confirmAction, setConfirmAction] = useState(null);
   const handleNotifications = async () => {
   try {
-    const res = await api.get("/api/admin-dashboard/notifications");
+    const res = await api.get("/admin-dashboard/notifications");
     setNotifications(res.data);
   } catch (err) {
     console.error("Admin notifications failed");

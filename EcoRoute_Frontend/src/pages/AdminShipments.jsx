@@ -14,7 +14,7 @@ export default function AdminShipments() {
   const [confirmAction, setConfirmAction] = useState(null);
   const handleNotifications = async () => {
   try {
-    const res = await api.get("/api/admin-dashboard/notifications");
+    const res = await api.get("/admin-dashboard/notifications");
     setNotifications(res.data);
   } catch (err) {
     console.error("Admin notifications failed");
@@ -27,7 +27,7 @@ export default function AdminShipments() {
 
   const [filters, setFilters] = useState({
     user: "All Users",
-    status: "All Status",
+    shipmentMode: "Shipment Mode",
     period: "All Time",
   });
 
@@ -51,13 +51,33 @@ export default function AdminShipments() {
     }));
   };
 
+  const normalizedCompanies = shipments.flatMap(s => {
+  if (!s.companyName) return [];
+
+  // Convert to string, split by comma, trim spaces
+  return s.companyName
+    .toString()
+    .split(",")
+    .map(name => name.trim().toUpperCase());
+});
+
+const uniqueUsers = [...new Set(normalizedCompanies)];
+
   // 🔹 FILTER LOGIC (Company + Status + Time Period)
   const filteredShipments = shipments.filter((s) => {
     const matchUser =
-      filters.user === "All Users" || s.companyName === filters.user;
+      filters.user === "All Users" ||
+      (s.companyName &&
+        s.companyName
+          .toString()
+          .toUpperCase()
+          .split(",")
+          .map(name => name.trim())
+          .includes(filters.user));
 
-    const matchStatus =
-      filters.status === "All Status" || s.shipmentStatus === filters.status;
+    const matchShipmentMode =
+  filters.shipmentMode === "Shipment Mode" ||
+  s.shipmentMode.toLowerCase() === filters.shipmentMode.toLowerCase();
 
     const shipmentDate = new Date(s.shipmentDate);
     const now = new Date();
@@ -80,7 +100,8 @@ export default function AdminShipments() {
         shipmentDate.getFullYear() === now.getFullYear();
     }
 
-    return matchUser && matchStatus && matchPeriod;
+   return matchUser && matchShipmentMode && matchPeriod;
+
   });
 
   // 🔹 LOADING STATE
@@ -154,24 +175,27 @@ export default function AdminShipments() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* COMPANY FILTER */}
               <select
-              className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              name="user"
-              value={filters.user}
-              onChange={handleFilterChange}>
-                <option>All Users</option>
-              {[...new Set(shipments.map(s => s.companyName))].map(name => (
-                <option key={name}>{name}</option>))}
+                className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                name="user"
+                value={filters.user}
+                onChange={handleFilterChange}
+              >
+                <option value="All Users">All Users</option>
+                {uniqueUsers.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
             {/* STATUS FILTER */}
             <select
             className="px-4 py-2 rounded-xl border border-blue-200 bg-white/80 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            name="status"
-            value={filters.status}
+            name="shipmentMode"
+            value={filters.shipmentMode}
             onChange={handleFilterChange}>
-              <option>All Status</option>
-              <option>Placed</option>
-              <option>Processing</option>
-              <option>Planed</option>
+              <option>Shipment Mode</option>
+              <option>Dedicated</option>
+              <option>Shared</option>
               </select>
             {/* TIME PERIOD FILTER */}
             <select
@@ -212,6 +236,7 @@ export default function AdminShipments() {
           <th className="px-4 py-3">Company Name</th>
           <th className="px-4 py-3">Origin</th>
           <th className="px-4 py-3">Destination</th>
+          <th className="px-4 py-3">Shipment Mode</th>
           <th className="px-4 py-3">Total Units</th>
           <th className="px-4 py-3">CO₂ (kg)</th>
           <th className="px-4 py-3">Status</th>
@@ -229,20 +254,20 @@ export default function AdminShipments() {
           </tr>
         )}
 
-        {filteredShipments.map((s) => (
-          <tr
-            key={s.shipmentId}
-            className="hover:bg-blue-50/60 transition"
-          >
+        {filteredShipments.map((s, index) => (
+            <tr key={`${s.shipmentId}-${index}`}>
             <td className="px-4 py-3 font-medium">{s.shipmentCode}</td>
             <td className="px-4 py-3">
               {new Date(s.shipmentDate).toLocaleDateString()}
             </td>
             <td className="px-4 py-3">
-              {s.companyName?.join(", ").toUpperCase()}
+              {Array.isArray(s.companyName)
+  ? s.companyName.join(", ").toUpperCase()
+  : s.companyName?.toUpperCase()}
             </td>
             <td className="px-4 py-3">{s.shipmentOrigin.toUpperCase()}</td>
             <td className="px-4 py-3">{s.shipmentDestination.toUpperCase()}</td>
+            <td className="px-4 py-3">{s.shipmentMode.toUpperCase()}</td>
             <td className="px-4 py-3">{s.shipmentTotalItems}</td>
             <td className="px-4 py-3">
               {s.shipmentCO2Emission.toFixed(2)}
