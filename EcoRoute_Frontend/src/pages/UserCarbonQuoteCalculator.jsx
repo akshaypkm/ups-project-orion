@@ -134,7 +134,7 @@ useEffect(() => {
 }, []);
 useEffect(() => {
   if (isNotifOpen && unreadCountState > 0) {
-    api.post("/api/client-dashboard/notifications/mark-seen").then(() => {
+    api.post("/client-dashboard/notifications/mark-seen").then(() => {
       setUnreadCountState(0);
       handleNotifications(); // refresh list
     });
@@ -145,7 +145,7 @@ useEffect(() => {
   const fetchUnreadCount = async () => {
     try {
       const res = await api.get(
-        "/api/client-dashboard/notifications/unread-count"
+        "/client-dashboard/notifications/unread-count"
       );
       setUnreadCountState(res.data);
     } catch (e) {
