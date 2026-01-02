@@ -17,6 +17,13 @@ export default function AdminShipmentsReview() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
+
+const autoApprovedShipments = shipments.filter(
+  s => (s.isAutoApproved || s.IsAutoApproved) && (s.isRender === true || s.IsRender === true)
+);
+const normalShipments = shipments.filter(s => !(s.isAutoApproved || s.IsAutoApproved));
+
+
   const handleNotifications = async () => {
   try {
     const res = await api.get("/admin-dashboard/notifications");
@@ -57,6 +64,23 @@ export default function AdminShipmentsReview() {
 
   // --- 2. Action Handlers ---
 
+const handleCollapseAutoApproved = async () => {
+  try {
+    await api.post("/admin-shipments-review/collapse-auto-approve");
+
+    setShipments(prev =>
+      prev.map(s =>
+        (s.isAutoApproved || s.IsAutoApproved)
+          ? { ...s, isRender: false }
+          : s
+     )
+    );
+  } catch (err) {
+    alert("Failed to collapse auto-approved orders");
+  }
+};
+
+
 const handleApprove = (shipment) => {
   setConfirmBox({
     open: true,
@@ -66,7 +90,6 @@ const handleApprove = (shipment) => {
       try {
         await api.post("/admin-shipments-review/approve", shipment);
         setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
-        alert(`Shipment #${shipment.orderId} approved`);
       } catch (err) {
         alert("Approval failed");
       } finally {
@@ -86,7 +109,7 @@ const handleCancel = (shipment) => {
       try {
         await api.post("/admin-shipments-review/cancel", shipment);
         setShipments(prev => prev.filter(s => s.orderId !== shipment.orderId));
-        alert(`Shipment #${shipment.orderId} cancelled`);
+        
       } catch (err) {
         alert("Cancellation failed");
       } finally {
@@ -174,7 +197,7 @@ const handleApproveGroup = (group) => {
 
 
   // --- 3. Filter Logic ---
-  const filteredShipments = shipments.filter((ship) => {
+ const filteredShipments = normalShipments.filter((ship) => {
     // Search by ID, Origin, or Destination
     const searchTerm = search.toLowerCase();
     const matchSearch = 
@@ -308,12 +331,95 @@ const handleApproveGroup = (group) => {
               Loading shipments...
             </div>
           )}
-          {!loading && !isImprovisedView && filteredShipments.length === 0 && (
+          {!loading &&
+            !isImprovisedView &&
+            filteredShipments.length === 0 &&
+            autoApprovedShipments.length === 0 && (
             <div className="text-center py-12 bg-white/70 backdrop-blur-2xl rounded-3xl border border-white/30 text-blue-600 font-medium shadow-lg bg-white rounded-xl border border-dashed">
-              No shipments found matching your criteria.
+              No pending shipments waiting for approval.
             </div>
           )}
             
+          {/* AUTO-APPROVED ORDERS (TOP) */}
+            {!loading && !isImprovisedView && autoApprovedShipments.length > 0 && (
+              <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+  <h2 className="text-lg font-bold text-yellow-700">
+    Auto-Approved Orders
+  </h2>
+
+  <button
+    onClick={handleCollapseAutoApproved}
+    className="px-4 py-2 text-sm rounded-lg bg-yellow-200 text-yellow-800 hover:bg-yellow-300"
+  >
+    Everything's Fine
+  </button>
+</div>
+                
+                {autoApprovedShipments.map((ship, index) => {
+                  const autoId = `auto-${ship.orderId}`;
+                  const isOpen = openCard === autoId;
+
+                  return (
+                    <div
+                      key={autoId}
+                      className={`bg-white rounded-2xl border mb-4 ${
+                        isOpen ? "ring-2 ring-yellow-400 shadow-lg" : "hover:shadow-md"
+                      }`}
+                    >
+                      {/* HEADER */}
+                      <div
+                        onClick={() => setOpenCard(isOpen ? null : autoId)}
+                        className="px-6 py-4 flex justify-between items-center cursor-pointer"
+                      >
+                        <div>
+                          <p className="font-bold text-yellow-700">
+                            #{ship.orderId} — Auto Approved
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {ship.orderOrigin.toUpperCase()} → {ship.orderDestination.toUpperCase()}     •     {ship.companyName}     •     Actual Emissions: {ship.orderCO2Emission.toFixed(2)} kg CO₂e     •     Standard Emission: {ship.orderStandardCO2Emissions.toFixed(2)} kg CO₂e     •     Savings: {(((ship.orderStandardCO2Emissions - ship.orderCO2Emission) / ship.orderStandardCO2Emissions) * 100).toFixed(1)} %
+                          </p>
+                        </div>
+
+                        <span className="material-symbols-outlined">
+                          {isOpen ? "expand_less" : "expand_more"}
+                        </span>
+                      </div>
+
+                      {/* EXPANDED */}
+                      {isOpen && (
+                        <div className="border-t px-6 py-5">
+                          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div><b>Weight:</b> {ship.orderWeightKg} kg</div>
+                            <div><b>Distance:</b> {ship.orderDistance} km</div>
+                            <div><b>CO₂:</b> {ship.orderCO2Emission?.toFixed(2)} kg</div>
+                            <div><b>Vehicle:</b> {ship.transportVehicle}</div>
+                          </div>
+
+                          {/* ACTIONS */}
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setOpenCard(null)}
+                              className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-50"
+                            >
+                              Close
+                            </button>
+
+                            <button
+                              onClick={() => handleCancel(ship)}
+                              className="px-4 py-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                            >
+                              Reject Order
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
            {/* NORMAL VIEW */}
            {!loading && !isImprovisedView &&
            filteredShipments.map((ship, index) => {
