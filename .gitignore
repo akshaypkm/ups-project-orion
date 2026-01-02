@@ -6,6 +6,13 @@
 
 EcoRoute_Frontend/frontend_1.zip
 
+EcoRoute_Backend/.gitignore
+
+EcoRoute_Backend/EcoRoute/appsettings.json
+
+EcoRoute_Frontend/.env
+
+# ./gitignore
 
 # User-specific files
 *.rsuser
