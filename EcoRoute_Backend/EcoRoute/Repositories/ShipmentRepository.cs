@@ -1,3 +1,4 @@
+using AutoMapper;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
@@ -30,10 +31,12 @@ namespace EcoRoute.Repositories
         Task AddShipmentAsync(Shipment shipment);
 
         Task SaveChangesAsync();
+        Task DeleteShipmentAsync(int? shipmentId);
     }
-    public class ShipmentRepository(EcoRouteDbContext dbContext) : IShipmentRepository
+    public class ShipmentRepository(EcoRouteDbContext dbContext, IMapper _mapper) : IShipmentRepository
     {
         private readonly EcoRouteDbContext dbContext = dbContext;
+        private readonly IMapper _mapper = _mapper;
 
         public async Task<int> GetTotalShipmentsCompanyAndDateWise(int companyId, DateTime ShipmentStartDate, DateTime ShipmentEndDate)
         {
@@ -67,12 +70,19 @@ namespace EcoRoute.Repositories
 
         public async Task<List<Order>> GetShipmentsForReview(int TransportCompanyId)
         {
-            return await dbContext.Orders.Where(o => o.TransportCompanyId == TransportCompanyId && o.OrderStatus == "processing" 
-                                        || o.OrderStatus == "planned").OrderByDescending(c => c.Id).ToListAsync();
+            return await dbContext.Orders.Where(o => o.TransportCompanyId == TransportCompanyId && ( o.IsAutoApproved == true || o.OrderStatus == "processing" 
+                                        || o.OrderStatus == "planned")).OrderByDescending(c => c.Id).ToListAsync();
         }
 
         public async Task<int> CreateShipment(OrderDto orderDto)
         {
+            var order = await dbContext.Orders.FirstOrDefaultAsync(o => o.Id == orderDto.OrderId);
+
+            if(order == null)
+            {
+                throw new Exception("order not found while creating a new shipment");
+            }
+
             var shipmentToAdd = new Shipment()
             {
                 ShipmentCO2Emission = orderDto.OrderCO2Emission,
@@ -87,9 +97,13 @@ namespace EcoRoute.Repositories
                 ShipmentDistance = orderDto.OrderDistance,
                 Vehicle = orderDto.TransportVehicle,
                 ShipmentMode = "dedicated",
-                TransportCompanyId = orderDto.TransportCompanyId
+                TransportCompanyId = orderDto.TransportCompanyId,
+                
             };
+            Console.WriteLine($"++++++++++++++++++COMPANY ID IN ORDERDTO: {orderDto.CompanyId}");
 
+            // shipmentToAdd.OrderList.Add(order);
+            order.Shipment = shipmentToAdd;
             await dbContext.AddAsync(shipmentToAdd);
             await dbContext.SaveChangesAsync();
 
@@ -116,5 +130,11 @@ namespace EcoRoute.Repositories
         {
             await dbContext.SaveChangesAsync();
         }
+
+        public async Task DeleteShipmentAsync(int? shipmentId)
+        {
+            await dbContext.Shipments.Where(s => s.Id == shipmentId).ExecuteDeleteAsync();
+        }
+
     }
 }

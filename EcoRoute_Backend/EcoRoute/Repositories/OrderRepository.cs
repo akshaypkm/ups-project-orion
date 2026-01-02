@@ -25,6 +25,10 @@ namespace EcoRoute.Repositories
 
         Task<Order> GetOrderByOrderId(int OrderId);
 
+        Task<List<Order>> GetAutoApprovalOrdersByTransportCompanyId(int transportCompanyId);
+
+        Task CollapseAutoApprove(int transportCompanyId);
+
     }
     public class OrderRepository(EcoRouteDbContext dbContext) : IOrderRepository
     {
@@ -74,5 +78,28 @@ namespace EcoRoute.Repositories
         {
             return await dbContext.Orders.Where(o => o.Id == OrderId).FirstOrDefaultAsync();
         }
+
+        public async Task<List<Order>> GetAutoApprovalOrdersByTransportCompanyId(int transportCompanyId)
+        {
+            DateTime now = DateTime.Today;
+            Console.WriteLine($"%%%%%%%%%%%%%THE REPO IS RUNNING!!");
+            return await dbContext.Orders.Where(o => o.TransportCompanyId == transportCompanyId
+                                            && o.OrderMode.ToLower() == "dedicated"
+                                                && (o.OrderStatus.Equals("planned") || o.OrderStatus.Equals("processing"))
+                                                    && o.IsAutoApproved == false
+                                                        && o.OrderDate >= now && o.OrderDate <= now.AddDays(3)
+                                                            && o.OrderCO2Emission <= o.OrderStandardCO2Emissions
+                                                                && o.OrderDistance <= 100.0).ToListAsync();
+
+                                                           
+        }
+
+        public async Task CollapseAutoApprove(int transportCompanyId)
+        {
+            await dbContext.Orders.Where(o => o.TransportCompanyId == transportCompanyId).
+                                        ExecuteUpdateAsync(o => o.SetProperty(o => o.IsRender, false));
+        }
+
     }
 }
+
