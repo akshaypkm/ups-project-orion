@@ -61,5 +61,10 @@ namespace EcoRoute.Models
         public int TransportCompanyId{get; set;}
 
         public string TransportCompanyName{get; set;}
+        public bool IsAutoApproved{get; set;}
+
+        public int? ShipmentId{get; set;}
+
+        public bool IsRender{get; set;}
     }
 }

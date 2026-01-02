@@ -59,6 +59,8 @@ namespace EcoRoute.Models.Entities
 
         public string TransportCompanyName{get; set;} = string.Empty;
 
+        public bool? IsAutoApproved{get; set;}
+
         //relationships
         public string CompanyName{get; set;}
 
@@ -69,5 +71,7 @@ namespace EcoRoute.Models.Entities
         public int? ShipmentId{get; set;}
         [ForeignKey("ShipmentId")]
         public Shipment Shipment{get; set;}
+
+        public bool IsRender{get; set;}
     }
 }
