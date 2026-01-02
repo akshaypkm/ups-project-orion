@@ -15,13 +15,10 @@ namespace EcoRoute.Controllers
     public class AdminShipmentsReviewController : ControllerBase
     {
         private readonly IAdminShipmentReviewService _adminShipmentReviewService;
-        private readonly IOrderRepository _orderRepo;
 
-        public AdminShipmentsReviewController(IAdminShipmentReviewService _adminShipmentReviewService,
-                                            IOrderRepository _orderRepo)
+        public AdminShipmentsReviewController(IAdminShipmentReviewService _adminShipmentReviewService)
         {
             this._adminShipmentReviewService = _adminShipmentReviewService;
-            this._orderRepo = _orderRepo;
         }
 
         [HttpGet("get-review-shipments")]
@@ -74,5 +71,20 @@ namespace EcoRoute.Controllers
             return Ok("order statuses changed");
         }
 
-    }
+        [HttpPost("collapse-auto-approve")]
+        public async Task CollapseAutoApprove()
+        {
+            var companyClaim = User.FindFirst("CompanyName");
+
+            if(companyClaim == null)
+            {
+                Unauthorized("token is missing the right company name");
+            } 
+
+            string companyName = companyClaim.Value;
+
+            Console.WriteLine($"THIS IS THE COMPANY NAME: ++++++++++++++++++{companyName}");
+            await _adminShipmentReviewService.CollapseAutoApprove(companyName);
+        }
+    }   
 }
