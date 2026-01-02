@@ -22,6 +22,8 @@ namespace EcoRoute.Services
         Task<List<ImproviseShipmentGroupDto>> ImproviseShipments(List<OrderDto> orderDtos);
 
         Task ApproveGroupedShipment(ImproviseShipmentGroupDto groupDto);
+
+        Task CollapseAutoApprove(string transportCompanyName);
     }
     public class AdminShipmentReviewService : IAdminShipmentReviewService
     {
@@ -83,7 +85,7 @@ namespace EcoRoute.Services
             await _orderRepo.InsertShipmentIdInOrder(orderDto.OrderId, shipId);
 
             var notification = new Notification(){
-                Message = $"Your order for ID({orderDto.OrderCode}) from {orderDto.OrderOrigin} -> {orderDto.OrderDestination} has been placed successfully!",
+                Message = $"Your order for ID({orderDto.OrderCode}) from {orderDto.OrderOrigin} --> {orderDto.OrderDestination} has been placed successfully!",
                 IsRead = false,
                 TargetCompanyId = orderDto.CompanyId
             };
@@ -95,6 +97,8 @@ namespace EcoRoute.Services
         public async Task CancelShipment(OrderDto orderDto)
         {
             string status = "cancelled";
+
+            var transaction = await _dbcontext.Database.BeginTransactionAsync();
             await _orderRepo.ChangeOrderStatus(orderDto.OrderId, status);
 
             var refundCredits = orderDto.OrderCO2Emission / 1000;
@@ -106,8 +110,22 @@ namespace EcoRoute.Services
                 TargetCompanyId = orderDto.CompanyId
             };
 
+            if (orderDto.IsAutoApproved)
+            {
+                var shipId = orderDto.ShipmentId;
+
+                var order = await _orderRepo.GetOrderByOrderId(orderDto.OrderId);
+                order.ShipmentId = null;
+                order.IsAutoApproved = false;
+
+                await _orderRepo.SaveChangesAsync();
+                await _shipmentRepo.DeleteShipmentAsync(shipId);
+            }
+
             await _notifRepo.AddNotificationAsync(notification);
             await _notifRepo.SaveChangesAsync();
+
+            await transaction.CommitAsync();
         }
 
         public async Task<List<ImproviseShipmentGroupDto>> ImproviseShipments(List<OrderDto> orderDtos)
@@ -122,7 +140,8 @@ namespace EcoRoute.Services
            var routeGroups = orderDtos.Where(o => o.OrderMode.ToLower() == "shared")
                                         .GroupBy( o=> new
                                         {
-                                            o.IsRefrigerated
+                                            o.IsRefrigerated,
+                                            
                                         });
 
             Console.WriteLine($"ROUTE GRoups LENGTH ----------------- {routeGroups.Count()}");
@@ -419,12 +438,30 @@ namespace EcoRoute.Services
 
                 await _companyRepo.RefundCompanyCredits(orderDto.CompanyId, refundCredits); 
                 
+                var notif = new Notification()
+                {
+                    Message = $"Your order ({orderDto.OrderCode}) from {orderDto.OrderOrigin} to {orderDto.OrderDestination} has been set to a shared shipment on {order.OrderDate.ToShortDateString()}",
+                    IsRead = false,
+                    TargetCompanyId = orderDto.CompanyId
+                };
+
+                await _notifRepo.AddNotificationAsync(notif);
+                await _notifRepo.SaveChangesAsync();
             }
 
             await _shipmentRepo.AddShipmentAsync(shipment);
             await _shipmentRepo.SaveChangesAsync();
 
             await transaction.CommitAsync();
+        }
+
+        public async Task CollapseAutoApprove(string companyName)
+        {
+            var transportCompanyId = await _companyRepo.GetCompanyIdByName(companyName);
+
+            Console.WriteLine($"COMPANY ID: {transportCompanyId}");
+
+            await _orderRepo.CollapseAutoApprove(transportCompanyId);
         }
 
         private async Task<bool> IsSpatiallyCompatible(OrderDto a, OrderDto b)

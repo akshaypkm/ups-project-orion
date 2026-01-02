@@ -2,6 +2,7 @@ using AutoMapper;
 using EcoRoute.Data;
 using EcoRoute.Models;
 using EcoRoute.Models.Entities;
+using EcoRoute.Models.HelperClasses;
 using EcoRoute.Repositories;
 
 namespace EcoRoute.Services
@@ -24,15 +25,18 @@ namespace EcoRoute.Services
         private readonly ICreditRepository _creditRepo;
         private readonly ITruckRepository _truckRepo;
         private readonly IOrderRepository _orderRepo;
+        private readonly INotificationRepository _notifRepo; 
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+        private readonly IAutoApprovalService _autoApproveService;
         
 
         public CarbonQuoteService(EcoRouteDbContext _dbContext, IUserRepository _userRepo, 
                             ICompanyRepository _companyRepo, IEmissionRepository _emissionRepo,
                             IShipmentRepository _shipmentRepo, ICreditRepository _creditRepo,
                              ITruckRepository _truckRepo,IOrderRepository _orderRepo,
-                            IConfiguration _configuration, IMapper _mapper)
+                            IConfiguration _configuration, IMapper _mapper,
+                            IAutoApprovalService _autoApproveService, INotificationRepository _notifRepo)
         {
             this._dbContext = _dbContext;
             this._userRepo = _userRepo;
@@ -42,8 +46,10 @@ namespace EcoRoute.Services
             this._creditRepo = _creditRepo;
             this._truckRepo = _truckRepo;
             this._orderRepo = _orderRepo;
+            this._notifRepo = _notifRepo;
             this._configuration = _configuration;
             this._mapper = _mapper;
+            this._autoApproveService = _autoApproveService;
         }
 
         public async Task<(bool Success,string? Message, List<OrderDto>? OrderDto)> PostDataToCalculate(string companyName, OrderRequestDto orderRequestDto)
@@ -198,6 +204,8 @@ namespace EcoRoute.Services
 
             orderToDb.TransportCompanyId = await _companyRepo.GetTransportCompanyIdByCompanyName(orderDto.TransportCompanyName);
             orderToDb.CompanyId = companyId;
+            orderToDb.IsAutoApproved = false;
+            
             if(orderDto.OrderDate > DateTime.Now)
             {
                 orderToDb.OrderStatus = "planned";
@@ -214,7 +222,29 @@ namespace EcoRoute.Services
             await _orderRepo.AddOrdersAsync(orderToDb);
             await _orderRepo.SaveChangesAsync();
 
+            var notification = new Notification
+            {
+                Message = $"Company - {orderToDb.CompanyName} has placed an order ({orderToDb.OrderCode} which is waiting for your approval.)",
+                IsRead = false,
+                TargetCompanyId = orderToDb.TransportCompanyId
+            };
+
+            await _notifRepo.AddNotificationAsync(notification);
+            await _notifRepo.SaveChangesAsync();
+
             await transaction.CommitAsync();
+
+            Console.WriteLine($"ORDER MORE: {orderToDb.OrderMode}##L#LFL#ML########################");
+
+            if(orderToDb.OrderMode.ToLower() == "dedicated")
+            {
+                Console.WriteLine("BRO TRIGGERING THE AUTO APPROVALLLLLLLLLLLLLLLLLL##L#LFL#ML########################");
+                // orderToDb.IsRender = true;
+                await _autoApproveService.AutoApprove(orderToDb.TransportCompanyId);
+            }
+
+            Console.WriteLine("PLACED ORDER   ##L#LFL#ML########################");
+
 
             return (true, "order has been placed successfully");
         }

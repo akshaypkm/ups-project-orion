@@ -76,7 +76,7 @@ namespace EcoRoute.Services
                 case "year":
                     EmissionStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     EmissionStartDate = DateTime.Today;
                     break;
                 case "month":
@@ -90,7 +90,7 @@ namespace EcoRoute.Services
                 case "year":
                     ShipmentStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     ShipmentStartDate = DateTime.Today;
                     break;
                 case "month":
@@ -104,7 +104,7 @@ namespace EcoRoute.Services
                 case "year":
                     EmissionsSavedStartDate = new DateTime(DateTime.Now.Year, 1, 1);
                     break;
-                case "day":
+                case "today":
                     EmissionsSavedStartDate = DateTime.Today;
                     break;
                 case "month":
